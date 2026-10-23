@@ -28,4 +28,5 @@
 
 ## 배포
 
-GitHub Pages(main 브랜치 루트). push 하면 1~2분 뒤 반영된다.
+GitHub 저장소 `game`(이 폴더의 상위)을 Pages(main 브랜치 루트)로 공개한다. 체스 주소는 `https://<아이디>.github.io/game/체스/`.
+push 하면 1~2분 뒤 반영된다. 파일 경로는 전부 상대 경로라 폴더 이름이 바뀌어도 동작한다.
