@@ -16,7 +16,7 @@
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Jua&family=Nunito:wght@400;600;700;800&display=swap">
 <style>
 /* 레이아웃: 한 화면 앱. 위 탭 → 상대 줄 → 정사각 보드 → 내 줄 → 기보 → 굵은 액션 버튼. 최대 폭 600px 한 열 */
 :root{
@@ -128,6 +128,16 @@ main{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden}
 @keyframes spark{0%{transform:translate(0,0) scale(1.2);opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(.2) rotate(160deg);opacity:0}}
 .ring{position:absolute;width:12%;aspect-ratio:1;border-radius:50%;border:4px solid var(--sun);transform:translate(-50%,-50%);animation:ring .45s ease-out forwards}
 @keyframes ring{from{transform:translate(-50%,-50%) scale(.3);opacity:1}to{transform:translate(-50%,-50%) scale(1.6);opacity:0}}
+/* 체크 이펙트: 도장처럼 찍히는 글자, 보드 테두리 번쩍, 킹에서 퍼지는 빨간 원, 보드 흔들림 */
+.callout{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;z-index:6}
+.callout span{font-family:"Jua",var(--f-display);font-size:clamp(44px,15vw,84px);color:#E23B2E;-webkit-text-stroke:4px #FFFFFF;paint-order:stroke fill;text-shadow:0 5px 0 rgba(120,20,15,.45);letter-spacing:.02em;white-space:nowrap;animation:stamp 1.25s cubic-bezier(.2,1.4,.4,1) forwards}
+.callout.mate span{color:#B01C1C;font-size:clamp(36px,11vw,66px)}
+@keyframes stamp{0%{transform:rotate(-8deg) scale(2.6);opacity:0}18%{transform:rotate(-8deg) scale(.92);opacity:1}28%{transform:rotate(-8deg) scale(1.04)}36%,78%{transform:rotate(-8deg) scale(1);opacity:1}100%{transform:rotate(-8deg) scale(1.08);opacity:0}}
+.flash{position:absolute;inset:0;border-radius:14px;box-shadow:inset 0 0 0 5px rgba(226,59,46,.9),inset 0 0 48px rgba(226,59,46,.55);animation:flash 1s ease-out forwards}
+@keyframes flash{0%,40%{opacity:1}100%{opacity:0}}
+.ring.chkring{border-color:#E23B2E;border-width:5px;width:15%;animation-duration:.7s}
+.board-wrap.jolt{animation:jolt .4s ease-in-out}
+@keyframes jolt{20%{transform:translateX(-6px)}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(2px)}}
 .conf{position:absolute;top:-6%;width:9px;height:14px;border-radius:2px;animation:fall var(--t) cubic-bezier(.25,.6,.5,1) forwards}
 @keyframes fall{0%{transform:translate(0,0) rotate(0);opacity:1}100%{transform:translate(var(--dx),115cqh) rotate(var(--r));opacity:.2}}
 .overlay .card{animation:pop .32s cubic-bezier(.3,1.5,.5,1)}
@@ -410,7 +420,23 @@ function render(anim){
       setTimeout(function(){pc.style.transition='';pc.classList.add('land');if(anim.cap)burst(anim.t);},200);
     }
   }
+  if(anim&&chkSq>=0)checkFx(chkSq);
   renderSides();renderMoves();renderActions();
+}
+// 체크(체크메이트)가 된 수 직후, 기물이 내려앉는 때에 맞춰 터뜨린다
+function checkFx(kingSq){
+  var mate=!!(over&&over.reason==='mate'),wrap=boardEl.parentNode,fx=$('fx');
+  if(g.turn===cur.human&&navigator.vibrate){try{navigator.vibrate(mate?[80,50,80,50,160]:[60,40,60]);}catch(e){}}
+  setTimeout(function(){
+    var t=document.createElement('div');t.className='callout'+(mate?' mate':'');t.setAttribute('aria-hidden','true');
+    t.innerHTML='<span>'+(mate?'체크메이트!':'체크!')+'</span>';
+    var fl=document.createElement('div');fl.className='flash';
+    var v=sqToV(kingSq),r=document.createElement('span');r.className='ring chkring';
+    r.style.left=((v&7)+.5)*12.5+'%';r.style.top=((v>>3)+.5)*12.5+'%';
+    fx.appendChild(fl);fx.appendChild(r);wrap.appendChild(t);
+    if(!reduced()){wrap.classList.remove('jolt');void wrap.offsetWidth;wrap.classList.add('jolt');}
+    setTimeout(function(){t.remove();fl.remove();r.remove();},1300);
+  },200);
 }
 // ---------- 이펙트 ----------
 var FX_COLORS=['var(--sun)','var(--accent)','var(--sky)','#FF8FA3','var(--danger)'];
