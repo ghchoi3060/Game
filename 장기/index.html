@@ -28,7 +28,7 @@
   --danger:#E0533D; --danger-deep:#AE3826; --sun:#F6C945;
   --wood:#F4DDA8; --wood-line:#9B6B3A; --board-edge:#C79A5B;
   --mark:rgba(70,45,20,.34); --last:rgba(246,201,69,.6); --sel:rgba(246,201,69,.95);
-  --cho:#4DA62B; --cho-edge:#2C6A16; --han:#E0533D; --han-edge:#9E2F20;
+  --piece:#FFFFFF; --piece-edge:#B4AC9C; --cho-ink:#142E8C; --han-ink:#B01C1C;
   --shade:rgba(34,48,31,.14);
   --f-display:"Fredoka","Jua","Nunito",ui-rounded,system-ui,sans-serif;
   --f-body:"Nunito",ui-rounded,system-ui,-apple-system,sans-serif;
@@ -103,16 +103,15 @@ main{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden}
 .pt.cap::after{content:"";position:absolute;width:96%;aspect-ratio:1;border-radius:50%;border:4px solid var(--danger);pointer-events:none;z-index:2;animation:dot .2s cubic-bezier(.3,1.6,.5,1)}
 @keyframes dot{from{transform:scale(0)}}
 /* 기물: 팔각 말. 궁이 가장 크고 사·졸이 가장 작다 */
-.pc{position:relative;z-index:1;display:block;width:84%;height:84%;pointer-events:none;will-change:transform;overflow:visible;filter:drop-shadow(0 2px 0 rgba(0,0,0,.25))}
-.pc.k{width:100%;height:100%}.pc.s{width:70%;height:70%}
-.pc.cho{--pf:var(--cho);--pe:var(--cho-edge)}
-.pc.han{--pf:var(--han);--pe:var(--han-edge)}
-.pc .ob{fill:var(--pf);stroke:var(--pe);stroke-width:5;stroke-linejoin:round}
-.pc .oi{fill:none;stroke:#FFFFFF;stroke-opacity:.5;stroke-width:3;stroke-linejoin:round}
-.pc .bl{fill:#FF8FA3;opacity:.7}
+.pc{position:relative;z-index:1;display:block;width:90%;height:90%;pointer-events:none;will-change:transform;overflow:visible;filter:drop-shadow(0 2px 0 rgba(0,0,0,.25))}
+.pc.k{width:104%;height:104%}.pc.s{width:78%;height:78%}
+/* 말: 전통 장기처럼 흰 팔각 말에 초는 파란 글씨, 한은 빨간 글씨 */
+.pc.cho{--pk:var(--cho-ink)}
+.pc.han{--pk:var(--han-ink)}
+.pc .ob{fill:var(--piece);stroke:var(--piece-edge);stroke-width:4;stroke-linejoin:round}
 /* 전통 장기 말처럼 한은 붓글씨 해서, 초는 굵은 초서. 붓글씨 글꼴은 획이 가늘어 같은 색 테두리로 굵게 한다 */
-.pc text{fill:#FFFFFF;font-family:var(--f-piece);font-size:52px;text-anchor:middle;dominant-baseline:central;stroke:#FFFFFF;stroke-width:2px;stroke-linejoin:round}
-.pc.cho text{font-family:var(--f-piece-cho);font-size:60px;stroke-width:2.5px}
+.pc text{fill:var(--pk);font-family:var(--f-piece);font-size:66px;text-anchor:middle;dominant-baseline:central;stroke:var(--pk);stroke-width:4px;stroke-linejoin:round}
+.pc.cho text{font-family:var(--f-piece-cho);font-size:74px;stroke-width:4.5px}
 .pc.lift{animation:bob 1.1s ease-in-out infinite}
 @keyframes bob{0%,100%{transform:translateY(-6%) scale(1.1)}50%{transform:translateY(-12%) scale(1.1)}}
 .pc.land{animation:land .3s ease-out}
@@ -295,16 +294,14 @@ var CHO=E.CHO,HAN=E.HAN,KING=E.K;
 var FORM_KEYS=Object.keys(E.FORMS);
 // 팔각 말 (viewBox 100×100)
 var OCT_OUT='M92.5 32.4L92.5 67.6L67.6 92.5L32.4 92.5L7.5 67.6L7.5 32.4L32.4 7.5L67.6 7.5Z';
-var OCT_IN='M84.6 35.3L84.6 64.7L64.7 84.6L35.3 84.6L15.4 64.7L15.4 35.3L35.3 15.4L64.7 15.4Z';
 // 초서체 글꼴에 번체 車·馬 가 없어 간체 车·马 를 쓴다(간체가 원래 초서(흘림)에서 온 모양이라 실제 초 말과 같다)
 var LABEL={8:['','卒','包','马','象','士','车','楚'],16:['','兵','包','馬','象','士','車','漢']};
 var PNAME=['','졸','포','마','상','사','차','궁'];
 function pieceSvg(t,color,extra){
   var size=t===KING?' k':(t===E.P||t===E.A)?' s':'';
   return '<svg class="pc '+(color===CHO?'cho':'han')+size+(extra||'')+'" viewBox="0 0 100 100" aria-hidden="true">'+
-    '<path class="ob" d="'+OCT_OUT+'"/><path class="oi" d="'+OCT_IN+'"/>'+
-    '<ellipse class="bl" cx="25" cy="66" rx="7" ry="4"/><ellipse class="bl" cx="75" cy="66" rx="7" ry="4"/>'+
-    '<text x="50" y="49">'+LABEL[color][t]+'</text></svg>';
+    '<path class="ob" d="'+OCT_OUT+'"/>'+
+    '<text x="50" y="50">'+LABEL[color][t]+'</text></svg>';
 }
 var LEVELS=[
   {t:'새싹',d:'규칙을 막 배운 상대. 아무 수나 자주 둡니다',o:{depth:1,q:false,noise:600,rnd:.45}},
