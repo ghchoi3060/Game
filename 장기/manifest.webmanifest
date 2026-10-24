@@ -1,0 +1,16 @@
+{
+  "name": "솔솔대국(장기)",
+  "short_name": "솔솔대국(장기)",
+  "description": "탭하면 갈 수 있는 자리가 보이는 귀여운 장기. 봇 10단계, 친구와 실시간 대전, 친구별 전적.",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F2F6EC",
+  "theme_color": "#58B030",
+  "icons": [
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
