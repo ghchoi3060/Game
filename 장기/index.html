@@ -17,6 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Jua&family=Nunito:wght@400;600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@900&text=%E6%A5%9A%E6%BC%A2%E8%BB%8A%E5%8C%85%E9%A6%AC%E8%B1%A1%E5%A3%AB%E5%8D%92%E5%85%B5&display=swap">
 <style>
 /* 레이아웃: 한 화면 앱. 위 탭 → 상대 줄 → 9×10 장기판 → 내 줄 → 기보 → 굵은 액션 버튼. 최대 폭 600px 한 열 */
 :root{
@@ -30,7 +31,7 @@
   --shade:rgba(34,48,31,.14);
   --f-display:"Fredoka","Jua","Nunito",ui-rounded,system-ui,sans-serif;
   --f-body:"Nunito",ui-rounded,system-ui,-apple-system,sans-serif;
-  --f-piece:"Jua","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --f-piece:"Noto Serif KR","AppleMyungjo","Batang","Malgun Gothic",serif;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#111711; --surface:#1B231A; --ink:#E5EEDF; --muted:#9AAA92; --line:#2C3A29;
@@ -107,7 +108,7 @@ main{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden}
 .pc .ob{fill:var(--pf);stroke:var(--pe);stroke-width:5;stroke-linejoin:round}
 .pc .oi{fill:none;stroke:#FFFFFF;stroke-opacity:.5;stroke-width:3;stroke-linejoin:round}
 .pc .bl{fill:#FF8FA3;opacity:.7}
-.pc text{fill:#FFFFFF;font-family:var(--f-piece);font-size:50px;text-anchor:middle;dominant-baseline:central;paint-order:stroke;stroke:var(--pe);stroke-width:3px}
+.pc text{fill:#FFFFFF;font-family:var(--f-piece);font-weight:900;font-size:50px;text-anchor:middle;dominant-baseline:central;paint-order:stroke;stroke:var(--pe);stroke-width:3px}
 .pc.lift{animation:bob 1.1s ease-in-out infinite}
 @keyframes bob{0%,100%{transform:translateY(-6%) scale(1.1)}50%{transform:translateY(-12%) scale(1.1)}}
 .pc.land{animation:land .3s ease-out}
@@ -128,6 +129,12 @@ main{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden}
 .card{background:var(--surface);border-radius:20px;padding:18px;box-shadow:0 6px 0 var(--shade);text-align:center;width:min(100%,320px);display:flex;flex-direction:column;gap:10px}
 .card h2{margin:0;font-family:var(--f-display);font-size:28px;font-weight:700;text-wrap:balance}
 .card p{margin:0;color:var(--muted);font-weight:700}
+.forms{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.forms button{border:2px solid var(--line);background:var(--wood);border-radius:14px;box-shadow:0 4px 0 var(--board-edge);padding:8px 6px 6px;display:flex;flex-direction:column;align-items:center;gap:4px;color:#3B2A14}
+.forms button[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 4px 0 var(--accent-deep)}
+.forms .row{display:flex;gap:2px}
+.forms .row .pc{width:28px;height:28px;filter:none}
+.forms .nm{font-weight:800;font-size:14px}
 
 /* 기보 */
 .moves{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;font-size:13px;font-weight:700;color:var(--muted);min-height:24px;padding:2px 0;font-variant-numeric:tabular-nums}
@@ -229,6 +236,9 @@ table.bot td:first-child,table.bot th:first-child{text-align:left}
           <svg class="lines" viewBox="0 0 90 100" preserveAspectRatio="none" aria-hidden="true" id="lines"></svg>
         </div>
         <div class="fx" id="fx" aria-hidden="true"></div>
+        <div class="overlay" id="formPick" hidden>
+          <div class="card"><h2>상차림 고르기</h2><p id="formHint"></p><div class="forms" id="formRow"></div></div>
+        </div>
         <div class="overlay" id="result" hidden>
           <div class="card"><h2 id="resTitle"></h2><p id="resReason"></p><div id="resBtns" class="list"></div></div>
         </div>
@@ -262,8 +272,6 @@ table.bot td:first-child,table.bot th:first-child{text-align:left}
       <button data-c="h" aria-pressed="false">한</button>
       <button data-c="r" aria-pressed="false">랜덤</button>
     </div>
-    <div class="label">내 상차림</div>
-    <div class="seg" id="formSeg"></div>
     <div class="row2">
       <button class="btn" id="sheetCancel">닫기</button>
       <button class="btn primary" id="sheetStart">시작하기</button>
@@ -284,7 +292,7 @@ var FORM_KEYS=Object.keys(E.FORMS);
 // 팔각 말 (viewBox 100×100)
 var OCT_OUT='M92.5 32.4L92.5 67.6L67.6 92.5L32.4 92.5L7.5 67.6L7.5 32.4L32.4 7.5L67.6 7.5Z';
 var OCT_IN='M84.6 35.3L84.6 64.7L64.7 84.6L35.3 84.6L15.4 64.7L15.4 35.3L35.3 15.4L64.7 15.4Z';
-var LABEL={8:['','졸','포','마','상','사','차','초'],16:['','병','포','마','상','사','차','한']};
+var LABEL={8:['','卒','包','馬','象','士','車','楚'],16:['','兵','包','馬','象','士','車','漢']};
 var PNAME=['','졸','포','마','상','사','차','궁'];
 function pieceSvg(t,color,extra){
   var size=t===KING?' k':(t===E.P||t===E.A)?' s':'';
@@ -314,7 +322,7 @@ var cur={mode:'bot',level:3,human:CHO,setup:{cho:'HEEH',han:'HEEH'},moves:[],gam
 var g=E.create(cur.setup),notes=[],keys=[],last=null,over=null;
 var selected=-1,targets=[],hint=null,thinking=false,token=0;
 var tab='play';
-var sheetLevel=3,sheetColor='c',sheetForm='HEEH';
+var sheetLevel=3,sheetColor='c',lastForm='HEEH';
 
 var $=function(id){return document.getElementById(id);};
 function store(k,v){try{if(v===undefined)return JSON.parse(localStorage.getItem(k)||'null');localStorage.setItem(k,JSON.stringify(v));}catch(e){return null;}}
@@ -473,7 +481,37 @@ function say(kind,text){
 
 // ---------- 상대/내 줄 ----------
 function oppColor(){return cur.human^24;}
-function formOf(color){return E.FORMS[color===CHO?cur.setup.cho:cur.setup.han];}
+function sideKey(color){return color===CHO?'cho':'han';}
+function formOf(color){return E.FORMS[cur.setup[sideKey(color)]]||'상차림 고르는 중';}
+// 상차림: 판마다 처음에 각자 고른다. 둘 다 고르기 전에는 둘 수 없다
+function needForm(){return !over&&!cur.setup[sideKey(cur.human)];}
+function setupReady(){return !!(cur.setup.cho&&cur.setup.han);}
+function renderPicker(){
+  var box=$('formPick');
+  if(!needForm()||(cur.mode==='friend'&&!friendGame())){box.hidden=true;return;}
+  $('formHint').textContent=side(cur.human)+' · 자기 쪽에서 본 왼쪽부터 놓을 말을 골라요';
+  var c=cur.human;
+  $('formRow').innerHTML=FORM_KEYS.map(function(f){
+    var row=f.split('').map(function(x){return pieceSvg(x==='H'?E.H:E.E,c);}).join('');
+    return '<button type="button" data-f="'+f+'" aria-pressed="'+(f===lastForm)+'"><span class="row">'+row+'</span><span class="nm">'+E.FORMS[f]+'</span></button>';
+  }).join('');
+  box.hidden=false;
+}
+$('formRow').addEventListener('click',function(e){var b=e.target.closest('button');if(b)pickForm(b.dataset.f);});
+function pickForm(f){
+  if(!needForm())return;
+  lastForm=f;var prefs=store('janggi.prefs')||{};prefs.form=f;store('janggi.prefs',prefs);
+  var k=sideKey(cur.human);
+  if(cur.mode==='bot'){
+    cur.setup[k]=f;replay(cur.moves);saveLocal();render();
+    if(!over&&g.turn!==cur.human)botMove();
+  }else{
+    var fg=friendGame();if(!fg)return;
+    fg.setup=fg.setup||{cho:null,han:null};fg.setup[k]=f;saveRoom();
+    send({t:'form',gid:fg.gid,side:k,form:f});
+    syncFromRoom(false);
+  }
+}
 function friendGame(){return (cur.mode==='friend'&&room&&room.gid&&room.gid===cur.gameId)?room:null;}
 function personName(id){return (room&&id&&id===room.oppId&&room.oppName)||'친구';}
 function renderSides(){
@@ -487,7 +525,7 @@ function renderSides(){
     var oid=fg?(cur.human===CHO?fg.han:fg.cho):null;
     $('oppAvatar').innerHTML=pieceAvatar(oppColor());
     $('oppName').textContent=oid?personName(oid):'친구를 기다리는 중';
-    $('oppSub').textContent=side(oppColor())+(fg&&fg.setup?' · '+formOf(oppColor()):'')+(online?' · 연결됨':' · 연결 끊김');
+    $('oppSub').textContent=side(oppColor())+(oid?' · '+formOf(oppColor()):'')+(online?' · 연결됨':' · 연결 끊김');
     $('bubble').hidden=true;
   }
   $('meAvatar').innerHTML=pieceAvatar(cur.human);
@@ -497,15 +535,17 @@ function renderSides(){
   var st=$('status'),txt,go=false;
   if(over)txt='대국 종료';
   else if(cur.mode==='friend'&&(!fg||fg.status==='open'))txt='상대 기다림';
+  else if(needForm())txt='상차림 고르기';
+  else if(!setupReady())txt='상대 상차림 기다림';
   else if(g.turn===cur.human){txt=E.inCheck(g)?'장군! 내 차례':'내 차례';go=true;}
   else txt=cur.mode==='bot'?'봇 차례':'친구 차례';
   st.textContent=txt;st.className='status'+(go?' go':'');
-  renderResult();
+  renderPicker();renderResult();
 }
 
 // ---------- 입력 ----------
 function myTurn(){
-  if(over||thinking||g.turn!==cur.human)return false;
+  if(over||thinking||g.turn!==cur.human||!setupReady())return false;
   if(cur.mode==='friend'){var fg=friendGame();return !!fg&&fg.status==='play';}
   return true;
 }
@@ -577,15 +617,16 @@ function finishBot(){
   cur.recorded=true;saveLocal();
   render();renderHistory();
 }
-function newBotGame(level,color,form){
+function newBotGame(level,color){
   token++;thinking=false;
+  var pick=color;
   if(color==='r')color=Math.random()<.5?'c':'h';
-  var mine=form==='r'?randForm():form,human=color==='h'?HAN:CHO;
-  cur={mode:'bot',level:level,human:human,setup:human===CHO?{cho:mine,han:randForm()}:{cho:randForm(),han:mine},moves:[],gameId:null};
+  var human=color==='h'?HAN:CHO;
+  // 봇 상차림은 무작위, 내 것은 판 위 선택 창에서 고른다
+  cur={mode:'bot',level:level,human:human,setup:human===CHO?{cho:null,han:randForm()}:{cho:randForm(),han:null},moves:[],gameId:null};
   replay([]);selected=-1;targets=[];hint=null;
-  store('janggi.prefs',{level:level,color:color,form:form});
+  store('janggi.prefs',{level:level,color:pick,form:lastForm});
   saveLocal();render();say('hello');
-  if(g.turn!==cur.human)botMove();
 }
 function undo(){
   if(cur.mode!=='bot'||!cur.moves.length)return;
@@ -595,7 +636,7 @@ function undo(){
   while(list.length&&turnAt(list.length)!==cur.human)list.pop();
   cur.recorded=false;
   replay(list);selected=-1;targets=[];hint=null;saveLocal();render();
-  if(!over&&g.turn!==cur.human)botMove();
+  if(!over&&setupReady()&&g.turn!==cur.human)botMove();
 }
 function askHint(){
   if(!myTurn()||cur.mode!=='bot')return;
@@ -648,9 +689,9 @@ function renderResult(){
   var btns=$('resBtns');btns.innerHTML='';
   function add(label,cls,fn){var b=document.createElement('button');b.type='button';b.className='btn '+cls;b.textContent=label;b.onclick=fn;btns.appendChild(b);}
   if(cur.mode==='bot'){
-    var col=cur.human===CHO?'c':'h',form=cur.human===CHO?cur.setup.cho:cur.setup.han;
-    if(res==='w'&&cur.level<10)add('레벨 '+(cur.level+1)+' 도전','primary',function(){newBotGame(cur.level+1,col,form);});
-    add('같은 레벨 다시','',function(){newBotGame(cur.level,col,form);});
+    var col=cur.human===CHO?'c':'h';
+    if(res==='w'&&cur.level<10)add('레벨 '+(cur.level+1)+' 도전','primary',function(){newBotGame(cur.level+1,col);});
+    add('같은 레벨 다시','',function(){newBotGame(cur.level,col);});
     add('기보 보기','',function(){box.hidden=true;});
   }else{
     add('친구와 한 판 더','primary',function(){if(fg)rematch(fg);});
@@ -669,16 +710,12 @@ function paintSheet(){
   $('levels').innerHTML=h;
   $('lvdesc').textContent='레벨 '+sheetLevel+' · '+LEVELS[sheetLevel-1].d;
   Array.prototype.forEach.call($('colorSeg').children,function(b){b.setAttribute('aria-pressed',b.dataset.c===sheetColor);});
-  $('formSeg').innerHTML=FORM_KEYS.concat(['r']).map(function(f){
-    return '<button type="button" data-f="'+f+'" aria-pressed="'+(f===sheetForm)+'">'+(f==='r'?'랜덤':E.FORMS[f])+'</button>';
-  }).join('');
 }
 $('levels').addEventListener('click',function(e){var b=e.target.closest('.lv');if(b){sheetLevel=+b.dataset.lv;paintSheet();}});
 $('colorSeg').addEventListener('click',function(e){var b=e.target.closest('button');if(b){sheetColor=b.dataset.c;paintSheet();}});
-$('formSeg').addEventListener('click',function(e){var b=e.target.closest('button');if(b){sheetForm=b.dataset.f;paintSheet();}});
 $('sheetCancel').onclick=function(){$('sheet').hidden=true;};
 $('sheet').addEventListener('click',function(e){if(e.target.id==='sheet')$('sheet').hidden=true;});
-$('sheetStart').onclick=function(){$('sheet').hidden=true;newBotGame(sheetLevel,sheetColor,sheetForm);setTab('play');};
+$('sheetStart').onclick=function(){$('sheet').hidden=true;newBotGame(sheetLevel,sheetColor);setTab('play');};
 
 // ---------- 탭 ----------
 function setTab(t){
@@ -699,7 +736,9 @@ var meId=store('solsol.me');if(!meId){meId='d'+Math.random().toString(36).slice(
 var myName=store('solsol.name')||'';
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 function newCode(){var s='';for(var i=0;i<6;i++)s+='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random()*32)];return s;}
-function randSetup(){return {cho:randForm(),han:randForm()};}
+function noSetup(){return {cho:null,han:null};}
+// 상대가 보낸 상차림과 내 것을 합친다(먼저 정해진 것을 지킨다)
+function mergeSetup(a,b){a=a||{};b=b||{};return {cho:a.cho||b.cho||null,han:a.han||b.han||null};}
 function baseUrl(){return location.origin+location.pathname;}
 function inviteLink(code){return baseUrl()+'#join-'+code;}
 function inviteText(code){return '[솔솔대국(장기)] 장기 한판 두자! 링크를 열면 바로 들어올 수 있어.\n'+inviteLink(code)+'\n방 코드: '+code;}
@@ -757,7 +796,7 @@ function attach(c){
     conn=null;setOnline(false);
     if(room&&!room.host)retry(joinPeer,3000);
   });
-  c.send({t:'hello',id:meId,name:myName||'친구',gid:room.gid,moves:room.moves,status:room.status,result:room.result,reason:room.reason});
+  c.send({t:'hello',id:meId,name:myName||'친구',gid:room.gid,setup:room.setup,moves:room.moves,status:room.status,result:room.result,reason:room.reason});
 }
 function send(o){if(conn&&conn.open){try{conn.send(o);}catch(e){}}}
 function onMsg(c,d){
@@ -769,6 +808,7 @@ function onMsg(c,d){
       conn=c;room.oppId=d.id;room.oppName=nm;
       if(room.status==='open'){if(!room.cho)room.cho=d.id;else room.han=d.id;room.status='play';}
       if(d.gid===room.gid){
+        room.setup=mergeSetup(room.setup,d.setup);
         if(isExtension(d.moves,room.moves))room.moves=d.moves.slice();
         if(d.status==='done'&&room.status!=='done'){room.status='done';room.result=d.result;room.reason=d.reason;}
       }
@@ -780,14 +820,20 @@ function onMsg(c,d){
       else syncFromRoom(true);
     }else{conn=c;room.oppId=d.id;room.oppName=nm;}
   }else if(d.t==='state'&&!room.host){
-    var r=d.room||{},mine=room.moves,newGame=r.gid!==room.gid;
-    room.gid=r.gid;room.cho=r.cho;room.han=r.han;room.setup=r.setup;room.status=r.status;room.result=r.result;room.reason=r.reason;
+    var r=d.room||{},mine=room.moves,newGame=r.gid!==room.gid,mySetup=newGame?null:room.setup;
+    room.gid=r.gid;room.cho=r.cho;room.han=r.han;room.setup=mergeSetup(r.setup,mySetup);room.status=r.status;room.result=r.result;room.reason=r.reason;
     room.moves=(!newGame&&isExtension(mine,r.moves||[]))?mine.slice():(r.moves||[]).slice();
     room.oppId=d.hostId;room.oppName=String(d.hostName||'친구').slice(0,20);
     saveRoom();warned=false;setOnline(true);
     if(newGame||cur.mode!=='friend'||cur.gameId!==room.gid){openFriendGame();setTab('play');}
     else syncFromRoom(true);
     if(room.moves.length>(r.moves||[]).length)send({t:'move',gid:room.gid,moves:room.moves});
+    // 연결이 끊긴 동안 고른 내 상차림을 방장에게 다시 알린다
+    ['cho','han'].forEach(function(k){if(room.setup[k]&&!(r.setup&&r.setup[k]))send({t:'form',gid:room.gid,side:k,form:room.setup[k]});});
+  }else if(d.t==='form'){
+    if(d.gid!==room.gid||!E.FORMS[d.form]||(d.side!=='cho'&&d.side!=='han'))return;
+    room.setup=room.setup||noSetup();
+    if(!room.setup[d.side]){room.setup[d.side]=d.form;saveRoom();syncFromRoom(false);}
   }else if(d.t==='move'){
     if(d.gid!==room.gid)return;
     if(d.moves&&d.moves.length>room.moves.length&&isExtension(d.moves,room.moves)){room.moves=d.moves.slice();saveRoom();syncFromRoom(true);}
@@ -795,7 +841,7 @@ function onMsg(c,d){
     if(d.gid!==room.gid||room.status==='done')return;
     room.status='done';room.result=d.result;room.reason=d.reason;saveRoom();syncFromRoom(false);
   }else if(d.t==='rematch'){
-    startRound(d.gid,d.cho,d.han,d.setup);toast('새 판! 진영을 바꿨어요');
+    startRound(d.gid,d.cho,d.han);toast('새 판! 진영을 바꿨어요. 상차림을 골라 주세요');
   }else if(d.t==='full'){
     toast('이미 다른 사람이 들어간 방이에요');leaveRoom();
   }
@@ -819,8 +865,10 @@ function recordFriend(){
 function syncFromRoom(anim){
   var fg=friendGame();if(!fg)return;
   cur.human=room.cho===meId?CHO:HAN;
-  var srv=room.moves,a=null;
-  if(!(srv.length===cur.moves.length&&isExtension(srv,cur.moves))){
+  var srv=room.moves,a=null,setup=mergeSetup(room.setup),setupChanged=setup.cho!==cur.setup.cho||setup.han!==cur.setup.han;
+  cur.setup=setup;
+  if(setupChanged){replay(srv);selected=-1;targets=[];hint=null;}
+  else if(!(srv.length===cur.moves.length&&isExtension(srv,cur.moves))){
     var oneMore=anim&&srv.length===cur.moves.length+1&&isExtension(srv,cur.moves);
     var before=E.pos(g).split(' ')[0].replace(/\./g,'').length;
     replay(srv);selected=-1;targets=[];hint=null;
@@ -834,7 +882,7 @@ function syncFromRoom(anim){
 function openFriendGame(){
   if(!room)return;
   token++;thinking=false;
-  cur={mode:'friend',level:cur.level,human:room.cho===meId?CHO:room.han===meId?HAN:CHO,setup:room.setup||{cho:'HEEH',han:'HEEH'},moves:[],gameId:room.gid};
+  cur={mode:'friend',level:cur.level,human:room.cho===meId?CHO:room.han===meId?HAN:CHO,setup:mergeSetup(room.setup),moves:[],gameId:room.gid};
   replay(room.moves||[]);
   if(room.status==='done'&&room.result)over={winner:resultOf(room.result),reason:room.reason||'mate'};
   markSeen();selected=-1;targets=[];hint=null;
@@ -859,12 +907,12 @@ function resign(){
 function rematch(){
   if(!room||!room.oppId)return;
   if(!online){toast('친구와 연결된 상태에서 새 판을 열 수 있어요');return;}
-  var gid=room.id+'-'+Date.now().toString(36),cho=room.han,han=room.cho,setup=randSetup();
-  send({t:'rematch',gid:gid,cho:cho,han:han,setup:setup});
-  startRound(gid,cho,han,setup);
+  var gid=room.id+'-'+Date.now().toString(36),cho=room.han,han=room.cho;
+  send({t:'rematch',gid:gid,cho:cho,han:han});
+  startRound(gid,cho,han);
 }
-function startRound(gid,cho,han,setup){
-  room.gid=gid;room.cho=cho;room.han=han;room.setup=setup||randSetup();room.status='play';room.moves=[];room.result=null;room.reason=null;
+function startRound(gid,cho,han){
+  room.gid=gid;room.cho=cho;room.han=han;room.setup=noSetup();room.status='play';room.moves=[];room.result=null;room.reason=null;
   saveRoom();openFriendGame();setTab('play');
 }
 function saveName(){var el=$('nick');if(el){myName=el.value.trim().slice(0,20);store('solsol.name',myName);}}
@@ -872,7 +920,7 @@ function createRoom(){
   if(!peerOk()){toast('연결 모듈을 불러오지 못했어요. 인터넷 연결을 확인해 주세요');return;}
   saveName();leaveRoom(true);
   var color=inviteColor==='r'?(Math.random()<.5?'c':'h'):inviteColor,code=newCode();
-  room={id:code,gid:code+'-1',host:true,cho:color==='c'?meId:null,han:color==='h'?meId:null,setup:randSetup(),status:'open',moves:[],result:null,reason:null,oppId:null,oppName:''};
+  room={id:code,gid:code+'-1',host:true,cho:color==='c'?meId:null,han:color==='h'?meId:null,setup:noSetup(),status:'open',moves:[],result:null,reason:null,oppId:null,oppName:''};
   saveRoom();hostPeer();openFriendGame();renderFriends();
 }
 function joinRoom(code){
@@ -917,7 +965,7 @@ function renderFriends(){
     if(room.gid&&room.status!=='joining')h+='<button type="button" class="btn blue" data-act="board">대국 화면으로</button>';
     h+='<button type="button" class="btn" data-act="leave">방 나가기</button></div>';
   }else{
-    h+='<div class="panel"><h3>방 만들기</h3><p class="hint">방을 만들고 초대 링크를 카카오톡으로 보내세요. 상차림은 판마다 무작위로 정해져요.</p>'+
+    h+='<div class="panel"><h3>방 만들기</h3><p class="hint">방을 만들고 초대 링크를 카카오톡으로 보내세요. 상차림은 판마다 각자 골라요.</p>'+
       '<div class="seg" id="invSeg">'+['c','h','r'].map(function(c){return '<button type="button" data-c="'+c+'" aria-pressed="'+(inviteColor===c)+'">'+(c==='c'?'나는 초':c==='h'?'나는 한':'랜덤')+'</button>';}).join('')+'</div>'+
       '<button type="button" class="btn primary" data-act="create">방 만들기</button></div>';
     h+='<div class="panel'+(pendingJoin?' focus':'')+'"><h3>'+(pendingJoin?'초대받은 방':'방 코드로 들어가기')+'</h3>'+
@@ -970,21 +1018,20 @@ function renderHistory(){
 function resumeBot(){
   var saved=store('janggi.botGame'),prefs=store('janggi.prefs');
   token++;thinking=false;
+  if(prefs&&E.FORMS[prefs.form])lastForm=prefs.form;
   if(saved&&saved.moves&&saved.setup){
     cur={mode:'bot',level:saved.level||3,human:saved.human===HAN?HAN:CHO,setup:saved.setup,moves:[],gameId:null,recorded:!!saved.recorded};
     replay(saved.moves);
   }else{
-    var f=(prefs&&prefs.form&&prefs.form!=='r')?prefs.form:'HEEH';
-    cur={mode:'bot',level:(prefs&&prefs.level)||3,human:CHO,setup:{cho:f,han:randForm()},moves:[],gameId:null};
+    cur={mode:'bot',level:(prefs&&prefs.level)||3,human:CHO,setup:{cho:null,han:randForm()},moves:[],gameId:null};
     replay([]);
   }
   sheetLevel=cur.level;
   if(prefs&&prefs.color)sheetColor=prefs.color;
-  if(prefs&&prefs.form)sheetForm=prefs.form;
   markSeen();
   selected=-1;targets=[];hint=null;
   render();
-  if(!over&&g.turn!==cur.human)botMove();
+  if(!over&&setupReady()&&g.turn!==cur.human)botMove();
 }
 function start(){
   $('logo').innerHTML=pieceSvg(KING,CHO);

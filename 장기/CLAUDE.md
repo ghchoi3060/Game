@@ -18,9 +18,12 @@
 - **기물**: `색(초 8, 한 16) | 종류`. 졸 1, 포 2, 마 3, 상 4, 사 5, 차 6, 궁 7. 이동표(궁성 대각선 포함)는 엔진 시작 때 한 번 계산한다.
 - **위치 문자열**(`E.pos`): 90글자(초 대문자, 한 소문자, 빈칸 `.`) + 차례(`c`/`h`) + 무잡기 수 + 전체 수. Worker 에 이 문자열을 넘긴다.
 - **상차림**: `HEEH`(마상상마) 같은 4글자, 자기 쪽에서 본 왼쪽부터. `cur.setup = {cho, han}`. 수 목록과 함께 저장·전송해야 국면을 다시 만들 수 있다.
+  판마다 처음에 판 위 선택 창(`#formPick`)에서 각자 고른다. 아직 안 고른 쪽은 `null` 이고, 둘 다 정해지기 전에는 둘 수 없다(`setupReady()`). 봇 쪽은 무작위.
+- **말 글자**: 한자(`LABEL`). 글꼴은 Google Fonts 의 Noto Serif KR 을 `text=` 로 필요한 9글자만 받는다. 글자를 바꾸면 그 링크의 `text=` 도 고친다.
 - **봇 난이도**: `index.html` 의 `LEVELS` 10개. `depth`·`noise`(졸 = 200 기준)·`rnd`·`time`(ms).
 - **친구 대전**: 체스와 같은 PeerJS 방식. 피어 id 는 `solsoljg-<방코드>`(체스 `solsol-` 과 겹치지 않게).
-  메시지: `hello` → (방장) `state` → `move`(전체 수 목록) / `end`(기권) / `rematch`(진영 바꾸고 상차림 새로 뽑음).
+  메시지: `hello` → (방장) `state` → `form`(내가 고른 상차림) / `move`(전체 수 목록) / `end`(기권) / `rematch`(진영 바꾸고 상차림 다시 고름).
+  상차림은 `mergeSetup` 으로 합친다(먼저 정해진 값을 지킴). 끊긴 동안 고른 것은 다시 연결될 때 `hello`·`state` 뒤에 다시 보낸다.
 - **저장**: localStorage. 체스와 같은 주소라 장기 것은 `janggi.*`(`room`, `friends`, `recorded`, `botStats`, `botLog`, `botGame`, `prefs`).
   기기 id `solsol.me` 와 이름 `solsol.name` 은 체스와 함께 쓴다.
 - **캐시**: 체스와 캐시 저장소를 함께 쓰므로 `sw.js` 는 `solsol-janggi-` 로 시작하는 옛 캐시만 지운다.
