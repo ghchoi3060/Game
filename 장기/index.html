@@ -71,13 +71,14 @@ main{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden}
 /* 상대·나 줄 */
 .player{display:flex;align-items:center;gap:10px;min-height:52px}
 .avatar{width:44px;height:44px;border-radius:14px;flex:none;display:grid;place-items:center;background:var(--surface);box-shadow:0 3px 0 var(--shade);overflow:hidden}
-.avatar svg{width:38px;height:38px}
+.avatar svg,.avatar .pc.k{width:38px;height:38px}
 .who{min-width:0;flex:none}
 .who .name{font-weight:800;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:40vw}
 .who .sub{font-size:12px;color:var(--muted);font-weight:700}
 .caps{min-height:18px;display:flex;align-items:center;gap:6px}
 .caps .pcs{display:flex;padding-right:5px}
-.caps .pc{width:18px;height:18px;margin-right:-5px;filter:none}
+/* 잡은 말: 크기별 말 규칙(.pc.k/.pc.s)보다 앞서도록 선택자를 더 구체적으로 */
+.caps .pcs .pc{width:18px;height:18px;margin-right:-5px;filter:none}
 .caps .adv{font-family:var(--f-body);font-size:12px;font-weight:800;color:var(--accent-deep)}
 .bubble{position:relative;margin-left:auto;background:var(--surface);border:2px solid var(--line);border-radius:14px;padding:6px 11px;font-weight:700;font-size:13px;max-width:52%;min-width:0}
 .bubble::before{content:"";position:absolute;left:-8px;top:50%;width:12px;height:12px;background:var(--surface);border-left:2px solid var(--line);border-bottom:2px solid var(--line);transform:translateY(-50%) rotate(45deg)}
