@@ -1,0 +1,16 @@
+{
+  "name": "솔솔퍼즐(지뢰찾기)",
+  "short_name": "솔솔퍼즐(지뢰찾기)",
+  "description": "귀여운 지뢰찾기. 첫 칸은 항상 안전, 찍기 없는 판, 길게 눌러 깃발, 난이도별 최고 기록.",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F2F6EC",
+  "theme_color": "#58B030",
+  "icons": [
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

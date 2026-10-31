@@ -1,0 +1,16 @@
+{
+  "name": "솔솔퍼즐(스도쿠)",
+  "short_name": "솔솔퍼즐(스도쿠)",
+  "description": "귀여운 스도쿠. 난이도 4단계, 메모·되돌리기·힌트, 난이도별 최고 기록.",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F2F6EC",
+  "theme_color": "#58B030",
+  "icons": [
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

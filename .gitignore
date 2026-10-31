@@ -1,3 +1,6 @@
 node_modules/
 .DS_Store
 Thumbs.db
+
+# 참고 이미지(위키백과 장기판) — 공개 저장소에 올리지 않는다
+장기/장기.jpg

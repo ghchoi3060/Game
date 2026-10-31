@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#58B030"/>
+  <ellipse cx="256" cy="440" rx="170" ry="26" fill="#3E871C"/>
+  <rect x="86" y="70" width="340" height="340" rx="40" fill="#FFFFFF" stroke="#3E5A33" stroke-width="12"/>
+  <path d="M199 76v328M313 76v328M92 183h328M92 297h328" stroke="#3E5A33" stroke-width="8"/>
+  <rect x="205" y="189" width="102" height="102" rx="10" fill="#F6C945"/>
+  <g font-family="Fredoka,'Nunito',sans-serif" font-weight="700" font-size="78" text-anchor="middle" dominant-baseline="central">
+    <text x="142" y="128" fill="#22301F">5</text>
+    <text x="370" y="128" fill="#22301F">3</text>
+    <text x="256" y="241" fill="#1D73A3">9</text>
+    <text x="142" y="354" fill="#1D73A3">7</text>
+    <text x="370" y="354" fill="#22301F">1</text>
+  </g>
+</svg>
