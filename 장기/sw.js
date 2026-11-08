@@ -1,6 +1,6 @@
 // 앱 껍데기 캐시: 화면은 네트워크 우선(새 버전 바로 반영), 안 되면 캐시로 오프라인 봇 대국
 // 체스와 같은 주소(origin)라 캐시 저장소를 함께 쓴다. 지울 때는 자기 이름(solsol-janggi-)으로 시작하는 것만 지운다
-const CACHE = 'solsol-janggi-v2';
+const CACHE = 'solsol-janggi-v3';
 const SHELL = ['./', './index.html', './engine.js', './manifest.webmanifest', './icon.svg', './icon-512.png'];
 
 self.addEventListener('install', (e) => {
@@ -19,7 +19,8 @@ self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
   if (e.request.method !== 'GET' || url.origin !== location.origin) return;
   e.respondWith(
-    fetch(e.request)
+    // GitHub Pages 는 10분 캐시(max-age=600)를 주므로, 브라우저 캐시를 건너뛰고 서버에 새 버전을 확인한다(바뀐 게 없으면 304 로 가볍다)
+    fetch(new Request(e.request.url, { cache: 'no-cache', credentials: 'same-origin' }))
       .then((res) => {
         const copy = res.clone();
         caches.open(CACHE).then((c) => c.put(e.request, copy));

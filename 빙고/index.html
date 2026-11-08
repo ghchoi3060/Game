@@ -331,6 +331,7 @@ function store(k,v){try{if(v===undefined)return JSON.parse(localStorage.getItem(
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 function reduced(){return matchMedia('(prefers-reduced-motion: reduce)').matches;}
 var MAX_PLAYERS=6;
+var VERSION='11.08-3';   // 고칠 때마다 올린다. 친구 탭 맨 아래에 보여서 폰이 새 버전인지 확인할 수 있다
 var BOT_NAMES=['토리','모모','콩이','보리','찰떡'];
 var LEVEL_NAMES=['쉬움','보통','어려움'];
 var COLORS=['#58B030','#2E9BD6','#E0533D','#F2A93B','#9B6BD6','#1AA39A'];
@@ -995,7 +996,7 @@ function renderFriends(){
       '<div class="row2"><input id="joinCode" class="field" maxlength="6" autocapitalize="characters" autocomplete="off" placeholder="코드 6자리" value="'+esc(codeVal||'')+'">'+
       '<button type="button" class="btn primary" data-act="join">들어가기</button></div></div>';
   }
-  h+='<p class="hint" style="padding:0 4px">모두 솔솔대국(빙고) 화면을 켜 둔 채로 해 주세요. 방장이 나가면 방이 닫혀요.</p>';
+  h+='<p class="hint" style="padding:0 4px">모두 솔솔대국(빙고) 화면을 켜 둔 채로 해 주세요. 방장이 나가면 방이 닫혀요. · 버전 '+VERSION+'</p>';
   v.innerHTML=h;
   $('friendBadge').hidden=!room;$('friendBadge').textContent=room?room.players.length:'';
 }
