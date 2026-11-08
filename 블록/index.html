@@ -250,7 +250,8 @@ table.rec td:first-child,table.rec th:first-child{text-align:left;font-weight:80
         <li><b>연속</b>: 줄을 연속으로 지우면 줄 보너스에 연속 횟수를 곱해요(연속 x3이면 3배). 줄을 못 지우고 3번 놓으면 연속이 끝나요.</li>
         <li><b>빠르게</b>: 지난번에 줄을 지운 뒤 <b>3초 안에</b> 또 지우면 추가 점수 +10, 계속 빠르게 지우면 +20, +30…으로 커져요.</li>
         <li>판을 완전히 비우면 <b>+300점</b>과 함께 <b>피버 타임</b>이 시작돼요. <b>10초 동안 모든 점수가 2배</b>이고, 판 테두리가 무지개로 빛나요. 피버 중에 또 비우면 다시 10초.</li>
-        <li>줄을 지울 때 뜨는 숫자 아래에 연속·빠르게·피버 중 무엇을 받았는지 보여요.</li></ul></section>
+        <li>줄을 지울 때 뜨는 숫자 아래에 연속·빠르게·피버 중 무엇을 받았는지 보여요.</li>
+        <li>줄이 지워질 때 효과음이 나요. 많이 지울수록 음이 늘고, 연속일수록 높아져요(아이폰 무음 모드에서는 안 들려요).</li></ul></section>
       <section><h3>친구와 하기 (2명)</h3><ul>
         <li><b>친구</b> 탭에서 방을 만들고 초대 링크를 카카오톡으로 보내요. 시간 제한(끝날 때까지·3분·5분)을 고를 수 있어요.</li>
         <li>두 사람은 <b>같은 블록이 같은 순서로</b> 나와요. 각자 자기 판에서 하고, 화면 위에 상대 이름과 점수만 보여요.</li>
@@ -274,7 +275,7 @@ table.rec td:first-child,table.rec th:first-child{text-align:left;font-weight:80
 'use strict';
 
 var E=BlockEngine(),N=E.N;
-var VERSION='11.08-1';
+var VERSION='11.08-2';
 var $=function(id){return document.getElementById(id);};
 function store(k,v){try{if(v===undefined)return JSON.parse(localStorage.getItem(k)||'null');localStorage.setItem(k,JSON.stringify(v));}catch(e){return null;}}
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
@@ -421,6 +422,7 @@ function placeAt(k,r0,c0){
     var delay=reduced()?0:120;
     res.cleared.forEach(function(i,n){cells[i].style.animationDelay=(delay?((n%8)*25):0)+'ms';cells[i].classList.add('pop');});
     burst(res.cleared);
+    clearSound(res.lines,G.combo,fever||res.perfect,res.perfect);
     var tags=[];if(G.combo>=2)tags.push('연속 x'+G.combo);if(quick)tags.push('빠르게 +'+quick);if(fever)tags.push('피버 x2');
     plusAt(res.placed,'+'+gain,tags.join(' · '));
     if(res.perfect)ribbon('피버 타임! 10초 동안 점수 2배','fever');
@@ -515,6 +517,33 @@ function plusAt(list,text,sub){
   el.style.left=Math.min(80,Math.max(20,x))+'%';el.style.top=y+'%';
   $('fx').appendChild(el);setTimeout(function(){el.remove();},1000);
 }
+// ---------- 효과음: 소리 파일 없이 Web Audio. iOS 는 첫 터치 뒤에만 소리가 나서 그때 준비한다 ----------
+var actx=null;
+function unlockAudio(){
+  try{
+    if(!actx){var AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;actx=new AC();}
+    if(actx.state==='suspended')actx.resume();
+  }catch(e){}
+}
+['pointerdown','touchstart','keydown'].forEach(function(ev){document.addEventListener(ev,unlockAudio,{passive:true});});
+function note(freq,at,dur,type,vol){
+  var t=actx.currentTime+at,o=actx.createOscillator(),g=actx.createGain();
+  o.type=type||'triangle';o.frequency.value=freq;o.connect(g);g.connect(actx.destination);
+  g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(vol||.22,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  o.start(t);o.stop(t+dur+.03);
+}
+// 줄이 지워질 때 "띠리링": 줄이 많을수록 음이 늘고, 연속일수록 음이 높아진다. 판을 비우면 짧은 팡파르
+function clearSound(lines,combo,bright,perfect){
+  unlockAudio();if(!actx)return;
+  try{
+    var base=523.25*Math.pow(2,Math.min(Math.max(combo-1,0),6)*2/12),steps=[0,4,7,12,16,19];
+    var n=Math.min(lines+1,steps.length);
+    for(var k=0;k<n;k++)note(base*Math.pow(2,steps[k]/12),k*.06,.22,'triangle',.2);
+    note(base*4,n*.06,.3,'sine',bright?.12:.07);   // 끝에 반짝
+    if(perfect){[0,4,7,12].forEach(function(s,k){note(523.25*Math.pow(2,s/12),.35+k*.09,.5,'square',.06);});note(1046.5,.75,.9,'triangle',.18);}
+  }catch(e){}
+}
+
 // ---------- 피버 타임·빠르게 지우기 ----------
 var FEVER_MS=10000,QUICK_MS=3000,wasFever=false;
 function feverLeft(){return G&&G.feverUntil&&!G.over?Math.max(0,G.feverUntil-Date.now()):0;}
@@ -847,6 +876,7 @@ if(m){
 }
 })();
 </script>
+<script src="../common/home.js"></script>
 <script>if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(function(){});</script>
 </body>
 </html>

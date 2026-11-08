@@ -42,3 +42,7 @@ GitHub 저장소 `ghchoi3060/Game` 을 Pages 로 공개한다. 주소는 `https:
 ## 서버 저장
 
 `../common/cloud.js` 를 `data-game="bingo"` 로 불러온다. 서버 DB 의 저장 허용 목록에 `bingo` 가 있어야 한다(`../supabase/schema.sql` 끝의 alter 문).
+
+## 게임 모음으로
+
+왼쪽 위 아이콘·게임 이름(`.brand`)을 누르면 "게임 모음으로 갈까요?" 팝업(`../common/home.js`, 모든 게임 공통). 친구 방이 저장돼 있으면 연결이 잠시 끊긴다고 함께 알려 준다.
