@@ -300,6 +300,8 @@ table.bot td:first-child,table.bot th:first-child{text-align:left}
 </div>
 <div class="toast" id="toast" hidden></div>
 
+<script src="../common/supabase-config.js"></script>
+<script src="../common/cloud.js" data-game="chess"></script>
 <script src="engine.js"></script>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script>
@@ -1010,6 +1012,7 @@ function renderHistory(){
     rows+='<tr><td>'+i+' · '+LEVELS[i-1].t+'</td><td>'+s.w+'</td><td>'+s.l+'</td><td>'+s.d+'</td></tr>';}
   h+='<div class="panel"><h3>봇 상대 전적</h3><p class="hint">합계 '+tw+'승 '+tl+'패 '+td+'무</p><div style="overflow-x:auto"><table class="bot"><thead><tr><th>레벨</th><th>승</th><th>패</th><th>무</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
   v.innerHTML=h;
+  if(window.SolsolCloud)SolsolCloud.mount(v,{board:false});
 }
 
 // ---------- 시작 ----------

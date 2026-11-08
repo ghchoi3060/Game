@@ -30,3 +30,7 @@
 
 GitHub 저장소 `ghchoi3060/Game`(이 폴더의 상위)을 Pages(main 브랜치 루트)로 공개한다. 체스 주소는 `https://ghchoi3060.github.io/Game/체스/`.
 push 하면 1~2분 뒤 반영된다. 파일 경로는 전부 상대 경로라 폴더 이름이 바뀌어도 동작한다.
+
+## 서버 저장
+
+`../common/cloud.js` 를 게임 스크립트보다 먼저 불러온다(`data-game` 으로 게임 이름). localStorage 를 쓰던 대로 쓰면 그 게임 키가 서버로 올라간다. 기록(전적) 탭 끝에 `SolsolCloud.mount()` 로 순위표·기기 옮기기 화면을 붙인다. 설정·구조는 `../supabase/README.md`.

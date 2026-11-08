@@ -279,6 +279,8 @@ table.rec td:first-child,table.rec th:first-child{text-align:left;font-weight:80
 </div>
 <div class="toast" id="toast" hidden></div>
 
+<script src="../common/supabase-config.js"></script>
+<script src="../common/cloud.js" data-game="sudoku"></script>
 <script src="engine.js"></script>
 <script>
 (function(){
@@ -445,6 +447,7 @@ function win(){
   s.solved++;if(record)s.best=G.time;
   s.recent.unshift({t:G.time,m:G.mistakes,h:G.hints,ts:Date.now()});s.recent=s.recent.slice(0,10);
   store('sudoku.stats',st);save();
+  if(window.SolsolCloud)SolsolCloud.submitScore(G.lv,G.time);
   // 판 전체가 대각선 물결로 반짝인 뒤 결과 카드
   var fx={};for(var i=0;i<81;i++){fx[i]='flash';cells[i].style.animationDelay=(S.ROW[i]+S.COL[i])*45+'ms';}
   render(fx);
@@ -509,7 +512,8 @@ function renderHistory(){
   recent.sort(function(a,b){return b.r.ts-a.r.ts;});
   var items=recent.slice(0,15).map(function(x){return '<div><span>'+fmtDate(x.r.ts)+'</span><span>'+LV[x.lv].t+'</span><span>'+fmt(x.r.t)+'</span><span>실수 '+x.r.m+' · 힌트 '+x.r.h+'</span></div>';});
   $('view-history').innerHTML='<div class="panel"><h3>난이도별 기록</h3><table class="rec"><thead><tr><th>난이도</th><th>완성 / 시작</th><th>최고 기록</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
-    '<div class="panel"><h3>최근 완성한 판</h3>'+(items.length?'<div class="recent">'+items.join('')+'</div>':'<p class="hint">아직 완성한 판이 없어요</p>')+'<p class="hint">기록은 이 폰에만 저장돼요.</p></div>';
+    '<div class="panel"><h3>최근 완성한 판</h3>'+(items.length?'<div class="recent">'+items.join('')+'</div>':'<p class="hint">아직 완성한 판이 없어요</p>')+'<p class="hint">'+(window.SolsolCloud&&SolsolCloud.enabled?'기록은 이 폰과 서버에 함께 저장돼요.':'기록은 이 폰에만 저장돼요.')+'</p></div>';
+  if(window.SolsolCloud)SolsolCloud.mount($('view-history'),{board:true,level:G&&G.lv,levels:LV_KEYS.map(function(k){return [k,LV[k].t];}),fmt:fmt});
 }
 
 // ---------- 설명서 ----------
