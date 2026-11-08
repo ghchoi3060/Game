@@ -41,8 +41,8 @@ body{margin:0}
 body{height:100%;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
 button{font:inherit;color:inherit;cursor:pointer}
 button:focus-visible{outline:3px solid var(--sky);outline-offset:2px}
-#app{height:100%;max-width:600px;margin:0 auto;display:flex;flex-direction:column;gap:10px;
-  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:10px 12px}
+#app{height:100%;max-width:600px;margin:0 auto;display:flex;flex-direction:column;gap:7px;
+  padding-left:max(10px,env(safe-area-inset-left,0px));padding-right:max(10px,env(safe-area-inset-right,0px));padding-block:8px 10px}
 .top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .brand{font-family:var(--f-display);font-weight:700;font-size:20px;display:flex;align-items:center;gap:6px;letter-spacing:-.01em}
 .brand .logo{display:flex}.brand .logo svg{width:28px;height:28px}
@@ -51,7 +51,7 @@ button:focus-visible{outline:3px solid var(--sky);outline-offset:2px}
 .tabs button[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:0 2px 0 var(--shade)}
 .badge{display:inline-block;min-width:18px;padding:0 5px;border-radius:9px;background:var(--danger);color:#fff;font-size:11px;line-height:18px;margin-left:4px}
 main{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden}
-.view{display:flex;flex-direction:column;gap:9px}
+.view{display:flex;flex-direction:column;gap:7px}
 
 /* 상대 점수 줄(친구 대전) */
 .opp{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:14px;background:var(--surface);border:2px solid var(--line)}
@@ -70,7 +70,7 @@ main{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden}
 
 /* 내 점수 */
 .scorebar{display:flex;align-items:flex-end;gap:10px}
-.score{font-family:var(--f-display);font-weight:700;font-size:38px;line-height:1;font-variant-numeric:tabular-nums}
+.score{font-family:var(--f-display);font-weight:700;font-size:32px;line-height:1;font-variant-numeric:tabular-nums}
 .score.bump{animation:bump .35s ease-out}
 @keyframes bump{40%{transform:scale(1.18)}}
 .scorebar .best{font-size:12px;font-weight:800;color:var(--muted);padding-bottom:4px}
@@ -80,7 +80,9 @@ main{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden}
 .combo{display:inline-block;background:var(--sun);color:#2B3826;border-radius:8px;padding:1px 8px;font-weight:800}
 
 /* 판 */
-.board-wrap{position:relative;width:min(100%,calc(100dvh - 400px));min-width:250px;margin:0 auto;max-width:100%}
+/* 판은 화면에서 남는 높이를 최대한 쓴다(위 점수 줄·아래 블록·버튼 몫만 빼고). 친구 대전은 상대 점수 줄만큼 더 뺀다 */
+.board-wrap{position:relative;width:min(100%,calc(100dvh - 245px));min-width:260px;margin:0 auto;max-width:100%}
+.vs-mode .board-wrap{width:min(100%,calc(100dvh - 312px))}
 .board{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;aspect-ratio:1;width:100%;padding:6px;border-radius:16px;background:var(--grid);box-shadow:0 6px 0 var(--shade);touch-action:none;user-select:none;-webkit-user-select:none}
 .cell{border-radius:22%;background:var(--grid-cell);position:relative;min-width:0;min-height:0}
 .blk{background:var(--bc);box-shadow:inset 0 -4px 0 rgba(0,0,0,.18),inset 0 3px 0 rgba(255,255,255,.35)}
@@ -88,8 +90,13 @@ main{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden}
 .c1{--bc:var(--c1)}.c2{--bc:var(--c2)}.c3{--bc:var(--c3)}.c4{--bc:var(--c4)}.c5{--bc:var(--c5)}.c6{--bc:var(--c6)}.c7{--bc:var(--c7)}
 .cell.ghost{background:var(--bc);opacity:.45}
 .cell.willclear{box-shadow:inset 0 0 0 3px #fff,0 0 10px 2px var(--sun)}
-.cell.drop{animation:drop .25s cubic-bezier(.3,1.6,.5,1)}
-@keyframes drop{from{transform:scale(.6)}}
+/* 내려놓기: 반짝 → 꾹 눌렸다가 튕기며 자리 잡기, 블록 색 테두리 파동과 조각 */
+.cell.drop{animation:land .34s cubic-bezier(.3,1.6,.5,1)}
+@keyframes land{0%{transform:scale(1.22);filter:brightness(1.7)}45%{transform:scale(.86,.9);filter:brightness(1.15)}100%{transform:none;filter:none}}
+.pring{position:absolute;border:3px solid var(--bc);border-radius:16%;transform:translate(-50%,-50%);animation:pring .45s ease-out forwards}
+@keyframes pring{from{opacity:.9;transform:translate(-50%,-50%) scale(.75)}to{opacity:0;transform:translate(-50%,-50%) scale(1.35)}}
+.dust{position:absolute;width:7px;height:7px;margin:-3.5px 0 0 -3.5px;border-radius:2px;background:var(--bc);animation:dust .5s ease-out forwards}
+@keyframes dust{to{transform:translate(var(--dx),var(--dy)) rotate(140deg) scale(.4);opacity:0}}
 .cell.pop{animation:popc .45s ease-in both}
 @keyframes popc{0%{transform:scale(1);background:#fff}40%{transform:scale(1.15);background:#fff}100%{transform:scale(0);opacity:0}}
 .board.over .cell.blk{filter:grayscale(1) brightness(.85);transition:filter .4s}
@@ -106,13 +113,13 @@ main{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden}
 .ribbon.fever span{background:linear-gradient(90deg,#F26D6D,#F6A93B,#F2CF3E);color:#3B1A00}
 
 /* 블록 3개 */
-.tray{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;min-height:96px}
-.slot{display:grid;place-items:center;border-radius:16px;background:var(--surface);border:2px solid var(--line);min-height:96px;touch-action:none;user-select:none;-webkit-user-select:none;position:relative}
+.tray{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;min-height:80px}
+.slot{display:grid;place-items:center;border-radius:16px;background:var(--surface);border:2px solid var(--line);min-height:80px;touch-action:none;user-select:none;-webkit-user-select:none;position:relative}
 .slot.used{background:transparent;border-style:dashed}
 .slot.cant .mini{opacity:.3}
 .slot.pick{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent)}
 .mini{display:grid;gap:2px;pointer-events:none}
-.mini i{width:14px;height:14px;border-radius:4px}
+.mini i{width:13px;height:13px;border-radius:4px}
 .mini i.blk::after{display:none}
 /* 끌고 다니는 블록(손가락 위로 띄워서 가리지 않게) */
 .drag{position:fixed;left:0;top:0;z-index:50;display:grid;gap:3px;pointer-events:none;filter:drop-shadow(0 8px 6px rgba(0,0,0,.3));transform-origin:0 0}
@@ -143,7 +150,7 @@ main{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden}
 
 /* 버튼 */
 .actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.btn{border:0;border-radius:16px;padding:11px 8px;font-weight:800;font-size:15px;background:var(--surface);color:var(--ink);border:2px solid var(--line);box-shadow:0 4px 0 var(--line);display:flex;align-items:center;justify-content:center;gap:6px;min-height:46px;transition:transform .06s,box-shadow .06s}
+.btn{border:0;border-radius:16px;padding:11px 8px;font-weight:800;font-size:15px;background:var(--surface);color:var(--ink);border:2px solid var(--line);box-shadow:0 4px 0 var(--line);display:flex;align-items:center;justify-content:center;gap:6px;min-height:42px;transition:transform .06s,box-shadow .06s}
 .btn:active:not(:disabled){transform:translateY(4px);box-shadow:0 0 0 var(--line)}
 .btn.primary{background:var(--accent);color:var(--on-accent);border-color:var(--accent);box-shadow:0 4px 0 var(--accent-deep)}
 .btn.blue{background:var(--sky);color:#fff;border-color:var(--sky);box-shadow:0 4px 0 var(--sky-deep)}
@@ -243,7 +250,8 @@ table.rec td:first-child,table.rec th:first-child{text-align:left;font-weight:80
         <li>블록을 누른 채로 끌어서 판 위에 놓아요. 블록이 손가락보다 조금 위에 떠서 판이 잘 보여요.</li>
         <li>놓을 수 있는 자리에는 블록 그림자가 보이고, 그 자리에 놓으면 지워질 줄은 반짝여요.</li>
         <li>끌기 어려우면 블록을 <b>톡 눌러 고른 다음</b> 판의 칸을 누르세요. 누른 칸이 블록의 왼쪽 위가 돼요.</li>
-        <li>흐리게 보이는 블록은 지금 판에 놓을 곳이 없는 블록이에요. 블록은 돌릴 수 없어요.</li></ul></section>
+        <li>흐리게 보이는 블록은 지금 판에 놓을 곳이 없는 블록이에요. 블록은 돌릴 수 없어요.</li>
+        <li>블록은 막대·네모·L·T·S·U·십자·계단·대각선 등 여러 모양이 나오고, 한 번에 나오는 3개는 서로 다른 모양이에요.</li></ul></section>
       <section><h3>점수</h3><ul>
         <li>놓은 칸 하나에 1점.</li>
         <li>줄을 지우면 보너스: 1줄 10점, 2줄 30점, 3줄 60점, 4줄 100점… 한 번에 많이 지울수록 커져요.</li>
@@ -275,7 +283,7 @@ table.rec td:first-child,table.rec th:first-child{text-align:left;font-weight:80
 'use strict';
 
 var E=BlockEngine(),N=E.N;
-var VERSION='11.08-2';
+var VERSION='11.08-3';
 var $=function(id){return document.getElementById(id);};
 function store(k,v){try{if(v===undefined)return JSON.parse(localStorage.getItem(k)||'null');localStorage.setItem(k,JSON.stringify(v));}catch(e){return null;}}
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
@@ -334,7 +342,7 @@ function renderTray(){
     var p=G.tray[k];
     if(!p){h+='<div class="slot used" data-k="'+k+'"></div>';continue;}
     var sz=E.size(p),set={};E.cells(p).forEach(function(x){set[x[0]+','+x[1]]=1;});
-    var m='<div class="mini" style="grid-template-columns:repeat('+sz.w+',14px)">';
+    var m='<div class="mini" style="grid-template-columns:repeat('+sz.w+',13px)">';
     for(var r=0;r<sz.h;r++)for(var c=0;c<sz.w;c++)m+='<i class="'+(set[r+','+c]?'blk c'+p.color:'')+'"></i>';
     m+='</div>';
     var can=!G.over&&E.anyFit(G.board,p);
@@ -408,6 +416,7 @@ function placeAt(k,r0,c0){
   G.board=before;
   var drop={};res.placed.forEach(function(i){drop[i]=1;});
   render({drop:drop});
+  placeFx(res.placed,p.color);placeSound();
   // 점수 = 엔진 점수(칸 + 줄 보너스 × 연속) + 빠르게 보너스, 피버 중이면 모두 2배
   var now=Date.now(),fever=feverLeft()>0,quick=0;
   if(res.lines){
@@ -511,6 +520,24 @@ function burst(list){
   });
   setTimeout(function(){fx.querySelectorAll('.star').forEach(function(x){x.remove();});},800);
 }
+// 내려놓은 블록 둘레로 블록 색 파동 + 작은 조각
+function placeFx(list,color){
+  if(reduced())return;
+  var fx=$('fx'),minR=9,maxR=-1,minC=9,maxC=-1;
+  list.forEach(function(i){var r=i>>3,c=i&7;minR=Math.min(minR,r);maxR=Math.max(maxR,r);minC=Math.min(minC,c);maxC=Math.max(maxC,c);});
+  var ring=document.createElement('span');ring.className='pring c'+color;
+  ring.style.left=((minC+maxC+1)/2)*12.5+'%';ring.style.top=((minR+maxR+1)/2)*12.5+'%';
+  ring.style.width=(maxC-minC+1)*12.5+'%';ring.style.height=(maxR-minR+1)*12.5+'%';
+  fx.appendChild(ring);
+  list.forEach(function(i,n){
+    if(n>5)return;
+    var c=center(i),d=document.createElement('span'),a=Math.random()*Math.PI*2,dist=14+Math.random()*16;
+    d.className='dust c'+color;d.style.left=c[0]+'%';d.style.top=c[1]+'%';
+    d.style.setProperty('--dx',Math.cos(a)*dist+'px');d.style.setProperty('--dy',Math.sin(a)*dist+'px');
+    fx.appendChild(d);
+  });
+  setTimeout(function(){fx.querySelectorAll('.pring,.dust').forEach(function(x){x.remove();});},550);
+}
 function plusAt(list,text,sub){
   var x=0,y=0;list.forEach(function(i){var c=center(i);x+=c[0];y+=c[1];});x/=list.length;y/=list.length;
   var el=document.createElement('span');el.className='plus';el.innerHTML=esc(text)+(sub?'<small>'+esc(sub)+'</small>':'');
@@ -531,6 +558,18 @@ function note(freq,at,dur,type,vol){
   o.type=type||'triangle';o.frequency.value=freq;o.connect(g);g.connect(actx.destination);
   g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(vol||.22,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
   o.start(t);o.stop(t+dur+.03);
+}
+// 내려놓을 때 "톡": 낮은 음이 짧게 떨어지며 끝에 작은 딸깍
+function placeSound(){
+  unlockAudio();if(!actx)return;
+  try{
+    var t=actx.currentTime,o=actx.createOscillator(),g=actx.createGain();
+    o.type='sine';o.frequency.setValueAtTime(260,t);o.frequency.exponentialRampToValueAtTime(120,t+.09);
+    o.connect(g);g.connect(actx.destination);
+    g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.3,t+.008);g.gain.exponentialRampToValueAtTime(.0001,t+.14);
+    o.start(t);o.stop(t+.16);
+    note(1320,0,.04,'triangle',.05);
+  }catch(e){}
 }
 // 줄이 지워질 때 "띠리링": 줄이 많을수록 음이 늘고, 연속일수록 음이 높아진다. 판을 비우면 짧은 팡파르
 function clearSound(lines,combo,bright,perfect){
@@ -612,7 +651,7 @@ function onState(d){
 }
 function renderOpp(bump){
   var show=!!(G&&G.mode==='friend');
-  $('oppBox').hidden=!show;
+  $('oppBox').hidden=!show;$('view-play').classList.toggle('vs-mode',show);
   $('newBtn').textContent=show||room?'방 나가기':'새 게임';
   if(!show)return;
   var o=opp||{name:'친구',score:0,over:false};
@@ -647,6 +686,8 @@ function checkFriendEnd(){
   }
 }
 function startFriendGame(d){
+  // 블록 버전이 다르면 같은 씨앗이어도 블록이 달라진다
+  if(d.v!==undefined&&d.v!==E.VERSION)toast('친구와 게임 버전이 달라 블록이 다르게 나올 수 있어요. 둘 다 새로고침해 주세요');
   opp=opp||{name:'친구',score:0,over:false};
   opp.score=0;opp.over=false;opp.lines=0;
   newGame('friend',d.seed,d.limit);
@@ -697,7 +738,7 @@ function hostStart(){
   if(!room||!room.host)return;
   if(!conn||!conn.open){toast('친구가 들어와야 시작할 수 있어요');return;}
   room.phase='play';
-  var d={t:'start',seed:newSeed(),limit:room.limit,gid:room.code+'-'+Date.now().toString(36)};
+  var d={t:'start',seed:newSeed(),limit:room.limit,gid:room.code+'-'+Date.now().toString(36),v:E.VERSION};
   send(d);startFriendGame(d);renderFriends();
 }
 

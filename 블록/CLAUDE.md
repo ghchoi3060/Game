@@ -14,11 +14,14 @@
 
 ## 구조
 
-- **판**: `i = 줄*8 + 칸`, 값 0 빈칸·1~7 색. 블록은 `{s: SHAPES 번호, color}`. 돌리기 없음.
+- **판**: `i = 줄*8 + 칸`, 값 0 빈칸·1~7 색. 블록은 `{s: SHAPES 번호, color}`. 돌리기 없음. 모양 62종(막대·네모·L·T·S·U·십자·계단·대각선·긴 L), 한 묶음 3개는 서로 다른 모양.
+- **엔진 버전** `E.VERSION`: 모양·순서가 바뀌면 올린다. 친구 대전 `start` 에 실어 보내 다르면 새로고침하라고 알린다.
 - **블록 순서**: `tray(seed, round)` — 씨앗과 순번만으로 정해진다(판 상태와 무관). 친구 대전은 방장이 씨앗을 보내 두 사람이 같은 순서.
 - **점수**: 엔진 `place()` = 칸 수 + 줄 보너스 `10·n(n+1)/2 × 연속`(+300 판 비움). 연속은 줄을 못 지우고 3번 놓으면 0.
   화면 쪽에서 더한다: 빠르게 보너스(지난 지우기 뒤 3초 안이면 `10 × 연속 빠르게 횟수`), 피버 중이면 전부 2배.
   피버 타임은 판을 비우면 10초(`FEVER_MS`, `G.feverUntil`).
+- **판 크기**: `.board-wrap` 폭 = `min(100%, 100dvh − 245px)`(친구 대전 −312px). 위·아래 요소 높이를 바꾸면 이 값도 맞춘다.
+- **내려놓기 이펙트**: 칸이 반짝→눌렸다 튕김, 블록 색 테두리 파동·조각(`placeFx`), "톡" 소리(`placeSound`). 줄 지우기는 `clearSound`.
 - **끌어 놓기**: 블록을 손가락보다 블록 높이 + 40px 위에 띄운다. 띄운 블록의 왼쪽 위로 판 칸을 계산해 그림자·지워질 줄을 미리 보여 준다. 움직이지 않고 떼면 "고르기", 그다음 칸 클릭으로 놓기.
 - **상태** `G`: `mode('solo'|'friend'), seed, round, board, tray(놓은 칸은 null), score, combo, miss, lines, over, why, limit, countdown, feverUntil, lastClearAt, speed`. 혼자 하기는 `block.game` 에 저장해서 이어 한다.
 - **친구 대전(2명)**: PeerJS, 방장 피어 id `solsolbk-<방코드>`. `hello` → `lobby{host,limit,phase}` → `start{seed,limit,gid}`(3·2·1 뒤 시작) → 서로 `state{score,over,lines,fever}`(0.25초마다 최대 1번).
