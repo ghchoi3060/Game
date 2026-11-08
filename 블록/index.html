@@ -1,0 +1,852 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>솔솔퍼즐(블록)</title>
+<meta name="description" content="블록을 끌어다 놓고 줄을 지우는 귀여운 블록 퍼즐. 혼자 최고 점수 도전, 친구와 같은 블록으로 점수 대결.">
+<meta name="theme-color" content="#F2F6EC" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111711" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="솔솔퍼즐(블록)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-512.png">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Jua&family=Nunito:wght@400;600;700;800&display=swap">
+<style>
+/* 레이아웃: 한 화면 앱. 위 탭 → (친구 대전이면 상대 점수 줄) → 내 점수 → 8×8 판 → 블록 3개 → 버튼. 최대 폭 600px 한 열 */
+:root{
+  --bg:#F2F6EC; --surface:#FFFFFF; --ink:#22301F; --muted:#64735D; --line:#D9E3CE;
+  --accent:#58B030; --accent-deep:#3E871C; --on-accent:#FFFFFF;
+  --sky:#2E9BD6; --sky-deep:#1D73A3; --danger:#E0533D; --danger-deep:#AE3826; --sun:#F6C945;
+  --grid:#E3EBD8; --grid-cell:#F6F9F1; --shade:rgba(34,48,31,.14);
+  --c1:#F26D6D; --c2:#F6A93B; --c3:#F2CF3E; --c4:#6CCB5F; --c5:#4FB3E8; --c6:#8E7CE8; --c7:#F28FC4;
+  --f-display:"Fredoka","Jua","Nunito",ui-rounded,system-ui,sans-serif;
+  --f-body:"Nunito",ui-rounded,system-ui,-apple-system,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#111711; --surface:#1B231A; --ink:#E5EEDF; --muted:#9AAA92; --line:#2C3A29;
+  --accent:#68C23E; --accent-deep:#427F24; --on-accent:#0E160B;
+  --sky:#3AA6DF; --sky-deep:#1F6C95; --danger:#EC6A55; --danger-deep:#A2402F; --sun:#F2C94C;
+  --grid:#232D21; --grid-cell:#1A2219; --shade:rgba(0,0,0,.45); color-scheme:dark;
+}}
+[hidden]{display:none!important}
+html{height:100%;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+*,*::before,*::after{box-sizing:inherit}
+body{height:100%;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible{outline:3px solid var(--sky);outline-offset:2px}
+#app{height:100%;max-width:600px;margin:0 auto;display:flex;flex-direction:column;gap:10px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:10px 12px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.brand{font-family:var(--f-display);font-weight:700;font-size:20px;display:flex;align-items:center;gap:6px;letter-spacing:-.01em}
+.brand .logo{display:flex}.brand .logo svg{width:28px;height:28px}
+.tabs{display:flex;background:var(--line);border-radius:14px;padding:3px;gap:2px}
+.tabs button{border:0;background:transparent;padding:7px 13px;border-radius:11px;font-weight:800;font-size:14px;color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:0 2px 0 var(--shade)}
+.badge{display:inline-block;min-width:18px;padding:0 5px;border-radius:9px;background:var(--danger);color:#fff;font-size:11px;line-height:18px;margin-left:4px}
+main{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden}
+.view{display:flex;flex-direction:column;gap:9px}
+
+/* 상대 점수 줄(친구 대전) */
+.opp{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:14px;background:var(--surface);border:2px solid var(--line)}
+.opp svg{width:30px;height:30px;flex:none}
+.opp .nm{font-weight:800;font-size:14px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.opp .chip{font-size:11px;font-weight:800;padding:2px 8px;border-radius:8px;background:var(--line);color:var(--muted);white-space:nowrap}
+.opp .chip.go{background:var(--accent);color:var(--on-accent)}
+.opp .chip.end{background:var(--muted);color:var(--surface)}
+.opp .chip.off{background:var(--danger);color:#fff}
+.opp .sc{margin-left:auto;font-family:var(--f-display);font-weight:700;font-size:22px;font-variant-numeric:tabular-nums}
+.opp .sc.bump{animation:bump .35s ease-out}
+.vs{display:flex;height:8px;border-radius:4px;overflow:hidden;background:var(--line)}
+.vs i{display:block;height:100%;transition:width .4s}
+.vs .me{background:var(--accent)}.vs .op{background:var(--sky)}
+.lead{font-size:12px;font-weight:800;color:var(--muted);text-align:center;margin-top:-4px}
+
+/* 내 점수 */
+.scorebar{display:flex;align-items:flex-end;gap:10px}
+.score{font-family:var(--f-display);font-weight:700;font-size:38px;line-height:1;font-variant-numeric:tabular-nums}
+.score.bump{animation:bump .35s ease-out}
+@keyframes bump{40%{transform:scale(1.18)}}
+.scorebar .best{font-size:12px;font-weight:800;color:var(--muted);padding-bottom:4px}
+.scorebar .right{margin-left:auto;text-align:right;font-weight:800;font-size:13px;color:var(--muted);padding-bottom:4px}
+.scorebar .timer{font-family:var(--f-display);font-weight:700;font-size:20px;color:var(--ink);font-variant-numeric:tabular-nums}
+.scorebar .timer.hurry{color:var(--danger)}
+.combo{display:inline-block;background:var(--sun);color:#2B3826;border-radius:8px;padding:1px 8px;font-weight:800}
+
+/* 판 */
+.board-wrap{position:relative;width:min(100%,calc(100dvh - 400px));min-width:250px;margin:0 auto;max-width:100%}
+.board{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;aspect-ratio:1;width:100%;padding:6px;border-radius:16px;background:var(--grid);box-shadow:0 6px 0 var(--shade);touch-action:none;user-select:none;-webkit-user-select:none}
+.cell{border-radius:22%;background:var(--grid-cell);position:relative;min-width:0;min-height:0}
+.blk{background:var(--bc);box-shadow:inset 0 -4px 0 rgba(0,0,0,.18),inset 0 3px 0 rgba(255,255,255,.35)}
+.cell.blk::after{content:"";position:absolute;left:22%;top:18%;width:22%;height:14%;border-radius:50%;background:rgba(255,255,255,.55)}
+.c1{--bc:var(--c1)}.c2{--bc:var(--c2)}.c3{--bc:var(--c3)}.c4{--bc:var(--c4)}.c5{--bc:var(--c5)}.c6{--bc:var(--c6)}.c7{--bc:var(--c7)}
+.cell.ghost{background:var(--bc);opacity:.45}
+.cell.willclear{box-shadow:inset 0 0 0 3px #fff,0 0 10px 2px var(--sun)}
+.cell.drop{animation:drop .25s cubic-bezier(.3,1.6,.5,1)}
+@keyframes drop{from{transform:scale(.6)}}
+.cell.pop{animation:popc .45s ease-in both}
+@keyframes popc{0%{transform:scale(1);background:#fff}40%{transform:scale(1.15);background:#fff}100%{transform:scale(0);opacity:0}}
+.board.over .cell.blk{filter:grayscale(1) brightness(.85);transition:filter .4s}
+.board{position:relative}
+/* 피버 타임: 판 테두리가 무지개로 빛나고 점수 2배 */
+.feverglow{position:absolute;inset:-5px;border-radius:21px;background:conic-gradient(#F26D6D,#F6A93B,#F2CF3E,#6CCB5F,#4FB3E8,#8E7CE8,#F28FC4,#F26D6D);filter:blur(1px);opacity:0;transition:opacity .3s}
+.board-wrap.fever .feverglow{opacity:1;animation:hue 1.4s linear infinite}
+@keyframes hue{to{filter:blur(1px) hue-rotate(360deg)}}
+.board-wrap.fever .board{box-shadow:0 0 24px 6px rgba(246,169,59,.55)}
+.score.fever{color:var(--c2)}
+.combo.fever{background:linear-gradient(90deg,#F26D6D,#F6A93B,#F2CF3E);color:#3B1A00}
+.opp .chip.fev{background:linear-gradient(90deg,#F26D6D,#F6A93B);color:#fff}
+.plus small{display:block;font-size:13px;-webkit-text-stroke:2px var(--accent-deep);text-align:center}
+.ribbon.fever span{background:linear-gradient(90deg,#F26D6D,#F6A93B,#F2CF3E);color:#3B1A00}
+
+/* 블록 3개 */
+.tray{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;min-height:96px}
+.slot{display:grid;place-items:center;border-radius:16px;background:var(--surface);border:2px solid var(--line);min-height:96px;touch-action:none;user-select:none;-webkit-user-select:none;position:relative}
+.slot.used{background:transparent;border-style:dashed}
+.slot.cant .mini{opacity:.3}
+.slot.pick{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent)}
+.mini{display:grid;gap:2px;pointer-events:none}
+.mini i{width:14px;height:14px;border-radius:4px}
+.mini i.blk::after{display:none}
+/* 끌고 다니는 블록(손가락 위로 띄워서 가리지 않게) */
+.drag{position:fixed;left:0;top:0;z-index:50;display:grid;gap:3px;pointer-events:none;filter:drop-shadow(0 8px 6px rgba(0,0,0,.3));transform-origin:0 0}
+.drag i{border-radius:22%}
+
+/* 이펙트 */
+.fx{position:absolute;inset:0;pointer-events:none;z-index:4;overflow:visible}
+.star{position:absolute;width:12px;height:12px;margin:-6px 0 0 -6px;clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);animation:star .7s ease-out forwards}
+@keyframes star{0%{transform:translate(0,0) scale(.4) rotate(0);opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(1.1) rotate(200deg);opacity:0}}
+.plus{position:absolute;font-family:var(--f-display);font-weight:700;font-size:22px;color:#fff;-webkit-text-stroke:3px var(--accent-deep);paint-order:stroke fill;transform:translate(-50%,-50%);animation:plus 1s ease-out forwards;white-space:nowrap}
+@keyframes plus{0%{transform:translate(-50%,-30%) scale(.6);opacity:0}20%{transform:translate(-50%,-50%) scale(1.15);opacity:1}100%{transform:translate(-50%,-160%);opacity:0}}
+.ribbon{position:absolute;left:0;right:0;top:40%;z-index:7;pointer-events:none;display:flex;justify-content:center}
+.ribbon span{background:var(--c6);color:#fff;font-family:"Jua",var(--f-display);font-size:clamp(22px,7vw,34px);padding:6px 22px;border-radius:14px;box-shadow:0 5px 0 rgba(0,0,0,.25);white-space:nowrap;animation:ribbon 1.3s cubic-bezier(.2,.9,.3,1) forwards}
+.ribbon.gold span{background:var(--sun);color:#3B2A00}
+@keyframes ribbon{0%{transform:translateX(-120vw) skewX(-12deg)}25%{transform:translateX(0) skewX(0)}78%{transform:translateX(0);opacity:1}100%{transform:translateX(120vw) skewX(12deg);opacity:0}}
+.count{position:absolute;inset:0;display:grid;place-items:center;z-index:8;pointer-events:none}
+.count span{font-family:"Jua",var(--f-display);font-size:clamp(70px,26vw,130px);color:#fff;-webkit-text-stroke:5px var(--accent-deep);paint-order:stroke fill;animation:count .9s ease-out forwards}
+@keyframes count{0%{transform:scale(2);opacity:0}25%{transform:scale(1);opacity:1}80%{opacity:1}100%{transform:scale(.7);opacity:0}}
+.overlay{position:absolute;inset:0;display:grid;place-items:center;background:rgba(17,23,17,.45);border-radius:16px;z-index:9;padding:14px}
+.overlay .card{animation:pop .32s cubic-bezier(.3,1.5,.5,1)}
+@keyframes pop{0%{transform:scale(.85)}70%{transform:scale(1.04)}100%{transform:scale(1)}}
+.card{background:var(--surface);border-radius:20px;padding:18px;box-shadow:0 6px 0 var(--shade);text-align:center;width:min(100%,320px);display:flex;flex-direction:column;gap:10px}
+.card h2{margin:0;font-family:var(--f-display);font-size:28px;font-weight:700}
+.card p{margin:0;color:var(--muted);font-weight:700}
+.card .big{font-family:var(--f-display);font-size:40px;font-weight:700;font-variant-numeric:tabular-nums}
+.card .new{color:var(--accent);font-weight:800}
+.list{display:flex;flex-direction:column;gap:8px}
+
+/* 버튼 */
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btn{border:0;border-radius:16px;padding:11px 8px;font-weight:800;font-size:15px;background:var(--surface);color:var(--ink);border:2px solid var(--line);box-shadow:0 4px 0 var(--line);display:flex;align-items:center;justify-content:center;gap:6px;min-height:46px;transition:transform .06s,box-shadow .06s}
+.btn:active:not(:disabled){transform:translateY(4px);box-shadow:0 0 0 var(--line)}
+.btn.primary{background:var(--accent);color:var(--on-accent);border-color:var(--accent);box-shadow:0 4px 0 var(--accent-deep)}
+.btn.blue{background:var(--sky);color:#fff;border-color:var(--sky);box-shadow:0 4px 0 var(--sky-deep)}
+.btn:disabled{opacity:.45;cursor:default}
+
+/* 친구·기록 */
+.panel{background:var(--surface);border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:10px;border:2px solid var(--line)}
+.panel h3{margin:0;font-family:var(--f-display);font-size:18px;font-weight:600}
+.panel .hint{font-size:13px;color:var(--muted);font-weight:600;margin:0}
+.panel.focus{border-color:var(--accent);box-shadow:0 4px 0 var(--accent-deep)}
+.field{width:100%;min-width:0;border:2px solid var(--line);background:var(--bg);color:var(--ink);border-radius:14px;padding:11px 12px;font:inherit;font-weight:800;font-size:16px}
+.field:focus{outline:3px solid var(--sky);outline-offset:1px}
+#joinCode{text-transform:uppercase;letter-spacing:.2em;font-family:var(--f-display);text-align:center}
+.code{font-family:var(--f-display);font-weight:700;font-size:40px;letter-spacing:.18em;text-align:center;color:var(--accent);user-select:all;-webkit-user-select:all}
+.invite-box{background:var(--bg);border:2px dashed var(--line);border-radius:14px;padding:10px;font-size:13px;white-space:pre-wrap;word-break:break-all;user-select:text;-webkit-user-select:text}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:8px}
+.seg button{border:2px solid var(--line);background:var(--surface);border-radius:14px;padding:9px 4px;font-weight:800;box-shadow:0 3px 0 var(--line)}
+.seg button[aria-pressed="true"]{border-color:var(--sky);background:var(--sky);color:#fff;box-shadow:0 3px 0 var(--sky-deep)}
+.row2{display:grid;grid-template-columns:1fr 2fr;gap:10px}
+.members{display:flex;flex-direction:column;gap:6px}
+.member{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:12px;background:var(--bg);font-weight:800}
+.member svg{width:30px;height:30px}
+.member .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+table.rec{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:14px}
+table.rec th,table.rec td{padding:7px 4px;text-align:center;border-bottom:1px solid var(--line)}
+table.rec th{font-size:11px;color:var(--muted);font-weight:800}
+table.rec td:first-child,table.rec th:first-child{text-align:left;font-weight:800}
+.recent{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
+.recent div{display:flex;gap:10px}
+
+/* 설명서 */
+.modal-bg{position:fixed;inset:0;background:rgba(17,23,17,.5);z-index:30;display:grid;place-items:center;padding:max(16px,env(safe-area-inset-top,0px)) 16px max(16px,env(safe-area-inset-bottom,0px))}
+.modal{background:var(--bg);border-radius:22px;width:min(100%,520px);max-height:100%;display:flex;flex-direction:column;box-shadow:0 8px 0 var(--shade);animation:pop .3s cubic-bezier(.3,1.5,.5,1);overflow:hidden}
+.modal header{display:flex;align-items:center;gap:10px;padding:14px 14px 10px 18px;border-bottom:2px solid var(--line)}
+.modal h2{margin:0;font-family:var(--f-display);font-size:22px;font-weight:700;flex:1}
+.modal .x{width:38px;height:38px;border-radius:12px;border:2px solid var(--line);background:var(--surface);font-size:18px;font-weight:800;display:grid;place-items:center;padding:0}
+.manual{overflow-y:auto;padding:14px 18px 18px;display:flex;flex-direction:column;gap:16px}
+.manual h3{margin:0 0 6px;font-family:var(--f-display);font-size:16px;font-weight:700;color:var(--accent)}
+.manual p,.manual li{margin:0;font-size:14px;line-height:1.6;font-weight:600}
+.manual ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.manual b{font-weight:800}
+.modal footer{padding:10px 18px 14px;border-top:2px solid var(--line)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:14px;font-weight:800;font-size:14px;z-index:40;max-width:calc(100% - 32px);text-align:center}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:380px){.tabs button{padding:6px 9px}.brand{font-size:17px}.score{font-size:32px}}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <header class="top">
+    <div class="brand"><span class="logo" id="logo"></span>솔솔퍼즐(블록)</div>
+    <nav class="tabs" role="tablist" aria-label="화면">
+      <button role="tab" id="tab-play" data-tab="play" aria-selected="true">게임</button>
+      <button role="tab" id="tab-friends" data-tab="friends" aria-selected="false">친구<span class="badge" id="friendBadge" hidden></span></button>
+      <button role="tab" id="tab-history" data-tab="history" aria-selected="false">기록</button>
+    </nav>
+  </header>
+
+  <main>
+    <section class="view" id="view-play">
+      <div id="oppBox" hidden>
+        <div class="opp"><span id="oppFace"></span><span class="nm" id="oppName">친구</span><span class="chip" id="oppState">대기</span><span class="sc" id="oppScore">0</span></div>
+        <div class="vs" style="margin-top:6px"><i class="me" id="vsMe" style="width:50%"></i><i class="op" id="vsOp" style="width:50%"></i></div>
+        <div class="lead" id="lead"></div>
+      </div>
+      <div class="scorebar">
+        <div><div class="score" id="score">0</div></div>
+        <div class="best" id="best"></div>
+        <div class="right"><div class="timer" id="timer" hidden></div><div id="comboTxt"></div></div>
+      </div>
+      <div class="board-wrap" id="wrap">
+        <div class="feverglow" aria-hidden="true"></div>
+        <div class="board" id="board" aria-label="블록 판"></div>
+        <div class="fx" id="fx" aria-hidden="true"></div>
+        <div class="overlay" id="result" hidden>
+          <div class="card"><h2 id="resTitle"></h2><div class="big" id="resScore"></div><p id="resInfo"></p><div id="resBtns" class="list"></div></div>
+        </div>
+      </div>
+      <div class="tray" id="tray"></div>
+      <div class="actions">
+        <button class="btn" id="manualBtn" type="button">설명서</button>
+        <button class="btn primary" id="newBtn" type="button">새 게임</button>
+      </div>
+    </section>
+    <section class="view" id="view-friends" hidden></section>
+    <section class="view" id="view-history" hidden></section>
+  </main>
+</div>
+
+<div class="modal-bg" id="manualBg" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="manualTitle">
+    <header><h2 id="manualTitle">블록 설명서</h2><button class="x" id="manualClose" type="button" aria-label="닫기">✕</button></header>
+    <div class="manual">
+      <section><h3>목표</h3><p>아래에 나오는 블록 3개를 8×8 판에 끌어다 놓아요. <b>가로 한 줄이나 세로 한 줄이 꽉 차면</b> 사라지면서 점수를 얻어요. 3개를 다 놓으면 새 블록 3개가 나와요. 남은 블록을 <b>놓을 곳이 하나도 없으면</b> 게임이 끝나요.</p></section>
+      <section><h3>놓는 법</h3><ul>
+        <li>블록을 누른 채로 끌어서 판 위에 놓아요. 블록이 손가락보다 조금 위에 떠서 판이 잘 보여요.</li>
+        <li>놓을 수 있는 자리에는 블록 그림자가 보이고, 그 자리에 놓으면 지워질 줄은 반짝여요.</li>
+        <li>끌기 어려우면 블록을 <b>톡 눌러 고른 다음</b> 판의 칸을 누르세요. 누른 칸이 블록의 왼쪽 위가 돼요.</li>
+        <li>흐리게 보이는 블록은 지금 판에 놓을 곳이 없는 블록이에요. 블록은 돌릴 수 없어요.</li></ul></section>
+      <section><h3>점수</h3><ul>
+        <li>놓은 칸 하나에 1점.</li>
+        <li>줄을 지우면 보너스: 1줄 10점, 2줄 30점, 3줄 60점, 4줄 100점… 한 번에 많이 지울수록 커져요.</li>
+        <li><b>연속</b>: 줄을 연속으로 지우면 줄 보너스에 연속 횟수를 곱해요(연속 x3이면 3배). 줄을 못 지우고 3번 놓으면 연속이 끝나요.</li>
+        <li><b>빠르게</b>: 지난번에 줄을 지운 뒤 <b>3초 안에</b> 또 지우면 추가 점수 +10, 계속 빠르게 지우면 +20, +30…으로 커져요.</li>
+        <li>판을 완전히 비우면 <b>+300점</b>과 함께 <b>피버 타임</b>이 시작돼요. <b>10초 동안 모든 점수가 2배</b>이고, 판 테두리가 무지개로 빛나요. 피버 중에 또 비우면 다시 10초.</li>
+        <li>줄을 지울 때 뜨는 숫자 아래에 연속·빠르게·피버 중 무엇을 받았는지 보여요.</li></ul></section>
+      <section><h3>친구와 하기 (2명)</h3><ul>
+        <li><b>친구</b> 탭에서 방을 만들고 초대 링크를 카카오톡으로 보내요. 시간 제한(끝날 때까지·3분·5분)을 고를 수 있어요.</li>
+        <li>두 사람은 <b>같은 블록이 같은 순서로</b> 나와요. 각자 자기 판에서 하고, 화면 위에 상대 이름과 점수만 보여요.</li>
+        <li>둘 다 끝나면(또는 시간이 다 되면) 점수가 높은 사람이 이겨요. 먼저 끝난 사람은 상대가 끝날 때까지 점수를 지켜봐요.</li></ul></section>
+      <section><h3>요령</h3><ul>
+        <li>큰 블록(3×3, 5칸 막대)이 들어갈 빈자리를 남겨 두세요.</li>
+        <li>가장자리부터 채우면 가운데에 큰 공간을 오래 남길 수 있어요.</li>
+        <li>가로와 세로를 한 번에 채우면 2줄 이상이 동시에 지워져 점수가 크게 올라요.</li></ul></section>
+    </div>
+    <footer><button class="btn primary" id="manualOk" type="button" style="width:100%">알겠어요</button></footer>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script src="../common/supabase-config.js"></script>
+<script src="../common/cloud.js" data-game="block"></script>
+<script src="engine.js"></script>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script>
+(function(){
+'use strict';
+
+var E=BlockEngine(),N=E.N;
+var VERSION='11.08-1';
+var $=function(id){return document.getElementById(id);};
+function store(k,v){try{if(v===undefined)return JSON.parse(localStorage.getItem(k)||'null');localStorage.setItem(k,JSON.stringify(v));}catch(e){return null;}}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function reduced(){return matchMedia('(prefers-reduced-motion: reduce)').matches;}
+function face(i){
+  var col=['#58B030','#2E9BD6'][i%2];
+  return '<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="21" r="17" fill="'+col+'"/><circle cx="14.5" cy="19" r="2.6" fill="#fff"/><circle cx="25.5" cy="19" r="2.6" fill="#fff"/><circle cx="15" cy="19.5" r="1.3" fill="#1d2a1a"/><circle cx="26" cy="19.5" r="1.3" fill="#1d2a1a"/><ellipse cx="10.5" cy="25" rx="3" ry="1.8" fill="#FF8FA3" opacity=".75"/><ellipse cx="29.5" cy="25" rx="3" ry="1.8" fill="#FF8FA3" opacity=".75"/><path d="M16.5 26q3.5 2.6 7 0" stroke="#1d2a1a" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>';
+}
+$('logo').innerHTML='<svg viewBox="0 0 28 28" aria-hidden="true"><rect x="1" y="1" width="26" height="26" rx="7" fill="#58B030"/><rect x="5" y="5" width="8" height="8" rx="2" fill="#F26D6D"/><rect x="15" y="5" width="8" height="8" rx="2" fill="#F2CF3E"/><rect x="5" y="15" width="8" height="8" rx="2" fill="#4FB3E8"/><rect x="15" y="15" width="8" height="8" rx="2" fill="#fff" opacity=".85"/></svg>';
+
+// ---------- 상태 ----------
+// G: {mode:'solo'|'friend', seed, round, board[64], tray[3](null=놓음), score, combo, miss, over, start, limit(초, 0=없음)}
+var meId=store('solsol.me');if(!meId){meId='d'+Math.random().toString(36).slice(2,12);store('solsol.me',meId);}
+var myName=store('solsol.name')||'';
+var G=null,tab='play',picked=-1,opp=null;   // opp: {name, score, over, online}
+
+function newSeed(){return Math.floor(Math.random()*4294967295);}
+function newGame(mode,seed,limit){
+  G={mode:mode,seed:seed>>>0,round:0,board:new Array(64).fill(0),tray:E.tray(seed>>>0,0),score:0,combo:0,miss:0,over:false,start:Date.now(),limit:limit||0,lines:0,ended:false};
+  picked=-1;$('result').hidden=true;$('board').classList.remove('over');
+  if(mode==='solo')save();
+  render();
+}
+function save(){if(G&&G.mode==='solo')store('block.game',G);}
+function best(){return (store('block.stats')||{}).best||0;}
+
+// ---------- 판 ----------
+var boardEl=$('board'),cells=[];
+for(var i=0;i<64;i++){var c=document.createElement('div');c.className='cell';c.dataset.i=i;boardEl.appendChild(c);cells.push(c);}
+var preview=null;   // {cells:[], clear:[], color}
+function render(fx){
+  fx=fx||{};
+  var ghost={},clear={};
+  if(preview){preview.cells.forEach(function(p){ghost[p]=preview.color;});preview.clear.forEach(function(p){clear[p]=1;});}
+  for(var i=0;i<64;i++){
+    var v=G.board[i],cls='cell';
+    if(v)cls+=' blk c'+v;
+    else if(ghost[i])cls+=' ghost c'+ghost[i];
+    if(clear[i])cls+=' willclear';
+    if(fx.drop&&fx.drop[i])cls+=' drop';
+    if(cells[i].className!==cls)cells[i].className=cls;
+  }
+  renderTray();renderScore();renderOpp();
+}
+function renderScore(){
+  $('score').textContent=G.score;
+  var b=best();$('best').textContent=G.mode==='solo'?'최고 '+Math.max(b,G.score):'';
+  var fl=feverLeft();
+  $('comboTxt').innerHTML=(fl?'<span class="combo fever">피버 '+Math.ceil(fl/1000)+'초</span> ':'')+(G.combo>=2?'<span class="combo">연속 x'+G.combo+'</span>':'');
+  $('score').classList.toggle('fever',!!fl);
+  $('wrap').classList.toggle('fever',!!fl);
+}
+function renderTray(){
+  var h='';
+  for(var k=0;k<3;k++){
+    var p=G.tray[k];
+    if(!p){h+='<div class="slot used" data-k="'+k+'"></div>';continue;}
+    var sz=E.size(p),set={};E.cells(p).forEach(function(x){set[x[0]+','+x[1]]=1;});
+    var m='<div class="mini" style="grid-template-columns:repeat('+sz.w+',14px)">';
+    for(var r=0;r<sz.h;r++)for(var c=0;c<sz.w;c++)m+='<i class="'+(set[r+','+c]?'blk c'+p.color:'')+'"></i>';
+    m+='</div>';
+    var can=!G.over&&E.anyFit(G.board,p);
+    h+='<div class="slot'+(can?'':' cant')+(picked===k?' pick':'')+'" data-k="'+k+'" role="button" aria-label="블록 '+(k+1)+'">'+m+'</div>';
+  }
+  $('tray').innerHTML=h;
+}
+
+// ---------- 끌어 놓기 ----------
+var drag=null;   // {k, el, cell, offX, offY}
+function cellSize(){var r=boardEl.getBoundingClientRect();return (r.width-12-7*3)/8;}
+function boardOrigin(){var r=boardEl.getBoundingClientRect();return {x:r.left+6,y:r.top+6};}
+$('tray').addEventListener('pointerdown',function(e){
+  var s=e.target.closest('.slot');if(!s||!G||G.over||!playing())return;
+  var k=+s.dataset.k,p=G.tray[k];if(!p)return;
+  e.preventDefault();
+  var cs=cellSize(),sz=E.size(p),set={};E.cells(p).forEach(function(x){set[x[0]+','+x[1]]=1;});
+  var el=document.createElement('div');el.className='drag';el.style.gridTemplateColumns='repeat('+sz.w+','+cs+'px)';
+  var h='';for(var r=0;r<sz.h;r++)for(var c=0;c<sz.w;c++)h+='<i class="'+(set[r+','+c]?'blk c'+p.color:'')+'" style="width:'+cs+'px;height:'+cs+'px"></i>';
+  el.innerHTML=h;document.body.appendChild(el);
+  // 손가락보다 블록 한 덩이만큼 위에 띄운다
+  var w=sz.w*cs+(sz.w-1)*3,hh=sz.h*cs+(sz.h-1)*3;
+  drag={k:k,el:el,cs:cs,offX:w/2,offY:hh+Math.max(40,cs*1.4),sx:e.clientX,sy:e.clientY,moved:false,pid:e.pointerId};
+  try{s.setPointerCapture(e.pointerId);}catch(err){}
+  moveDrag(e.clientX,e.clientY);
+});
+function moveDrag(x,y){
+  if(!drag)return;
+  if(Math.abs(x-drag.sx)>6||Math.abs(y-drag.sy)>6)drag.moved=true;
+  var left=x-drag.offX,top=y-drag.offY;
+  drag.el.style.transform='translate('+left+'px,'+top+'px)';
+  // 블록 왼쪽 위 칸이 판의 어느 칸에 오는지
+  var o=boardOrigin(),step=drag.cs+3,c0=Math.round((left-o.x)/step),r0=Math.round((top-o.y)/step);
+  setPreview(drag.k,r0,c0);
+}
+function setPreview(k,r0,c0){
+  var p=G.tray[k],old=preview;preview=null;
+  if(p&&E.fits(G.board,p,r0,c0)){
+    var b=G.board.slice(),pc=[];E.cells(p).forEach(function(x){var i=(r0+x[0])*N+c0+x[1];b[i]=p.color;pc.push(i);});
+    preview={k:k,r0:r0,c0:c0,cells:pc,clear:E.lineCells(E.fullLines(b)),color:p.color};
+  }
+  if(JSON.stringify(old)!==JSON.stringify(preview))render();
+}
+window.addEventListener('pointermove',function(e){if(drag&&e.pointerId===drag.pid){e.preventDefault();moveDrag(e.clientX,e.clientY);}},{passive:false});
+function endDrag(e){
+  if(!drag||(e&&e.pointerId!==drag.pid))return;
+  var d=drag;drag=null;d.el.remove();
+  if(!d.moved){   // 톡 눌렀으면 고르기(칸을 눌러 놓기)
+    preview=null;picked=picked===d.k?-1:d.k;render();
+    if(picked>=0)toast('놓을 칸(블록의 왼쪽 위)을 누르세요');
+    return;
+  }
+  var pv=preview;preview=null;
+  if(pv&&pv.k===d.k)placeAt(d.k,pv.r0,pv.c0);else render();
+}
+window.addEventListener('pointerup',endDrag);
+window.addEventListener('pointercancel',function(e){if(drag&&e.pointerId===drag.pid){drag.el.remove();drag=null;preview=null;render();}});
+boardEl.addEventListener('click',function(e){
+  var c=e.target.closest('.cell');if(!c||picked<0||!G||G.over||!playing())return;
+  var i=+c.dataset.i,p=G.tray[picked];if(!p)return;
+  if(E.fits(G.board,p,i>>3,i&7))placeAt(picked,i>>3,i&7);else toast('거기엔 놓을 수 없어요');
+});
+
+// ---------- 놓기·지우기·끝 ----------
+function playing(){return G&&!G.over&&(!G.countdown||Date.now()>=G.countdown);}
+function placeAt(k,r0,c0){
+  var p=G.tray[k],res=E.place(G,p,r0,c0);
+  G.tray[k]=null;picked=-1;
+  // 지울 줄이 있으면 놓은 모습을 잠깐 보여 준 뒤 지운다
+  var before=G.board.slice();res.placed.forEach(function(i){before[i]=p.color;});
+  G.board=before;
+  var drop={};res.placed.forEach(function(i){drop[i]=1;});
+  render({drop:drop});
+  // 점수 = 엔진 점수(칸 + 줄 보너스 × 연속) + 빠르게 보너스, 피버 중이면 모두 2배
+  var now=Date.now(),fever=feverLeft()>0,quick=0;
+  if(res.lines){
+    if(G.lastClearAt&&now-G.lastClearAt<=QUICK_MS){G.speed=(G.speed||0)+1;quick=10*G.speed;}else G.speed=0;
+    G.lastClearAt=now;
+  }
+  var gain=(res.gain+quick)*(fever?2:1);
+  G.combo=res.combo;G.miss=res.miss;G.score+=gain;G.lines+=res.lines;
+  if(res.perfect){G.feverUntil=now+FEVER_MS;}
+  bumpScore();
+  if(res.lines){
+    var delay=reduced()?0:120;
+    res.cleared.forEach(function(i,n){cells[i].style.animationDelay=(delay?((n%8)*25):0)+'ms';cells[i].classList.add('pop');});
+    burst(res.cleared);
+    var tags=[];if(G.combo>=2)tags.push('연속 x'+G.combo);if(quick)tags.push('빠르게 +'+quick);if(fever)tags.push('피버 x2');
+    plusAt(res.placed,'+'+gain,tags.join(' · '));
+    if(res.perfect)ribbon('피버 타임! 10초 동안 점수 2배','fever');
+    else if(res.lines>=3)ribbon(res.lines+'줄 한 번에!');
+    else if(G.combo>=3)ribbon('콤보 x'+G.combo+'!');
+    if(navigator.vibrate){try{navigator.vibrate(res.lines>1?[20,30,20]:20);}catch(e){}}
+    setTimeout(function(){
+      G.board=res.board;cells.forEach(function(c){c.classList.remove('pop');c.style.animationDelay='';});
+      afterPlace();
+    },reduced()?0:470);
+  }else{G.board=res.board;afterPlace();}
+}
+function afterPlace(){
+  if(G.tray.every(function(x){return !x;})){G.round++;G.tray=E.tray(G.seed,G.round);}
+  if(!G.tray.some(function(p){return p&&E.anyFit(G.board,p);}))gameOver('stuck');
+  save();render();sendState();
+}
+function gameOver(why){
+  if(G.over)return;
+  G.over=true;G.why=why;picked=-1;preview=null;
+  $('board').classList.add('over');
+  if(G.mode==='solo'){record();save();setTimeout(showResult,700);}
+  else{sendState();ribbon(why==='time'?'시간 끝!':'더 놓을 곳이 없어요');checkFriendEnd();}
+  render();
+}
+function record(){
+  var st=store('block.stats')||{best:0,games:0,total:0,recent:[],friend:{w:0,l:0,d:0}};
+  st.friend=st.friend||{w:0,l:0,d:0};
+  var isBest=false;
+  if(G.mode==='solo'){st.games++;st.total+=G.score;if(G.score>st.best){st.best=G.score;isBest=true;}}
+  st.recent.unshift({mode:G.mode,score:G.score,lines:G.lines,ts:Date.now(),res:G.res||'',opp:opp?opp.score:null});st.recent=st.recent.slice(0,20);
+  if(G.mode==='friend'&&G.res)st.friend[G.res]++;
+  store('block.stats',st);
+  G.isBest=isBest;
+  if(window.SolsolCloud&&G.mode==='solo'&&G.score>0)SolsolCloud.submitScore('normal',G.score);
+}
+function bumpScore(){var s=$('score');s.classList.remove('bump');void s.offsetWidth;s.classList.add('bump');}
+
+// ---------- 결과 ----------
+function showResult(){
+  if(!G||!G.over)return;
+  var b=$('resBtns');b.innerHTML='';
+  function add(label,cls,fn){var x=document.createElement('button');x.type='button';x.className='btn '+cls;x.textContent=label;x.onclick=fn;b.appendChild(x);}
+  if(G.mode==='solo'){
+    $('resTitle').textContent=G.isBest?'최고 기록!':'게임 끝';
+    $('resScore').textContent=G.score+'점';
+    $('resInfo').innerHTML=G.lines+'줄 지움'+(G.isBest?'<br><span class="new">새 최고 기록이에요!</span>':' · 최고 '+best()+'점');
+    add('한 판 더','primary',function(){newGame('solo',newSeed(),0);});
+  }else{
+    var res=G.res;
+    $('resTitle').textContent=res==='w'?'이겼어요!':res==='l'?'아쉬워요':'무승부';
+    $('resScore').textContent=G.score+' : '+(opp?opp.score:0);
+    $('resInfo').textContent='나 '+G.score+'점 · '+(opp?opp.name:'친구')+' '+(opp?opp.score:0)+'점'+(G.endNote?' · '+G.endNote:'');
+    if(room&&room.host)add('한 판 더','primary',function(){hostStart();});
+    else add('방장이 새 판을 열면 시작돼요','',function(){$('result').hidden=true;});
+  }
+  add('판 보기','',function(){$('result').hidden=true;});
+  $('result').hidden=false;
+  if((G.mode==='solo'&&G.isBest)||G.res==='w')fireworks();
+}
+
+// ---------- 시간 제한(친구 대전) ----------
+setInterval(function(){
+  if(!G||G.mode!=='friend'||!G.limit||G.over||!G.countdown){$('timer').hidden=true;return;}
+  var left=Math.max(0,G.limit*1000-(Date.now()-G.countdown));
+  if(Date.now()<G.countdown)left=G.limit*1000;
+  $('timer').hidden=false;$('timer').textContent=Math.floor(left/60000)+':'+('0'+Math.ceil(left/1000)%60).slice(-2);
+  $('timer').classList.toggle('hurry',left<=15000);
+  if(left<=0)gameOver('time');
+},250);
+
+// ---------- 이펙트 ----------
+function center(i){return [((i&7)+.5)*12.5,((i>>3)+.5)*12.5];}
+function burst(list){
+  if(reduced())return;
+  var fx=$('fx'),cols=['var(--sun)','#FFFFFF','var(--c5)','var(--c7)'];
+  list.forEach(function(i,n){
+    if(n%2)return;
+    var c=center(i);
+    for(var s=0;s<2;s++){
+      var st=document.createElement('span'),a=Math.random()*Math.PI*2,d=18+Math.random()*28;
+      st.className='star';st.style.left=c[0]+'%';st.style.top=c[1]+'%';st.style.background=cols[(n+s)%4];
+      st.style.setProperty('--dx',Math.cos(a)*d+'px');st.style.setProperty('--dy',Math.sin(a)*d+'px');
+      fx.appendChild(st);
+    }
+  });
+  setTimeout(function(){fx.querySelectorAll('.star').forEach(function(x){x.remove();});},800);
+}
+function plusAt(list,text,sub){
+  var x=0,y=0;list.forEach(function(i){var c=center(i);x+=c[0];y+=c[1];});x/=list.length;y/=list.length;
+  var el=document.createElement('span');el.className='plus';el.innerHTML=esc(text)+(sub?'<small>'+esc(sub)+'</small>':'');
+  el.style.left=Math.min(80,Math.max(20,x))+'%';el.style.top=y+'%';
+  $('fx').appendChild(el);setTimeout(function(){el.remove();},1000);
+}
+// ---------- 피버 타임·빠르게 지우기 ----------
+var FEVER_MS=10000,QUICK_MS=3000,wasFever=false;
+function feverLeft(){return G&&G.feverUntil&&!G.over?Math.max(0,G.feverUntil-Date.now()):0;}
+setInterval(function(){
+  if(!G)return;
+  var on=feverLeft()>0;
+  if(on||wasFever)renderScore();
+  if(on!==wasFever){wasFever=on;sendState();if(!on&&G.feverUntil&&!G.over)toast('피버 타임 끝!');}
+},250);
+function ribbon(text,cls){
+  var r=document.createElement('div');r.className='ribbon'+(cls?' '+cls:'');r.innerHTML='<span>'+esc(text)+'</span>';
+  $('wrap').appendChild(r);setTimeout(function(){r.remove();},1400);
+}
+function fireworks(){
+  if(reduced())return;
+  var fx=$('fx'),cols=['#F6C945','#F26D6D','#6CCB5F','#4FB3E8','#F28FC4','#8E7CE8'];
+  for(var b=0;b<6;b++)(function(b){setTimeout(function(){
+    var x=10+Math.random()*80,y=8+Math.random()*55,c=cols[b%cols.length];
+    for(var i=0;i<16;i++){
+      var s=document.createElement('span'),a=Math.PI*2*i/16,d=40+Math.random()*25;
+      s.className='star';s.style.left=x+'%';s.style.top=y+'%';s.style.background=i%3?c:'#fff';
+      s.style.setProperty('--dx',Math.cos(a)*d+'px');s.style.setProperty('--dy',Math.sin(a)*d+'px');s.style.animationDuration='1s';
+      fx.appendChild(s);
+    }
+  },b*250);})(b);
+  setTimeout(function(){fx.querySelectorAll('.star').forEach(function(x){x.remove();});},2800);
+}
+function countdown(){
+  [3,2,1,'시작!'].forEach(function(t,k){setTimeout(function(){
+    var el=document.createElement('div');el.className='count';el.innerHTML='<span>'+t+'</span>';
+    $('wrap').appendChild(el);setTimeout(function(){el.remove();},900);
+  },k*1000);});
+}
+
+// ---------- 친구 대전: 2명, PeerJS(서버 저장 없음) ----------
+// 방장 피어 id solsolbk-<방코드>. 메시지: 참가자→방장 hello{id,name}, 서로 state{score,over,lines,gid}
+//   방장→참가자 lobby{host,guest,limit} start{seed,limit,gid} . 두 사람 모두 같은 seed 라 블록 순서가 같다
+var peer=null,conn=null,room=null,online=false,inviteLimit=0,pendingJoin=null,joinDraft='',joinTimer=0,joinStart=0;
+function peerOk(){return typeof Peer!=='undefined';}
+function newCode(){var s='';for(var i=0;i<6;i++)s+='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random()*32)];return s;}
+function inviteLink(code){return location.origin+location.pathname+'#join-'+code;}
+function inviteText(code){return '[솔솔퍼즐(블록)] 블록 점수 대결 하자! 링크를 열면 바로 들어올 수 있어.\n'+inviteLink(code)+'\n방 코드: '+code;}
+function shareInvite(code){var t=inviteText(code);if(navigator.share){navigator.share({title:'솔솔퍼즐(블록)',text:t}).catch(function(){});return;}copyText(t);}
+function copyText(text){
+  var ok=function(){toast('복사했어요. 카카오톡 대화창에 붙여넣으세요');};
+  try{navigator.clipboard.writeText(text).then(ok,function(){toast('아래 글을 길게 눌러 복사해 주세요');});}catch(e){toast('아래 글을 길게 눌러 복사해 주세요');}
+}
+function saveName(){var el=$('nick');if(el){myName=el.value.trim().slice(0,20);store('solsol.name',myName);}}
+function ensureName(){if(myName)return false;myName='친구'+(10+Math.floor(Math.random()*90));store('solsol.name',myName);return true;}
+function send(o){if(conn&&conn.open){try{conn.send(o);}catch(e){}}}
+function dropPeer(){if(conn){try{conn.close();}catch(e){}conn=null;}if(peer){try{peer.destroy();}catch(e){}peer=null;}online=false;}
+
+var lastSent=0,sendTimer=0;
+function sendState(){
+  if(!room||!G||G.mode!=='friend')return;
+  clearTimeout(sendTimer);
+  var go=function(){lastSent=Date.now();send({t:'state',gid:G.gid,score:G.score,over:G.over,lines:G.lines,fever:feverLeft()>0});};
+  if(Date.now()-lastSent>250||G.over)go();else sendTimer=setTimeout(go,250);
+}
+function onState(d){
+  if(!opp)opp={name:'친구',score:0,over:false,online:true};
+  if(!G||G.mode!=='friend'||d.gid!==G.gid)return;
+  var up=d.score!==opp.score;
+  opp.score=d.score;opp.over=!!d.over;opp.lines=d.lines||0;opp.fever=!!d.fever;
+  renderOpp(up);checkFriendEnd();
+}
+function renderOpp(bump){
+  var show=!!(G&&G.mode==='friend');
+  $('oppBox').hidden=!show;
+  $('newBtn').textContent=show||room?'방 나가기':'새 게임';
+  if(!show)return;
+  var o=opp||{name:'친구',score:0,over:false};
+  $('oppFace').innerHTML=face(1);
+  $('oppName').textContent=o.name;
+  var st=$('oppState');
+  if(!online&&room){st.textContent='연결 끊김';st.className='chip off';}
+  else if(o.over){st.textContent='끝';st.className='chip end';}
+  else if(G.countdown&&Date.now()<G.countdown){st.textContent='준비';st.className='chip';}
+  else if(o.fever){st.textContent='피버!';st.className='chip fev';}
+  else{st.textContent='플레이 중';st.className='chip go';}
+  var sc=$('oppScore');sc.textContent=o.score;if(bump){sc.classList.remove('bump');void sc.offsetWidth;sc.classList.add('bump');}
+  var tot=G.score+o.score,mp=tot?G.score*100/tot:50;
+  $('vsMe').style.width=mp+'%';$('vsOp').style.width=(100-mp)+'%';
+  var diff=G.score-o.score;
+  $('lead').textContent=diff>0?'내가 '+diff+'점 앞서요':diff<0?o.name+' 님이 '+(-diff)+'점 앞서요':'동점';
+}
+// 둘 다 끝났으면(또는 상대가 오래 끊겼으면) 결과
+var endWait=0;
+function checkFriendEnd(){
+  if(!G||G.mode!=='friend'||!G.over||G.ended)return;
+  clearTimeout(endWait);
+  var o=opp||{score:0,over:false};
+  if(o.over||(!online&&G.offlineSince&&Date.now()-G.offlineSince>45000)){
+    G.ended=true;
+    if(!o.over)G.endNote='상대 연결 끊김';
+    G.res=G.score>o.score?'w':G.score<o.score?'l':'d';
+    record();setTimeout(showResult,600);
+  }else{
+    toast(o.name+' 님이 끝날 때까지 기다려요');
+    endWait=setTimeout(checkFriendEnd,5000);
+  }
+}
+function startFriendGame(d){
+  opp=opp||{name:'친구',score:0,over:false};
+  opp.score=0;opp.over=false;opp.lines=0;
+  newGame('friend',d.seed,d.limit);
+  G.gid=d.gid;G.countdown=Date.now()+3200;
+  setTab('play');countdown();render();
+  setTimeout(function(){if(G&&G.gid===d.gid){render();sendState();}},3300);
+}
+
+// --- 방장 ---
+function createRoom(){
+  if(!peerOk()){toast('연결 모듈을 불러오지 못했어요. 인터넷 연결을 확인해 주세요');return;}
+  saveName();var auto=ensureName();
+  leaveRoom(true);openHostRoom(newCode(),inviteLimit);
+  if(auto)toast('이름을 \''+myName+'\'(으)로 정했어요. 친구 탭에서 바꿀 수 있어요');
+}
+function openHostRoom(code,limit){
+  room={code:code,host:true,limit:limit,guest:null,phase:'lobby'};
+  store('block.room',{code:code,host:true,limit:limit,ts:Date.now()});
+  hostPeer();renderFriends();render();
+}
+function hostPeer(){
+  var p=new Peer('solsolbk-'+room.code);peer=p;
+  p.on('open',function(){renderFriends();});
+  p.on('connection',function(c){
+    c.on('open',function(){
+      c.on('data',function(d){
+        if(!d||typeof d!=='object')return;
+        if(d.t==='hello'){
+          if(room.guest&&room.guest.id!==d.id&&conn&&conn.open){try{c.send({t:'full'});}catch(e){}setTimeout(function(){c.close();},300);return;}
+          if(conn&&conn!==c){try{conn.close();}catch(e){}}
+          conn=c;online=true;
+          var back=room.guest&&room.guest.id===d.id;
+          room.guest={id:String(d.id).slice(0,40),name:String(d.name||'친구').slice(0,20)};
+          opp=opp||{score:0,over:false};opp.name=room.guest.name;
+          toast(room.guest.name+(back?' 님이 다시 연결됐어요':' 님이 들어왔어요'));
+          c.send({t:'lobby',host:myName,limit:room.limit,phase:room.phase});
+          if(G&&G.mode==='friend'&&room.phase==='play'){c.send({t:'start',seed:G.seed,limit:G.limit,gid:G.gid,resume:true});sendState();G.offlineSince=0;}
+          renderFriends();render();
+        }else if(d.t==='state')onState(d);
+      });
+      c.on('close',function(){if(conn===c){conn=null;online=false;if(G)G.offlineSince=Date.now();toast('친구와 연결이 끊겼어요. 다시 들어오기를 기다려요');renderFriends();render();checkFriendEnd();}});
+    });
+  });
+  p.on('disconnected',function(){setTimeout(function(){if(peer===p&&!p.destroyed&&p.disconnected){try{p.reconnect();}catch(e){}}},2000);});
+  p.on('error',function(e){if(e.type==='unavailable-id')setTimeout(function(){if(room&&room.host&&peer===p){try{p.destroy();}catch(err){}hostPeer();}},4000);});
+}
+function hostStart(){
+  if(!room||!room.host)return;
+  if(!conn||!conn.open){toast('친구가 들어와야 시작할 수 있어요');return;}
+  room.phase='play';
+  var d={t:'start',seed:newSeed(),limit:room.limit,gid:room.code+'-'+Date.now().toString(36)};
+  send(d);startFriendGame(d);renderFriends();
+}
+
+// --- 참가자 ---
+function joinRoom(code){
+  code=String(code||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+  if(code.length!==6){toast('방 코드 6자리를 확인해 주세요');return;}
+  if(!peerOk()){toast('연결 모듈을 불러오지 못했어요. 인터넷 연결을 확인해 주세요');return;}
+  saveName();var auto=ensureName();
+  leaveRoom(true);pendingJoin=null;
+  room={code:code,host:false,limit:0,phase:'joining',hostName:''};
+  store('block.room',{code:code,host:false,ts:Date.now()});
+  joinStart=Date.now();guestPeer();renderFriends();
+  toast(auto?'이름을 \''+myName+'\'(으)로 정했어요. 방에 연결하는 중…':'방에 연결하는 중…');
+}
+function guestPeer(){
+  if(peer){try{peer.destroy();}catch(e){}}
+  var p=new Peer();peer=p;
+  p.on('open',function(){if(peer===p)connectHost();});
+  p.on('disconnected',function(){setTimeout(function(){if(peer===p&&!p.destroyed&&p.disconnected){try{p.reconnect();}catch(e){}}},1500);});
+  // 방장이 카카오톡에 다녀오는 동안 방을 못 찾을 수 있다 → 포기하지 않고 다시 시도
+  p.on('error',function(e){if(peer===p&&(e.type==='peer-unavailable'||e.type==='network'||e.type==='server-error'||e.type==='socket-error'))scheduleJoin();});
+}
+function connectHost(){
+  if(!room||room.host||!peer||peer.destroyed)return;
+  clearTimeout(joinTimer);
+  var old=conn;conn=null;if(old){try{old.close();}catch(e){}}
+  var c=peer.connect('solsolbk-'+room.code,{reliable:true});conn=c;
+  joinTimer=setTimeout(function(){if(conn===c&&!c.open)scheduleJoin();},6000);
+  c.on('open',function(){if(conn!==c)return;clearTimeout(joinTimer);online=true;joinStart=Date.now();if(G)G.offlineSince=0;c.send({t:'hello',id:meId,name:myName});renderFriends();render();});
+  c.on('data',function(d){
+    if(conn!==c||!d||typeof d!=='object')return;
+    if(d.t==='lobby'){
+      var first=room.phase==='joining';
+      room.limit=d.limit||0;room.hostName=String(d.host||'방장').slice(0,20);room.phase=d.phase==='play'?'play':'lobby';
+      opp=opp||{score:0,over:false};opp.name=room.hostName;
+      if(first){setTab('friends');toast('방에 들어왔어요! 방장이 시작하면 바로 시작돼요');}
+      renderFriends();render();
+    }else if(d.t==='start'){
+      room.phase='play';
+      if(d.resume&&G&&G.mode==='friend'&&G.gid===d.gid){sendState();render();}
+      else startFriendGame(d);
+      renderFriends();
+    }else if(d.t==='state')onState(d);
+    else if(d.t==='full'){toast('이미 다른 친구가 들어간 방이에요(2명)');leaveRoom(true);renderFriends();render();}
+  });
+  c.on('close',function(){
+    if(conn!==c||!room)return;
+    online=false;joinStart=Date.now();if(G)G.offlineSince=Date.now();
+    toast('방장과 연결이 끊겨 다시 연결하는 중…');renderFriends();render();scheduleJoin();checkFriendEnd();
+  });
+}
+function scheduleJoin(){
+  if(!room||room.host)return;
+  clearTimeout(joinTimer);
+  if(Date.now()-joinStart>180000){toast('방장을 찾지 못했어요. 코드가 맞는지, 방장이 블록 화면을 켜 두었는지 확인해 주세요');leaveRoom(true);renderFriends();render();return;}
+  renderFriends();
+  joinTimer=setTimeout(function(){
+    if(!room||room.host||!peer)return;
+    if(peer.destroyed){guestPeer();return;}
+    if(peer.disconnected){try{peer.reconnect();}catch(e){}}
+    connectHost();
+  },3000);
+}
+function leaveRoom(quiet){
+  if(!room)return;
+  dropPeer();room=null;opp=null;clearTimeout(joinTimer);clearTimeout(endWait);
+  store('block.room',null);
+  if(G&&G.mode==='friend')resumeSolo();
+  if(!quiet){toast('방에서 나왔어요');renderFriends();}
+}
+document.addEventListener('visibilitychange',function(){
+  if(document.hidden||!room||!peerOk())return;
+  if(room.host){if(!peer||peer.destroyed)hostPeer();else if(peer.disconnected){try{peer.reconnect();}catch(e){}}}
+  else if(!online){joinStart=Date.now();if(!peer||peer.destroyed)guestPeer();else{if(peer.disconnected){try{peer.reconnect();}catch(e){}}connectHost();}}
+});
+
+// ---------- 친구 탭 ----------
+function standalone(){return (navigator.standalone===true)||matchMedia('(display-mode: standalone)').matches;}
+function limitText(s){return s?Math.round(s/60)+'분':'끝날 때까지';}
+function renderFriends(){
+  var v=$('view-friends'),h='',nickVal=$('nick')?$('nick').value:myName,codeVal=$('joinCode')?$('joinCode').value:(pendingJoin||joinDraft);
+  if(!standalone())h+='<div class="panel"><h3>앱처럼 쓰기</h3><p class="hint">아이폰 Safari 아래쪽 공유 버튼 → "홈 화면에 추가"를 누르면 홈 화면에서 앱처럼 열려요.</p></div>';
+  h+='<div class="panel"><h3>내 이름</h3><input id="nick" class="field" maxlength="20" placeholder="친구에게 보일 이름" value="'+esc(nickVal)+'"></div>';
+  if(room){
+    var st=room.phase==='joining'?(online?'연결됨':'방장을 찾는 중… 방장이 블록 화면으로 돌아오면 연결돼요'):!online?(room.host?(room.guest?'친구 연결 끊김 · 다시 들어오기를 기다려요':'친구를 기다리는 중'):'연결 끊김 · 다시 연결하는 중…'):room.phase==='play'?'게임 중':'준비됐어요';
+    h+='<div class="panel focus"><h3>'+(room.host?'내 방':'참가한 방')+' · '+limitText(room.limit)+'</h3><div class="code">'+esc(room.code)+'</div><p class="hint">'+st+'</p>';
+    h+='<div class="members"><div class="member">'+face(0)+'<span class="nm">'+esc(room.host?myName+' (나)':(room.hostName||'방장'))+' · 방장</span></div>';
+    var gname=room.host?(room.guest&&room.guest.name):myName+' (나)';
+    h+='<div class="member">'+face(1)+'<span class="nm">'+(gname?esc(gname):'<span style="color:var(--muted)">친구를 기다리는 중</span>')+'</span></div></div>';
+    if(room.host){
+      if(!room.guest||!online)h+='<button type="button" class="btn blue" data-act="share">카카오톡으로 초대 보내기</button><button type="button" class="btn" data-act="copy">초대 글 복사</button><div class="invite-box">'+esc(inviteText(room.code))+'</div>';
+      h+='<button type="button" class="btn primary" data-act="start"'+(online&&conn?'':' disabled')+'>'+(room.phase==='play'?'새 판 시작':'시작')+'</button>';
+    }else if(room.phase!=='joining')h+='<p class="hint">방장이 시작을 누르면 3, 2, 1 뒤에 바로 시작돼요.</p>';
+    if(room.phase==='play')h+='<button type="button" class="btn" data-act="board">게임 화면으로</button>';
+    h+='<button type="button" class="btn" data-act="leave">방 나가기</button></div>';
+  }else{
+    h+='<div class="panel"><h3>친구와 점수 대결 (2명)</h3><p class="hint">방을 만들고 초대 링크를 카카오톡으로 보내세요. 두 사람에게 같은 블록이 같은 순서로 나와요.</p>'+
+      '<div class="seg" id="limSeg">'+[0,180,300].map(function(s){return '<button type="button" data-v="'+s+'" aria-pressed="'+(inviteLimit===s)+'">'+limitText(s)+'</button>';}).join('')+'</div>'+
+      '<button type="button" class="btn primary" data-act="create">방 만들기</button></div>';
+    h+='<div class="panel'+(pendingJoin?' focus':'')+'"><h3>'+(pendingJoin?'초대받은 방':'방 코드로 들어가기')+'</h3>'+
+      '<div class="row2"><input id="joinCode" class="field" maxlength="6" autocapitalize="characters" autocomplete="off" placeholder="코드 6자리" value="'+esc(codeVal||'')+'">'+
+      '<button type="button" class="btn primary" data-act="join">들어가기</button></div></div>';
+  }
+  h+='<p class="hint" style="padding:0 4px">두 사람 모두 블록 화면을 켜 둔 채로 해 주세요. · 버전 '+VERSION+'</p>';
+  v.innerHTML=h;
+  $('friendBadge').hidden=!room;$('friendBadge').textContent=room?(room.host?(room.guest&&online?2:1):2):'';
+}
+$('view-friends').addEventListener('input',function(e){
+  if(e.target.id==='nick'){myName=e.target.value.trim().slice(0,20);store('solsol.name',myName);}
+  if(e.target.id==='joinCode')joinDraft=e.target.value;
+});
+$('view-friends').addEventListener('click',function(e){
+  var b=e.target.closest('button');if(!b)return;
+  if(b.parentNode.id==='limSeg'){inviteLimit=+b.dataset.v;return renderFriends();}
+  var a=b.dataset.act;
+  if(a==='create')createRoom();
+  else if(a==='join')joinRoom($('joinCode').value);
+  else if(a==='share')shareInvite(room.code);
+  else if(a==='copy')copyText(inviteText(room.code));
+  else if(a==='start')hostStart();
+  else if(a==='board')setTab('play');
+  else if(a==='leave')leaveRoom();
+});
+
+// ---------- 탭·기록 ----------
+function setTab(t){
+  tab=t;
+  ['play','friends','history'].forEach(function(n){$('view-'+n).hidden=n!==t;$('tab-'+n).setAttribute('aria-selected',n===t);});
+  if(t==='friends')renderFriends();
+  if(t==='history')renderHistory();
+}
+document.querySelector('.tabs').addEventListener('click',function(e){var b=e.target.closest('button');if(b)setTab(b.dataset.tab);});
+function fmtDate(ts){var d=new Date(ts);return (d.getMonth()+1)+'/'+d.getDate();}
+function renderHistory(){
+  var st=store('block.stats')||{best:0,games:0,total:0,recent:[],friend:{w:0,l:0,d:0}},f=st.friend||{w:0,l:0,d:0};
+  var items=(st.recent||[]).slice(0,15).map(function(r){return '<div><span>'+fmtDate(r.ts)+'</span><span>'+(r.mode==='solo'?'혼자':'친구')+'</span><span>'+r.score+'점</span><span>'+(r.mode==='friend'?(r.res==='w'?'승':r.res==='l'?'패':'무')+' · 상대 '+r.opp+'점':r.lines+'줄')+'</span></div>';});
+  var v=$('view-history');
+  v.innerHTML='<div class="panel"><h3>혼자 하기</h3><table class="rec"><tbody><tr><td>최고 점수</td><td>'+st.best+'점</td></tr><tr><td>한 판 수</td><td>'+st.games+'판</td></tr><tr><td>평균 점수</td><td>'+(st.games?Math.round(st.total/st.games):0)+'점</td></tr></tbody></table></div>'+
+    '<div class="panel"><h3>친구와 대결</h3><table class="rec"><thead><tr><th></th><th>승</th><th>패</th><th>무</th></tr></thead><tbody><tr><td>전적</td><td>'+f.w+'</td><td>'+f.l+'</td><td>'+f.d+'</td></tr></tbody></table></div>'+
+    '<div class="panel"><h3>최근 판</h3>'+(items.length?'<div class="recent">'+items.join('')+'</div>':'<p class="hint">아직 끝낸 판이 없어요</p>')+'<p class="hint">'+(window.SolsolCloud&&SolsolCloud.enabled?'기록은 이 폰과 서버에 함께 저장돼요.':'기록은 이 폰에만 저장돼요.')+'</p></div>';
+  if(window.SolsolCloud)SolsolCloud.mount(v,{board:true,level:'normal',levels:[['normal','최고 점수']],fmt:function(s){return s+'점';},note:'혼자 하기에서 끝난 판의 점수가 올라가요.'});
+}
+
+// ---------- 설명서·버튼 ----------
+function openManual(){$('manualBg').hidden=false;$('manualBg').querySelector('.manual').scrollTop=0;$('manualClose').focus();}
+function closeManual(){$('manualBg').hidden=true;$('manualBtn').focus();}
+$('manualBtn').onclick=openManual;$('manualClose').onclick=closeManual;$('manualOk').onclick=closeManual;
+$('manualBg').addEventListener('click',function(e){if(e.target.id==='manualBg')closeManual();});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!$('manualBg').hidden)closeManual();});
+$('newBtn').onclick=function(){
+  if(room){leaveRoom();render();return;}
+  if(G&&!G.over&&G.score>0&&!confirm('지금 판을 그만두고 새로 시작할까요?'))return;
+  newGame('solo',newSeed(),0);
+};
+var toastTimer=0;
+function toast(msg){var t=$('toast');t.textContent=msg;t.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(function(){t.hidden=true;},2600);}
+
+// ---------- 시작 ----------
+function resumeSolo(){
+  var s=store('block.game');
+  if(s&&s.board&&s.board.length===64&&s.mode==='solo'){G=s;picked=-1;$('result').hidden=true;$('board').classList.toggle('over',!!G.over);render();if(G.over)showResult();}
+  else newGame('solo',newSeed(),0);
+}
+resumeSolo();
+var m=(location.hash||'').match(/^#join-([A-Za-z0-9]{6})$/),savedRoom=store('block.room');
+if(m){
+  pendingJoin=m[1].toUpperCase();
+  try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}
+  setTab('friends');
+  if(peerOk())joinRoom(pendingJoin);else toast('연결 모듈을 불러오지 못했어요. 인터넷 연결을 확인해 주세요');
+}else if(savedRoom&&savedRoom.code&&Date.now()-savedRoom.ts<2*3600*1000&&peerOk()){
+  if(savedRoom.host){openHostRoom(savedRoom.code,savedRoom.limit||0);toast('방 '+savedRoom.code+'을(를) 다시 열었어요');}
+  else joinRoom(savedRoom.code);
+  setTab('friends');
+}
+})();
+</script>
+<script>if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(function(){});</script>
+</body>
+</html>

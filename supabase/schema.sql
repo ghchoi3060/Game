@@ -125,3 +125,34 @@ grant execute on function public.redeem_transfer_code(text) to authenticated;
 -- 빙고 추가(이미 위 테이블을 만든 프로젝트에서도 저장 허용 목록을 갱신)
 alter table public.saves drop constraint if exists saves_game_check;
 alter table public.saves add constraint saves_game_check check (game in ('chess', 'janggi', 'sudoku', 'mine', 'bingo'));
+
+-- 블록 추가 · 앞으로 새 게임은 SQL 없이: 저장 허용 목록을 "영문 소문자 2~16자" 규칙으로 바꾼다
+alter table public.saves drop constraint if exists saves_game_check;
+alter table public.saves add constraint saves_game_check check (game ~ '^[a-z]{2,16}$');
+alter table public.scores drop constraint if exists scores_game_check;
+alter table public.scores add constraint scores_game_check check (game ~ '^[a-z]{2,16}$');
+alter table public.scores drop constraint if exists scores_level_check;
+alter table public.scores add constraint scores_level_check check (level ~ '^[a-z]{2,16}$');
+alter table public.scores drop constraint if exists scores_time_sec_check;
+alter table public.scores add constraint scores_time_sec_check check (time_sec between 1 and 10000000);
+
+-- 순위표: 블록은 점수가 높을수록 위(나머지는 시간이 짧을수록 위)
+create or replace function public.leaderboard(p_game text, p_level text, p_limit int default 20)
+returns table (rank bigint, nickname text, best int, is_me boolean)
+language sql stable security definer set search_path = public as $$
+  with best as (
+    select s.user_id,
+           case when p_game = 'block' then max(s.time_sec) else min(s.time_sec) end as best
+    from scores s where s.game = p_game and s.level = p_level
+    group by s.user_id
+  ), ranked as (
+    select rank() over (order by case when p_game = 'block' then -b.best else b.best end) as rank,
+           coalesce(p.nickname, '이름 없음') as nickname,
+           b.best,
+           b.user_id = auth.uid() as is_me
+    from best b left join profiles p on p.id = b.user_id
+  )
+  select * from ranked where rank <= least(greatest(p_limit, 1), 100) or is_me order by rank;
+$$;
+revoke all on function public.leaderboard(text, text, int) from public;
+grant execute on function public.leaderboard(text, text, int) to authenticated;

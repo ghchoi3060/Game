@@ -13,7 +13,8 @@
     janggi:{prefix:['janggi.'],skip:['janggi.room']},
     sudoku:{prefix:['sudoku.']},
     mine:{prefix:['mine.']},
-    bingo:{prefix:['bingo.']}
+    bingo:{prefix:['bingo.'],skip:['bingo.room']},
+    block:{prefix:['block.'],skip:['block.room']}
   }[GAME]||{prefix:[]};
   function owned(k){
     if(!k)return false;
@@ -188,7 +189,7 @@
       h+='<div class="panel"><h3>전체 순위</h3><div class="sc-seg" data-k="lv">'+opts.levels.map(function(l){return '<button type="button" data-lv="'+l[0]+'" aria-pressed="'+(l[0]===first)+'">'+l[1]+'</button>';}).join('')+'</div>'+
         '<div class="sc-rows" data-k="rows"><p class="hint">불러오는 중…</p></div>'+
         '<div class="sc-line"><input class="sc-field" data-k="nick" maxlength="20" placeholder="순위표에 보일 이름"><button type="button" class="btn sc-small" data-k="saveNick">저장</button></div>'+
-        '<p class="hint">이름을 정하지 않으면 "이름 없음"으로 보여요. 완성·성공한 판의 시간이 올라가요.</p></div>';
+        '<p class="hint">이름을 정하지 않으면 "이름 없음"으로 보여요. '+esc(opts.note||'완성·성공한 판의 시간이 올라가요.')+'</p></div>';
     }
     h+='<div class="panel"><h3>기기 옮기기</h3><div class="sc-state" data-k="state"></div>'+
       '<p class="hint">폰을 바꿀 때 예전 폰에서 코드를 만들고, 새 폰에서 입력하면 모든 게임의 기록이 옮겨져요. 코드는 30분 동안 쓸 수 있어요.</p>'+

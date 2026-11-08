@@ -1,0 +1,37 @@
+# 솔솔퍼즐(블록)
+
+아이폰에서 링크로 여는 블록 퍼즐 웹앱(PWA). 다른 게임과 같은 디자인. 빌드 단계 없음 — 파일을 고치면 그대로 배포된다.
+사용자 응답·문서·화면 문구는 한국어. "블록 블라스트"는 다른 회사 게임 이름이라 화면·문서에 쓰지 않는다.
+
+## 파일
+
+| 파일 | 내용 |
+|---|---|
+| `index.html` | 화면·스타일·앱 로직 전부. 끌어 놓기, 점수·피버, 친구 대전, 이펙트, 기록 |
+| `engine.js` | 블록 모양·씨앗 난수·놓기·줄 지우기·기본 점수 (`BlockEngine()`) |
+| `sw.js` | 오프라인 캐시. 캐시에 넣는 파일이 바뀌면 `CACHE` 버전을 올린다 |
+| `manifest.webmanifest`, `icon.svg`, `icon-512.png` | 홈 화면 앱 정보·아이콘 |
+
+## 구조
+
+- **판**: `i = 줄*8 + 칸`, 값 0 빈칸·1~7 색. 블록은 `{s: SHAPES 번호, color}`. 돌리기 없음.
+- **블록 순서**: `tray(seed, round)` — 씨앗과 순번만으로 정해진다(판 상태와 무관). 친구 대전은 방장이 씨앗을 보내 두 사람이 같은 순서.
+- **점수**: 엔진 `place()` = 칸 수 + 줄 보너스 `10·n(n+1)/2 × 연속`(+300 판 비움). 연속은 줄을 못 지우고 3번 놓으면 0.
+  화면 쪽에서 더한다: 빠르게 보너스(지난 지우기 뒤 3초 안이면 `10 × 연속 빠르게 횟수`), 피버 중이면 전부 2배.
+  피버 타임은 판을 비우면 10초(`FEVER_MS`, `G.feverUntil`).
+- **끌어 놓기**: 블록을 손가락보다 블록 높이 + 40px 위에 띄운다. 띄운 블록의 왼쪽 위로 판 칸을 계산해 그림자·지워질 줄을 미리 보여 준다. 움직이지 않고 떼면 "고르기", 그다음 칸 클릭으로 놓기.
+- **상태** `G`: `mode('solo'|'friend'), seed, round, board, tray(놓은 칸은 null), score, combo, miss, lines, over, why, limit, countdown, feverUntil, lastClearAt, speed`. 혼자 하기는 `block.game` 에 저장해서 이어 한다.
+- **친구 대전(2명)**: PeerJS, 방장 피어 id `solsolbk-<방코드>`. `hello` → `lobby{host,limit,phase}` → `start{seed,limit,gid}`(3·2·1 뒤 시작) → 서로 `state{score,over,lines,fever}`(0.25초마다 최대 1번).
+  둘 다 끝나면(시간 제한이면 0초에 자동으로 끝) 점수 비교. 상대가 45초 넘게 끊겨 있으면 내 점수로 끝낸다.
+  재연결은 빙고와 같은 방식(참가자 3초마다 최대 3분 재시도, 화면 복귀 시 재연결, 방 코드 저장 후 다시 열기).
+- **저장**: `block.game`, `block.stats`(best, games, total, recent, friend w/l/d), `block.room`. 서버 순위표는 `scores(game='block', level='normal', time_sec=점수)`, 높은 점수가 위.
+
+## 검증
+
+- 엔진: 같은 씨앗·순번이면 같은 블록, 줄·판 비움 점수, 범위·겹침, 연속, 무작위 100판이 끝나는지.
+- 화면: headless Chrome 에서 가짜 PointerEvent 로 끌어 놓기·톡 고르기, 끝까지 → 결과·기록. 점수 규칙(빠르게·피버)은 판을 미리 만들어 계산값과 비교.
+- 친구 대전: iframe 2개 + 가짜 PeerJS 중계(같은 블록인지, 상대 점수 표시, 결과가 같은지). 실제 폰 2대로도 확인해야 한다.
+
+## 배포
+
+GitHub 저장소 `ghchoi3060/Game` 을 Pages 로 공개한다. 주소는 `https://ghchoi3060.github.io/Game/블록/`.
