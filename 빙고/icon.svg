@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#58B030"/>
+  <ellipse cx="256" cy="444" rx="170" ry="24" fill="#3E871C"/>
+  <rect x="86" y="70" width="340" height="340" rx="44" fill="#D9E3CE"/>
+  <g font-family="Fredoka,'Nunito',sans-serif" font-weight="700" font-size="54" text-anchor="middle" dominant-baseline="central">
+    <rect x="104" y="88" width="92" height="92" rx="22" fill="#E0533D"/><text x="150" y="134" fill="#FFFFFF">7</text>
+    <rect x="210" y="88" width="92" height="92" rx="22" fill="#FFFFFF"/><text x="256" y="134" fill="#22301F">12</text>
+    <rect x="316" y="88" width="92" height="92" rx="22" fill="#F6C945"/><text x="362" y="134" fill="#5A4300">3</text>
+    <rect x="104" y="194" width="92" height="92" rx="22" fill="#FFFFFF"/><text x="150" y="240" fill="#22301F">20</text>
+    <rect x="210" y="194" width="92" height="92" rx="22" fill="#E0533D"/><text x="256" y="240" fill="#FFFFFF">9</text>
+    <rect x="316" y="194" width="92" height="92" rx="22" fill="#FFFFFF"/><text x="362" y="240" fill="#22301F">16</text>
+    <rect x="104" y="300" width="92" height="92" rx="22" fill="#F6C945"/><text x="150" y="346" fill="#5A4300">1</text>
+    <rect x="210" y="300" width="92" height="92" rx="22" fill="#FFFFFF"/><text x="256" y="346" fill="#22301F">24</text>
+    <rect x="316" y="300" width="92" height="92" rx="22" fill="#E0533D"/><text x="362" y="346" fill="#FFFFFF">5</text>
+  </g>
+  <path d="M136 120L376 360" stroke="#FFFFFF" stroke-width="14" stroke-linecap="round" opacity=".9"/>
+</svg>

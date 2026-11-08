@@ -12,7 +12,8 @@
     chess:{prefix:['chess.'],exact:['solsol.friends','solsol.recorded']},
     janggi:{prefix:['janggi.'],skip:['janggi.room']},
     sudoku:{prefix:['sudoku.']},
-    mine:{prefix:['mine.']}
+    mine:{prefix:['mine.']},
+    bingo:{prefix:['bingo.']}
   }[GAME]||{prefix:[]};
   function owned(k){
     if(!k)return false;
@@ -190,7 +191,7 @@
         '<p class="hint">이름을 정하지 않으면 "이름 없음"으로 보여요. 완성·성공한 판의 시간이 올라가요.</p></div>';
     }
     h+='<div class="panel"><h3>기기 옮기기</h3><div class="sc-state" data-k="state"></div>'+
-      '<p class="hint">폰을 바꿀 때 예전 폰에서 코드를 만들고, 새 폰에서 입력하면 네 게임의 기록이 모두 옮겨져요. 코드는 30분 동안 쓸 수 있어요.</p>'+
+      '<p class="hint">폰을 바꿀 때 예전 폰에서 코드를 만들고, 새 폰에서 입력하면 모든 게임의 기록이 옮겨져요. 코드는 30분 동안 쓸 수 있어요.</p>'+
       '<button type="button" class="btn sc-small" data-k="make">이어하기 코드 만들기</button><div class="sc-code" data-k="code" hidden></div>'+
       '<div class="sc-line"><input class="sc-field" data-k="redeem" maxlength="8" autocapitalize="characters" autocomplete="off" placeholder="받은 코드 8자리"><button type="button" class="btn sc-small" data-k="use">옮겨 오기</button></div>'+
       '<p class="hint">옮겨 오면 이 폰의 지금 기록은 예전 폰 기록으로 바뀌어요.</p></div>';

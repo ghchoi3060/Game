@@ -1,0 +1,16 @@
+{
+  "name": "솔솔대국(빙고)",
+  "short_name": "솔솔대국(빙고)",
+  "description": "친구들과 함께하는 귀여운 숫자 빙고. 최대 6명, 초대 링크로 바로 참가, 봇과 연습, 전적.",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F2F6EC",
+  "theme_color": "#58B030",
+  "icons": [
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

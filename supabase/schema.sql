@@ -13,7 +13,7 @@ create table if not exists public.profiles (
 -- 게임별 저장 데이터(브라우저 localStorage 의 그 게임 키들을 통째로)
 create table if not exists public.saves (
   user_id uuid not null references auth.users(id) on delete cascade,
-  game text not null check (game in ('chess', 'janggi', 'sudoku', 'mine')),
+  game text not null check (game in ('chess', 'janggi', 'sudoku', 'mine', 'bingo')),
   data jsonb not null,
   updated_at timestamptz not null default now(),
   primary key (user_id, game)
@@ -121,3 +121,7 @@ revoke all on function public.redeem_transfer_code(text) from public;
 grant execute on function public.leaderboard(text, text, int) to authenticated;
 grant execute on function public.create_transfer_code() to authenticated;
 grant execute on function public.redeem_transfer_code(text) to authenticated;
+
+-- 빙고 추가(이미 위 테이블을 만든 프로젝트에서도 저장 허용 목록을 갱신)
+alter table public.saves drop constraint if exists saves_game_check;
+alter table public.saves add constraint saves_game_check check (game in ('chess', 'janggi', 'sudoku', 'mine', 'bingo'));
