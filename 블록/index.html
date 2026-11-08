@@ -262,7 +262,7 @@ table.rec td:first-child,table.rec th:first-child{text-align:left;font-weight:80
         <li>놓은 칸 하나에 1점.</li>
         <li>줄을 지우면 보너스: 1줄 10점, 2줄 30점, 3줄 60점, 4줄 100점… 한 번에 많이 지울수록 커져요.</li>
         <li><b>연속</b>: 줄을 연속으로 지우면 줄 보너스에 연속 횟수를 곱해요(연속 x3이면 3배). 줄을 못 지우고 3번 놓으면 연속이 끝나요.</li>
-        <li>3연속부터 <b>Great! → Excellent! → Amazing! → Fantastic! → Incredible! → Legendary!</b> 감탄 문구가 나와요.</li>
+        <li>잘하면 상황에 맞는 감탄 문구가 나와요: 판을 비우면 <b>Perfect!</b>, 판이 거의 찼을 때 지우면 <b>Nice Save!</b>, 3줄 이상이면 <b>Triple!</b>, 빠르게 연달아 지우면 <b>Speedy!</b>, 친구를 앞지르면 <b>Comeback!</b>, 3연속부터는 <b>Great! → … → Legendary!</b></li>
         <li><b>빠르게</b>: 지난번에 줄을 지운 뒤 <b>3초 안에</b> 또 지우면 추가 점수 +10, 계속 빠르게 지우면 +20, +30…으로 커져요.</li>
         <li>판을 완전히 비우면 <b>+300점</b>과 함께 <b>피버 타임</b>이 시작돼요. <b>10초 동안 모든 점수가 2배</b>이고, 판 테두리가 무지개로 빛나요. 피버 중에 또 비우면 다시 10초.</li>
         <li>줄을 지울 때 뜨는 숫자 아래에 연속·빠르게·피버 중 무엇을 받았는지 보여요.</li>
@@ -290,7 +290,7 @@ table.rec td:first-child,table.rec th:first-child{text-align:left;font-weight:80
 'use strict';
 
 var E=BlockEngine(),N=E.N;
-var VERSION='11.08-4';
+var VERSION='11.08-5';
 var $=function(id){return document.getElementById(id);};
 function store(k,v){try{if(v===undefined)return JSON.parse(localStorage.getItem(k)||'null');localStorage.setItem(k,JSON.stringify(v));}catch(e){return null;}}
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
@@ -431,6 +431,12 @@ function placeAt(k,r0,c0){
     G.lastClearAt=now;
   }
   var gain=(res.gain+quick)*(fever?2:1);
+  // 상황에 맞는 감탄을 고르기 위한 정보(점수를 더하기 전·후)
+  var ctx={lines:res.lines,perfect:res.perfect,fever:fever,quickChain:G.speed||0,combo:res.combo,
+    full:before.filter(Boolean).length/64,
+    overtook:G.mode==='friend'&&opp&&G.score<=opp.score&&G.score+gain>opp.score&&opp.score>0,
+    newBest:G.mode==='solo'&&!G.bestCelebrated&&best()>0&&G.score<=best()&&G.score+gain>best()};
+  if(ctx.newBest)G.bestCelebrated=true;
   G.combo=res.combo;G.miss=res.miss;G.score+=gain;G.lines+=res.lines;
   if(res.perfect){G.feverUntil=now+FEVER_MS;}
   bumpScore();
@@ -442,8 +448,7 @@ function placeAt(k,r0,c0){
     var tags=[];if(G.combo>=2)tags.push('연속 x'+G.combo);if(quick)tags.push('빠르게 +'+quick);if(fever)tags.push('피버 x2');
     plusAt(res.placed,'+'+gain,tags.join(' · '));
     if(res.perfect)ribbon('피버 타임! 10초 동안 점수 2배','fever');
-    else if(res.lines>=3)ribbon(res.lines+'줄 한 번에!');
-    if(G.combo>=3)praise(G.combo);   // 3연속부터 감탄 문구
+    praise(ctx);   // 상황에 맞는 감탄(해당하는 게 없으면 안 나옴)
     if(navigator.vibrate){try{navigator.vibrate(res.lines>1?[20,30,20]:20);}catch(e){}}
     setTimeout(function(){
       G.board=res.board;cells.forEach(function(c){c.classList.remove('pop');c.style.animationDelay='';});
@@ -599,13 +604,36 @@ setInterval(function(){
   if(on||wasFever)renderScore();
   if(on!==wasFever){wasFever=on;sendState();if(!on&&G.feverUntil&&!G.over)toast('피버 타임 끝!');}
 },250);
-// 연속 횟수별 감탄: [영어 문구, 한국어, 색]
-var PRAISE=[['Great!','잘하고 있어요!','#3E9BD6'],['Excellent!','대단해요!','#6CB33F'],['Amazing!','멋져요!','#8E6BE0'],['Fantastic!','최고예요!','#E0779F'],['Incredible!','믿을 수 없어요!','#E8892B'],['Legendary!','전설이에요!','#D9434B']];
-function praise(combo){
+// 감탄 문구: 그 순간 일어난 일에 맞춰 고른다. [영어, 한국어] 후보 중 바로 전과 다른 것
+var PRAISE={
+  perfect:[['Perfect!','판을 싹 비웠어요!'],['Spotless!','하나도 안 남았어요!']],
+  overtook:[['Comeback!','역전했어요!'],['Take the Lead!','앞서기 시작했어요!']],
+  newBest:[['New Record!','최고 기록을 넘었어요!']],
+  clutch:[['Nice Save!','위기 탈출!'],['Phew!','휴, 살았다!'],['Clutch!','아슬아슬했어요!']],
+  lines3:[['Triple!','세 줄 한 번에!']],lines4:[['Quadruple!','네 줄 한 번에!']],lines5:[['Unreal!','다섯 줄 넘게 한 번에!']],
+  quick:[['Speedy!','손이 정말 빨라요!'],['Lightning!','번개처럼 빨라요!'],['Rapid Fire!','쉬지 않고 지워요!']],
+  fever:[['On Fire!','불타오르네요!'],['Hot Streak!','피버를 제대로 쓰고 있어요!']],
+  combo:[[['Great!','잘하고 있어요!'],['Nice!','좋아요, 계속!']],[['Excellent!','대단해요!'],['Superb!','훌륭해요!']],[['Amazing!','멋져요!'],['Brilliant!','반짝반짝해요!']],
+    [['Fantastic!','최고예요!']],[['Incredible!','믿을 수 없어요!']],[['Legendary!','전설이에요!'],['Unstoppable!','아무도 못 말려요!']]]
+};
+var PRAISE_COLOR={perfect:'#E8A317',overtook:'#D9434B',newBest:'#E8A317',clutch:'#2FA37A',lines3:'#8E6BE0',lines4:'#8E6BE0',lines5:'#8E6BE0',quick:'#3E9BD6',fever:'#E8642B',combo:['#3E9BD6','#6CB33F','#8E6BE0','#E0779F','#E8892B','#D9434B']};
+var lastPraise='';
+// 우선순위: 판 비움 > 역전 > 신기록 > 위기 탈출 > 3줄 이상 > 빠르게 연달아 > 피버 중 > 3연속 이상
+function pickPraise(c){
+  var key=c.perfect?'perfect':c.overtook?'overtook':c.newBest?'newBest':(c.full>=.75&&c.lines)?'clutch':
+    c.lines>=5?'lines5':c.lines===4?'lines4':c.lines===3?'lines3':(c.quickChain>=2&&c.lines)?'quick':(c.fever&&c.lines&&c.combo>=2)?'fever':c.combo>=3?'combo':null;
+  if(!key)return null;
+  var pool=key==='combo'?PRAISE.combo[Math.min(c.combo-3,PRAISE.combo.length-1)]:PRAISE[key];
+  var cand=pool.filter(function(x){return x[0]!==lastPraise;});if(!cand.length)cand=pool;
+  var t=cand[Math.floor(Math.random()*cand.length)];lastPraise=t[0];
+  var col=key==='combo'?PRAISE_COLOR.combo[Math.min(c.combo-3,5)]:PRAISE_COLOR[key];
+  return [t[0],t[1]+(c.combo>=3?' · '+c.combo+'연속':''),col];
+}
+function praise(ctx){
+  var t=pickPraise(ctx);if(!t)return;
   $('wrap').querySelectorAll('.praise').forEach(function(x){x.remove();});
-  var t=PRAISE[Math.min(combo-3,PRAISE.length-1)];
   var el=document.createElement('div');el.className='praise';el.style.setProperty('--pc',t[2]);
-  el.innerHTML='<b>'+t[0]+'</b><small>'+combo+'연속! '+t[1]+'</small>';
+  el.innerHTML='<b>'+esc(t[0])+'</b><small>'+esc(t[1])+'</small>';
   $('wrap').appendChild(el);setTimeout(function(){el.remove();},1300);
   // 글자 둘레로 별
   if(!reduced()){
