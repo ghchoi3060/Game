@@ -112,7 +112,8 @@ main{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden}
 .list{display:flex;flex-direction:column;gap:8px}
 
 /* 아래 버튼 */
-.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.actions{display:grid;grid-template-columns:1.25fr 1fr 1.25fr;gap:8px}
+.actions .btn{padding-inline:6px}
 .btn{border:0;border-radius:16px;padding:12px 10px;font-weight:800;font-size:15px;background:var(--surface);color:var(--ink);border:2px solid var(--line);box-shadow:0 4px 0 var(--line);display:flex;align-items:center;justify-content:center;gap:6px;min-height:48px}
 .btn:active:not(:disabled){transform:translateY(4px);box-shadow:0 0 0 var(--line)}
 .btn.primary{background:var(--accent);color:var(--on-accent);border-color:var(--accent);box-shadow:0 4px 0 var(--accent-deep)}
@@ -132,6 +133,23 @@ table.rec th{font-size:11px;color:var(--muted);font-weight:800}
 table.rec td:first-child,table.rec th:first-child{text-align:left;font-weight:800}
 .recent{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
 .recent div{display:flex;gap:10px}
+/* 설명서 팝업 */
+.modal-bg{position:fixed;inset:0;background:rgba(17,23,17,.5);z-index:30;display:grid;place-items:center;padding:max(16px,env(safe-area-inset-top,0px)) 16px max(16px,env(safe-area-inset-bottom,0px))}
+.modal{background:var(--bg);border-radius:22px;width:min(100%,520px);max-height:100%;display:flex;flex-direction:column;box-shadow:0 8px 0 var(--shade);animation:pop .3s cubic-bezier(.3,1.5,.5,1);overflow:hidden}
+.modal header{display:flex;align-items:center;gap:10px;padding:14px 14px 10px 18px;border-bottom:2px solid var(--line)}
+.modal h2{margin:0;font-family:var(--f-display);font-size:22px;font-weight:700;flex:1}
+.modal .x{width:38px;height:38px;border-radius:12px;border:2px solid var(--line);background:var(--surface);font-size:18px;font-weight:800;display:grid;place-items:center;padding:0}
+.manual{overflow-y:auto;padding:14px 18px 18px;display:flex;flex-direction:column;gap:16px;-webkit-overflow-scrolling:touch}
+.manual h3{margin:0 0 6px;font-family:var(--f-display);font-size:16px;font-weight:700;color:var(--accent)}
+.manual p,.manual li{margin:0;font-size:14px;line-height:1.6;font-weight:600}
+.manual ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.manual b{font-weight:800}
+.manual .mini{display:inline-grid;grid-template-columns:repeat(3,22px);gap:2px;padding:3px;border-radius:8px;background:var(--tile-deep);vertical-align:middle;margin:4px 0}
+.manual .mini i{width:22px;height:22px;border-radius:5px;background:var(--tile);display:grid;place-items:center;font-style:normal;font-family:var(--f-display);font-weight:700;font-size:13px}
+.manual .mini i.o{background:var(--open)}
+.manual .mini i svg{width:80%;height:80%}
+.manual .row{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.modal footer{padding:10px 18px 14px;border-top:2px solid var(--line)}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:14px;font-weight:800;font-size:14px;z-index:40;max-width:calc(100% - 32px);text-align:center}
 @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
 @media (max-width:380px){.tabs button{padding:6px 9px}.brand{font-size:17px}}
@@ -165,6 +183,7 @@ table.rec td:first-child,table.rec th:first-child{text-align:left;font-weight:80
       </div>
       <div class="actions">
         <button class="btn" id="flagBtn" type="button" aria-pressed="false"></button>
+        <button class="btn" id="manualBtn" type="button">설명서</button>
         <button class="btn primary" id="newBtn" type="button">새 게임</button>
       </div>
       <p class="help" id="help">탭하면 열기 · 길게 누르면 깃발 · 숫자를 누르면 주변 한 번에 열기</p>
@@ -173,6 +192,71 @@ table.rec td:first-child,table.rec th:first-child{text-align:left;font-weight:80
 
     <section class="view" id="view-history" hidden></section>
   </main>
+</div>
+<div class="modal-bg" id="manualBg" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="manualTitle">
+    <header><h2 id="manualTitle">지뢰찾기 설명서</h2><button class="x" id="manualClose" type="button" aria-label="닫기">✕</button></header>
+    <div class="manual">
+      <section>
+        <h3>목표</h3>
+        <p>판 어딘가에 지뢰가 숨어 있어요. 지뢰를 밟지 않고 <b>지뢰가 없는 칸을 모두 열면</b> 성공이에요. 지뢰 칸에 깃발을 다 꽂을 필요는 없어요.</p>
+      </section>
+      <section>
+        <h3>숫자 읽는 법</h3>
+        <p>열린 칸의 숫자는 <b>그 칸을 둘러싼 8칸에 있는 지뢰 수</b>예요. 숫자가 없는 빈칸은 주변에 지뢰가 없어서, 주변 칸이 저절로 함께 열려요.</p>
+        <div class="row">
+          <span class="mini" id="exA"></span>
+          <span style="flex:1;min-width:160px;font-size:13px;font-weight:700">가운데 <b>1</b> 주변의 닫힌 칸이 하나뿐이면, 그 칸이 지뢰예요. 그림처럼 깃발을 꽂아 두세요.</span>
+        </div>
+      </section>
+      <section>
+        <h3>조작</h3>
+        <ul>
+          <li><b>탭</b>: 칸을 열어요.</li>
+          <li><b>길게 누르기</b>: 깃발을 꽂거나 빼요. 지뢰라고 확신하는 칸에 꽂아 두면 실수로 열지 않아요.</li>
+          <li><b>깃발 모드</b> 버튼: 켜면 탭이 깃발이 되고, 길게 누르면 열려요. 깃발을 많이 꽂을 때 편해요.</li>
+          <li><b>열린 숫자 탭</b>: 주변에 꽂은 깃발 수가 숫자와 같으면, 나머지 닫힌 칸을 한 번에 열어요. 깃발이 틀렸으면 지뢰가 터지니 조심하세요.</li>
+          <li>PC에서는 <b>오른쪽 클릭</b>이 깃발이에요.</li>
+        </ul>
+      </section>
+      <section>
+        <h3>화면 위쪽</h3>
+        <ul>
+          <li><b>왼쪽 숫자</b>: 남은 지뢰 수(전체 지뢰 − 꽂은 깃발)</li>
+          <li><b>얼굴</b>: 누르면 새 게임. 칸을 누르는 동안 놀란 표정, 지면 ✕ 눈, 이기면 선글라스</li>
+          <li><b>오른쪽 숫자</b>: 걸린 시간(초). 첫 칸을 열 때부터 재요.</li>
+        </ul>
+      </section>
+      <section>
+        <h3>안심하세요</h3>
+        <ul>
+          <li><b>첫 칸은 항상 안전</b>해요. 첫 칸 주변에도 지뢰가 없어서 넓게 열려요.</li>
+          <li><b>찍지 않아도 풀리는 판만 만들기</b>를 켜 두면(기본), 운에 맡겨 찍어야 하는 상황 없이 숫자만 보고 끝까지 풀 수 있는 판이 나와요.</li>
+        </ul>
+      </section>
+      <section>
+        <h3>난이도</h3>
+        <ul>
+          <li><b>초급</b> 9×9 · 지뢰 10개</li>
+          <li><b>중급</b> 12×16 · 지뢰 30개</li>
+          <li><b>고급</b> 12×20 · 지뢰 50개</li>
+        </ul>
+      </section>
+      <section>
+        <h3>요령</h3>
+        <ul>
+          <li>숫자와 주변 닫힌 칸 수가 같으면, 닫힌 칸은 모두 지뢰예요.</li>
+          <li>숫자만큼 깃발을 이미 꽂았으면, 나머지 닫힌 칸은 모두 안전해요. 숫자를 탭해서 한 번에 여세요.</li>
+          <li>모서리와 가장자리의 숫자부터 보면 쉽게 풀려요.</li>
+        </ul>
+      </section>
+      <section>
+        <h3>기록</h3>
+        <p>진행 중인 판은 자동으로 저장돼요. 난이도별 성공률과 최고 기록은 <b>기록</b> 탭에서 볼 수 있어요. 기록은 이 폰에만 저장돼요. 설명서를 보는 동안에는 시간이 멈춰요.</p>
+      </section>
+    </div>
+    <footer><button class="btn primary" id="manualOk" type="button" style="width:100%">알겠어요</button></footer>
+  </div>
 </div>
 <div class="toast" id="toast" hidden></div>
 
@@ -423,7 +507,7 @@ $('noGuess').onchange=function(){store('mine.noGuess',this.checked);};
 
 // ---------- 시간·저장 ----------
 setInterval(function(){
-  if(!G||!G.started||G.over||document.hidden||tab!=='play')return;
+  if(!G||!G.started||G.over||document.hidden||tab!=='play'||!$('manualBg').hidden)return;
   G.time+=1;$('timer').textContent=Math.floor(G.time);
   if(G.time%5===0)save();
 },1000);
@@ -450,6 +534,17 @@ function renderHistory(){
   $('view-history').innerHTML='<div class="panel"><h3>난이도별 기록</h3><table class="rec"><thead><tr><th>난이도</th><th>성공 / 시작</th><th>성공률</th><th>최고 기록</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
     '<div class="panel"><h3>최근 판</h3>'+(items.length?'<div class="recent">'+items.join('')+'</div>':'<p class="hint">아직 끝낸 판이 없어요</p>')+'<p class="hint">기록은 이 폰에만 저장돼요.</p></div>';
 }
+
+// ---------- 설명서 ----------
+// 숫자 읽기 예: 가운데 1, 닫힌 칸은 오른쪽 위 하나뿐 → 그 칸에 깃발
+$('exA').innerHTML='<i class="o"></i><i class="o"></i><i>'+FLAG_SVG.replace('class="flag" ','')+'</i><i class="o"></i><i class="o n1">1</i><i class="o"></i><i class="o"></i><i class="o"></i><i class="o"></i>';
+function openManual(){$('manualBg').hidden=false;$('manualBg').querySelector('.manual').scrollTop=0;$('manualClose').focus();}
+function closeManual(){$('manualBg').hidden=true;$('manualBtn').focus();}
+$('manualBtn').onclick=openManual;
+$('manualClose').onclick=closeManual;
+$('manualOk').onclick=closeManual;
+$('manualBg').addEventListener('click',function(e){if(e.target.id==='manualBg')closeManual();});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!$('manualBg').hidden)closeManual();});
 
 var toastTimer=0;
 function toast(msg){var t=$('toast');t.textContent=msg;t.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(function(){t.hidden=true;},2400);}

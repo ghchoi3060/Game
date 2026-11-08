@@ -140,6 +140,21 @@ table.rec th{font-size:11px;color:var(--muted);font-weight:800}
 table.rec td:first-child,table.rec th:first-child{text-align:left;font-weight:800}
 .recent{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
 .recent div{display:flex;gap:10px}
+/* 설명서 팝업 */
+.bottom{display:grid;grid-template-columns:1fr 2fr;gap:10px}
+.modal-bg{position:fixed;inset:0;background:rgba(17,23,17,.5);z-index:30;display:grid;place-items:center;padding:max(16px,env(safe-area-inset-top,0px)) 16px max(16px,env(safe-area-inset-bottom,0px))}
+.modal{background:var(--bg);border-radius:22px;width:min(100%,520px);max-height:100%;display:flex;flex-direction:column;box-shadow:0 8px 0 var(--shade);animation:pop .3s cubic-bezier(.3,1.5,.5,1);overflow:hidden}
+.modal header{display:flex;align-items:center;gap:10px;padding:14px 14px 10px 18px;border-bottom:2px solid var(--line)}
+.modal h2{margin:0;font-family:var(--f-display);font-size:22px;font-weight:700;flex:1}
+.modal .x{width:38px;height:38px;border-radius:12px;border:2px solid var(--line);background:var(--surface);font-size:18px;font-weight:800;display:grid;place-items:center;padding:0}
+.manual{overflow-y:auto;padding:14px 18px 18px;display:flex;flex-direction:column;gap:16px;-webkit-overflow-scrolling:touch}
+.manual h3{margin:0 0 6px;font-family:var(--f-display);font-size:16px;font-weight:700;color:var(--accent)}
+.manual p,.manual li{margin:0;font-size:14px;line-height:1.6;font-weight:600}
+.manual ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.manual b{font-weight:800}
+.manual .k{display:inline-block;min-width:22px;padding:0 6px;border-radius:6px;background:var(--surface);border:2px solid var(--line);font-weight:800;font-size:12px;text-align:center;line-height:1.5}
+.manual .sw{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:-2px;margin-right:2px;border:1px solid var(--line)}
+.modal footer{padding:10px 18px 14px;border-top:2px solid var(--line)}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:14px;font-weight:800;font-size:14px;z-index:40;max-width:calc(100% - 32px);text-align:center}
 @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
 @media (max-width:380px){.tabs button{padding:6px 9px}.brand{font-size:17px}.num b{font-size:21px}}
@@ -181,7 +196,10 @@ table.rec td:first-child,table.rec th:first-child{text-align:left;font-weight:80
         <button class="tool" id="hintBtn" type="button"><svg viewBox="0 0 24 24"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7V16h8v-1.3A7 7 0 0 0 12 2z"/></svg>힌트 <span class="cnt" id="hintCnt"></span></button>
       </div>
       <div class="pad" id="pad"></div>
-      <button class="btn primary" id="newBtn" type="button">새 게임</button>
+      <div class="bottom">
+        <button class="btn" id="manualBtn" type="button">설명서</button>
+        <button class="btn primary" id="newBtn" type="button">새 게임</button>
+      </div>
     </section>
 
     <section class="view" id="view-history" hidden></section>
@@ -193,6 +211,70 @@ table.rec td:first-child,table.rec th:first-child{text-align:left;font-weight:80
     <h2 id="sheetTitle">새 게임</h2>
     <div class="list" id="levels"></div>
     <button class="btn" id="sheetCancel" type="button">닫기</button>
+  </div>
+</div>
+<div class="modal-bg" id="manualBg" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="manualTitle">
+    <header><h2 id="manualTitle">스도쿠 설명서</h2><button class="x" id="manualClose" type="button" aria-label="닫기">✕</button></header>
+    <div class="manual">
+      <section>
+        <h3>목표</h3>
+        <p>9×9 판의 빈칸을 모두 1~9 숫자로 채우면 완성이에요. 단, 아래 세 곳에는 1~9가 <b>한 번씩만</b> 들어가야 해요.</p>
+        <ul><li>가로줄 9칸</li><li>세로줄 9칸</li><li>굵은 선으로 나뉜 3×3 상자 9칸</li></ul>
+      </section>
+      <section>
+        <h3>하는 법</h3>
+        <ul>
+          <li>빈칸을 누르고 아래 <b>숫자 패드</b>에서 숫자를 눌러요.</li>
+          <li>숫자 아래 작은 숫자는 그 숫자를 앞으로 몇 개 더 넣어야 하는지예요. 9개를 다 넣으면 버튼이 흐려져요.</li>
+          <li>처음부터 있던 진한 숫자는 바꿀 수 없어요.</li>
+        </ul>
+      </section>
+      <section>
+        <h3>도구</h3>
+        <ul>
+          <li><b>메모</b>: 켜면 숫자가 작은 글씨 후보로 적혀요. 확실하지 않을 때 후보를 적어 두세요. 숫자를 맞게 넣으면 같은 줄·칸·상자의 메모에서 그 숫자가 저절로 지워져요.</li>
+          <li><b>지우기</b>: 고른 칸의 숫자나 메모를 지워요.</li>
+          <li><b>되돌리기</b>: 방금 한 일을 하나씩 취소해요.</li>
+          <li><b>힌트</b>: 지금 확실히 채울 수 있는 칸 하나를 채우고, 왜 그 숫자인지 알려 줘요.</li>
+        </ul>
+      </section>
+      <section>
+        <h3>화면 색</h3>
+        <ul>
+          <li><span class="sw" style="background:var(--sel)"></span><b>노랑</b>: 지금 고른 칸</li>
+          <li><span class="sw" style="background:var(--peer)"></span><b>옅은 초록</b>: 고른 칸과 같은 줄·칸·상자</li>
+          <li><span class="sw" style="background:var(--same)"></span><b>초록</b>: 고른 칸과 같은 숫자</li>
+          <li><span class="sw" style="background:var(--wrong-bg)"></span><b>빨간 숫자</b>: 틀린 숫자예요. 실수가 1 늘어요. 지우고 다시 넣으면 돼요(실수 수는 그대로).</li>
+        </ul>
+      </section>
+      <section>
+        <h3>난이도</h3>
+        <ul>
+          <li><b>쉬움·보통</b>: 한 칸씩 확실한 자리를 찾아가면 끝까지 풀려요.</li>
+          <li><b>어려움</b>: 후보를 메모해 두고 비교해 봐야 풀리는 곳이 있어요.</li>
+          <li><b>고수</b>: 처음 숫자가 가장 적어요(23~25개).</li>
+        </ul>
+        <p>모든 문제는 정답이 딱 하나예요. 찍지 않고 논리로 풀 수 있어요.</p>
+      </section>
+      <section>
+        <h3>요령</h3>
+        <ul>
+          <li>먼저 많이 나온 숫자부터 보세요. 예를 들어 5가 이미 여러 개 있으면, 5가 없는 상자에서 5가 들어갈 수 있는 칸이 하나뿐인 경우가 많아요.</li>
+          <li>빈칸이 1~2개만 남은 줄이나 상자를 찾으세요. 빠진 숫자가 바로 보여요.</li>
+          <li>막히면 후보를 메모해 두고, 후보가 하나만 남은 칸을 찾아보세요.</li>
+        </ul>
+      </section>
+      <section>
+        <h3>기록</h3>
+        <p>진행 중인 판은 자동으로 저장돼서, 앱을 닫았다 열어도 이어서 할 수 있어요. 난이도별 완성 수와 최고 기록은 <b>기록</b> 탭에서 볼 수 있어요. 기록은 이 폰에만 저장돼요. 설명서를 보는 동안에는 시간이 멈춰요.</p>
+      </section>
+      <section>
+        <h3>PC 키보드</h3>
+        <p><span class="k">1</span>~<span class="k">9</span> 숫자 넣기 · <span class="k">←↑→↓</span> 칸 이동 · <span class="k">Backspace</span> 지우기 · <span class="k">N</span> 메모 켜고 끄기 · <span class="k">Ctrl</span>+<span class="k">Z</span> 되돌리기</p>
+      </section>
+    </div>
+    <footer><button class="btn primary" id="manualOk" type="button" style="width:100%">알겠어요</button></footer>
   </div>
 </div>
 <div class="toast" id="toast" hidden></div>
@@ -321,7 +403,7 @@ $('eraseBtn').onclick=erase;
 $('hintBtn').onclick=hint;
 $('notesBtn').onclick=function(){notesMode=!notesMode;renderPad();};
 document.addEventListener('keydown',function(e){
-  if(!G||tab!=='play'||!$('sheet').hidden)return;
+  if(!G||tab!=='play'||!$('sheet').hidden||!$('manualBg').hidden)return;
   var k=e.key;
   if(k>='1'&&k<='9'){place(+k);e.preventDefault();}
   else if(k==='Backspace'||k==='Delete'||k==='0'){erase();e.preventDefault();}
@@ -337,7 +419,7 @@ document.addEventListener('keydown',function(e){
 
 // ---------- 시간 ----------
 setInterval(function(){
-  if(!G||G.done||document.hidden||tab!=='play'||!$('result').hidden||!$('making').hidden)return;
+  if(!G||G.done||document.hidden||tab!=='play'||!$('result').hidden||!$('making').hidden||!$('manualBg').hidden)return;
   G.time++;$('timer').textContent=fmt(G.time);
   if(G.time%5===0)save();
 },1000);
@@ -429,6 +511,15 @@ function renderHistory(){
   $('view-history').innerHTML='<div class="panel"><h3>난이도별 기록</h3><table class="rec"><thead><tr><th>난이도</th><th>완성 / 시작</th><th>최고 기록</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
     '<div class="panel"><h3>최근 완성한 판</h3>'+(items.length?'<div class="recent">'+items.join('')+'</div>':'<p class="hint">아직 완성한 판이 없어요</p>')+'<p class="hint">기록은 이 폰에만 저장돼요.</p></div>';
 }
+
+// ---------- 설명서 ----------
+function openManual(){$('manualBg').hidden=false;$('manualBg').querySelector('.manual').scrollTop=0;$('manualClose').focus();}
+function closeManual(){$('manualBg').hidden=true;$('manualBtn').focus();}
+$('manualBtn').onclick=openManual;
+$('manualClose').onclick=closeManual;
+$('manualOk').onclick=closeManual;
+$('manualBg').addEventListener('click',function(e){if(e.target.id==='manualBg')closeManual();});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!$('manualBg').hidden)closeManual();});
 
 var toastTimer=0;
 function toast(msg){var t=$('toast');t.textContent=msg;t.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(function(){t.hidden=true;},2800);}
