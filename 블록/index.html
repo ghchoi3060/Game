@@ -275,7 +275,7 @@ table.rec td:first-child,table.rec th:first-child{text-align:left;font-weight:80
         <li>흐리게 보이는 블록은 지금 판에 놓을 곳이 없는 블록이에요. 블록은 돌릴 수 없어요.</li>
         <li>블록은 막대·네모·L·T·S·U·십자·계단·대각선 등 여러 모양이 나오고, 한 번에 나오는 3개는 서로 다른 모양이에요.</li></ul></section>
       <section><h3>난이도</h3><ul>
-        <li><b>초급</b>: 작은 블록이 많이 나오고, 큰 블록은 드물어요. 혼자 할 때는 새 블록 3개 중 최소 2개는 지금 판에 놓을 수 있게 나와요.</li>
+        <li><b>초급</b>: 1~3칸 작은 블록 위주로 나오고, 큰 블록·대각선 블록은 거의 안 나와요. 혼자 할 때는 새 블록 3개가 <b>모두 지금 판에 놓을 수 있게</b> 나오고, 가능하면 줄을 지울 수 있는 블록도 섞여요. 놓을 곳이 없어 끝나려 하면 <b>구조 블록</b>(판에 들어가는 작은 블록)으로 한 판에 3번까지 바꿔 줘요.</li>
         <li><b>중급</b>: 여러 모양이 고르게 나와요.</li>
         <li><b>고급</b>: 5칸·3×3 같은 크고 까다로운 블록이 자주 나와요.</li>
         <li>새 게임을 누르면 고를 수 있고, 최고 점수와 순위표는 난이도별로 따로예요. 친구 대전은 방장이 골라요(초급의 "놓을 수 있게 골라 주기"는 두 사람 블록을 같게 하려고 빠져요).</li></ul></section>
@@ -304,14 +304,15 @@ table.rec td:first-child,table.rec th:first-child{text-align:left;font-weight:80
 
 <script src="../common/supabase-config.js?v=1"></script>
 <script src="../common/cloud.js?v=3" data-game="block"></script>
-<script src="engine.js?v=3"></script>
+<script src="engine.js?v=4"></script>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script>
 (function(){
 'use strict';
 
 var E=BlockEngine(),N=E.N;
-var VERSION='11.09-2';
+var VERSION='11.09-3';
+var RESCUE_MAX=3;   // 초급 혼자 하기 구조 블록 횟수
 var $=function(id){return document.getElementById(id);};
 function store(k,v){try{if(v===undefined)return JSON.parse(localStorage.getItem(k)||'null');localStorage.setItem(k,JSON.stringify(v));}catch(e){return null;}}
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
@@ -486,7 +487,14 @@ function placeAt(k,r0,c0){
 }
 function afterPlace(){
   if(G.tray.every(function(x){return !x;})){G.round++;G.tray=nextTray(G.round);}
-  if(!G.tray.some(function(p){return p&&E.anyFit(G.board,p);}))gameOver('stuck');
+  if(!G.tray.some(function(p){return p&&E.anyFit(G.board,p);})){
+    // 초급 혼자 하기: 한 판에 3번까지 판에 들어가는 작은 블록으로 바꿔 준다
+    if(G.mode==='solo'&&G.level==='easy'&&E.rescueTray&&(G.rescue||0)<RESCUE_MAX){
+      G.rescue=(G.rescue||0)+1;G.tray=E.rescueTray(G.board);
+      ribbon('구조 블록!','gold');
+      toast('놓을 곳이 없어서 작은 블록으로 바꿔 줬어요 (도움 '+(RESCUE_MAX-G.rescue)+'번 남음)');
+    }else gameOver('stuck');
+  }
   save();render();sendState();
 }
 function gameOver(why){
@@ -985,7 +993,7 @@ $('newBtn').onclick=function(){
   openLevels();
 };
 // 새 게임: 난이도 고르기
-var LEVEL_DESC={easy:'작은 블록이 많이 나오고, 놓을 수 있는 블록을 골라 줘요',normal:'여러 모양이 고르게 나와요',hard:'크고 까다로운 블록이 자주 나와요'};
+var LEVEL_DESC={easy:'작은 블록 위주, 3개 모두 놓을 수 있게 골라 주고, 막히면 구조 블록 3번',normal:'여러 모양이 고르게 나와요',hard:'크고 까다로운 블록이 자주 나와요'};
 function openLevels(){
   var cur=G&&G.mode==='solo'?G.level:prefLevel();
   $('levelList').innerHTML=LEVEL_KEYS.map(function(k){

@@ -3,7 +3,7 @@ function BlockEngine(){
   // 판: 8×8, 칸 i = 줄*8 + 칸, 값 0 은 빈칸·1~7 은 블록 색
   var N=8;
   // 블록 모양·순서가 바뀌면 올린다(친구 대전에서 두 사람이 같은 버전인지 확인)
-  var VERSION=3;
+  var VERSION=4;
   // [모양(줄, 칸) 목록, 나올 확률 가중치]. 모양 묶음마다 합이 비슷하도록 방향이 많은 모양은 가중치를 나눴다
   var SHAPES=[
     [[[0,0]],1],
@@ -36,9 +36,20 @@ function BlockEngine(){
     [[[0,0],[1,0],[2,0],[2,1],[2,2]],1],[[[0,0],[0,1],[0,2],[1,0],[2,0]],1],[[[0,0],[0,1],[0,2],[1,2],[2,2]],1],[[[0,2],[1,2],[2,0],[2,1],[2,2]],1]
   ];
   // 난이도별 가중치 배율(블록 칸 수 기준). 초급은 작은 블록이 많고, 고급은 큰 블록이 많다
-  var LEVEL_MULT={easy:function(n){return n<=3?2:n===4?1:n===5?.3:.2;},normal:function(){return 1;},hard:function(n){return n<=2?.5:n===3?.8:n===4?1:n===5?1.6:2;}};
+  // 칸끼리 변으로 이어진 모양인지(대각선 블록은 끼워 넣기 어려워서 초급에서 드물게)
+  function connected(c){
+    var seen={},st=[c[0]],n=0,has={};c.forEach(function(x){has[x[0]+','+x[1]]=1;});
+    while(st.length){var x=st.pop(),k=x[0]+','+x[1];if(seen[k])continue;seen[k]=1;n++;
+      [[1,0],[-1,0],[0,1],[0,-1]].forEach(function(d){var kk=(x[0]+d[0])+','+(x[1]+d[1]);if(has[kk]&&!seen[kk])st.push([x[0]+d[0],x[1]+d[1]]);});}
+    return n===c.length;
+  }
+  var LEVEL_MULT={
+    easy:function(n,con){return (n<=2?3:n===3?2.5:n===4?.8:n===5?.12:.05)*(con?1:.3);},
+    normal:function(){return 1;},
+    hard:function(n){return n<=2?.5:n===3?.8:n===4?1:n===5?1.6:2;}
+  };
   var W={},TOT={};
-  Object.keys(LEVEL_MULT).forEach(function(lv){W[lv]=SHAPES.map(function(s){return s[1]*LEVEL_MULT[lv](s[0].length);});TOT[lv]=W[lv].reduce(function(a,b){return a+b;},0);});
+  Object.keys(LEVEL_MULT).forEach(function(lv){W[lv]=SHAPES.map(function(s){return s[1]*LEVEL_MULT[lv](s[0].length,connected(s[0]));});TOT[lv]=W[lv].reduce(function(a,b){return a+b;},0);});
 
   // 같은 씨앗(seed)이면 같은 블록이 같은 순서로 나온다 → 친구 대전에서 두 사람이 공정하게
   function rng(seed){
@@ -58,14 +69,41 @@ function BlockEngine(){
     return out;
   }
   function tray(seed,round,level){return trayRaw(seed,round,level||'normal',0);}
-  // 초급 혼자 하기 도움: 지금 판에 놓을 수 있는 블록이 2개 이상인 묶음이 나올 때까지 다시 뽑는다(판에 따라 달라지므로 친구 대전에는 쓰지 않는다)
+  // 이 블록을 지금 판 어딘가에 놓아 줄을 지울 수 있는지
+  function canClear(board,p){
+    var c=cells(p);
+    for(var r0=0;r0<N;r0++)for(var c0=0;c0<N;c0++){
+      if(!fits(board,p,r0,c0))continue;
+      var b=board.slice();c.forEach(function(x){b[(r0+x[0])*N+c0+x[1]]=1;});
+      var l=fullLines(b);if(l.rows.length||l.cols.length)return true;
+    }
+    return false;
+  }
+  // 초급 혼자 하기 도움: 3개 모두 지금 판에 놓을 수 있고, 하나는 줄을 지울 수 있는 묶음이 나올 때까지 다시 뽑는다
+  // (판에 따라 달라지므로 친구 대전에는 쓰지 않는다)
   function helpfulTray(seed,round,level,board){
-    var best=null,bestN=-1;
-    for(var k=0;k<25;k++){
+    var best=null,bestS=-1,empty=board.every(function(v){return !v;});
+    for(var k=0;k<40;k++){
       var t=trayRaw(seed,round,level,k),n=t.filter(function(p){return anyFit(board,p);}).length;
-      if(n>=2)return t;if(n>bestN){bestN=n;best=t;}
+      var cl=!empty&&t.some(function(p){return canClear(board,p);});
+      var s=n*10+(cl?5:0);
+      if(n===3&&(cl||empty))return t;
+      if(s>bestS){bestS=s;best=t;}
     }
     return best;
+  }
+  // 구조 블록: 놓을 곳이 없을 때 판에 들어가는 작은 블록 3개(줄을 지울 수 있는 것부터)
+  function rescueTray(board){
+    var cand=[];
+    SHAPES.forEach(function(s,k){
+      if(s[0].length>3||!connected(s[0]))return;
+      var p={s:k,color:1+Math.floor(Math.random()*7)};
+      if(anyFit(board,p))cand.push({p:p,cl:canClear(board,p),n:s[0].length,r:Math.random()});
+    });
+    cand.sort(function(a,b){return (b.cl-a.cl)||(b.n-a.n)||(a.r-b.r);});
+    var out=cand.slice(0,3).map(function(x){return x.p;});
+    while(out.length<3)out.push({s:0,color:1+Math.floor(Math.random()*7)});
+    return out;
   }
   function cells(p){return SHAPES[p.s][0];}
   function size(p){var c=cells(p),h=0,w=0;c.forEach(function(x){h=Math.max(h,x[0]+1);w=Math.max(w,x[1]+1);});return {h:h,w:w};}
@@ -108,6 +146,6 @@ function BlockEngine(){
     gain+=bonus;
     return {board:b,placed:placed,cleared:cleared,lines:lines,rows:l.rows,cols:l.cols,combo:combo,miss:miss,gain:gain,bonus:bonus,perfect:perfect};
   }
-  return {VERSION:VERSION,N:N,SHAPES:SHAPES,rng:rng,tray:tray,helpfulTray:helpfulTray,cells:cells,size:size,fits:fits,anyFit:anyFit,fullLines:fullLines,lineCells:lineCells,place:place};
+  return {VERSION:VERSION,N:N,SHAPES:SHAPES,rng:rng,tray:tray,helpfulTray:helpfulTray,rescueTray:rescueTray,canClear:canClear,cells:cells,size:size,fits:fits,anyFit:anyFit,fullLines:fullLines,lineCells:lineCells,place:place};
 }
 if(typeof module!=='undefined')module.exports=BlockEngine;
