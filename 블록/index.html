@@ -302,16 +302,16 @@ table.rec td:first-child,table.rec th:first-child{text-align:left;font-weight:80
 </div>
 <div class="toast" id="toast" hidden></div>
 
-<script src="../common/supabase-config.js"></script>
-<script src="../common/cloud.js" data-game="block"></script>
-<script src="engine.js"></script>
+<script src="../common/supabase-config.js?v=1"></script>
+<script src="../common/cloud.js?v=3" data-game="block"></script>
+<script src="engine.js?v=3"></script>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script>
 (function(){
 'use strict';
 
 var E=BlockEngine(),N=E.N;
-var VERSION='11.09-1';
+var VERSION='11.09-2';
 var $=function(id){return document.getElementById(id);};
 function store(k,v){try{if(v===undefined)return JSON.parse(localStorage.getItem(k)||'null');localStorage.setItem(k,JSON.stringify(v));}catch(e){return null;}}
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
@@ -332,7 +332,8 @@ function newSeed(){return Math.floor(Math.random()*4294967295);}
 var LEVELS={easy:'초급',normal:'중급',hard:'고급'},LEVEL_KEYS=['easy','normal','hard'];
 function prefLevel(){var l=store('block.level');return LEVELS[l]?l:'normal';}
 // 다음 블록 묶음: 혼자 하는 초급은 판을 보고 놓을 수 있는 블록이 2개 이상 나오게 돕는다
-function nextTray(round){return G.mode==='solo'&&G.level==='easy'?E.helpfulTray(G.seed,round,'easy',G.board):E.tray(G.seed,round,G.level);}
+// (옛 engine.js 가 캐시에 남아 helpfulTray 가 없더라도 멈추지 않게)
+function nextTray(round){return G.mode==='solo'&&G.level==='easy'&&E.helpfulTray?E.helpfulTray(G.seed,round,'easy',G.board):E.tray(G.seed,round,G.level);}
 function newGame(mode,seed,limit,level){
   G={mode:mode,seed:seed>>>0,round:0,board:new Array(64).fill(0),tray:[],level:LEVELS[level]?level:'normal',score:0,combo:0,miss:0,over:false,start:Date.now(),limit:limit||0,lines:0,ended:false};
   G.tray=nextTray(0);
@@ -1000,6 +1001,9 @@ $('levelList').addEventListener('click',function(e){
 });
 $('levelClose').onclick=function(){$('levelBg').hidden=true;};
 $('levelBg').addEventListener('click',function(e){if(e.target.id==='levelBg')$('levelBg').hidden=true;});
+// 예상 못 한 오류가 나면 조용히 멈추지 말고 알려 준다(대개 옛 파일이 캐시에 남은 경우)
+var errShown=0;
+window.addEventListener('error',function(){if(Date.now()-errShown<8000)return;errShown=Date.now();toast('문제가 생겼어요. 화면을 새로고침해 주세요');});
 var toastTimer=0;
 function toast(msg){var t=$('toast');t.textContent=msg;t.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(function(){t.hidden=true;},2600);}
 
@@ -1023,7 +1027,7 @@ if(m){
 }
 })();
 </script>
-<script src="../common/home.js"></script>
+<script src="../common/home.js?v=1"></script>
 <script>if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(function(){});</script>
 </body>
 </html>

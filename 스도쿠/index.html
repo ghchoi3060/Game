@@ -279,9 +279,9 @@ table.rec td:first-child,table.rec th:first-child{text-align:left;font-weight:80
 </div>
 <div class="toast" id="toast" hidden></div>
 
-<script src="../common/supabase-config.js"></script>
-<script src="../common/cloud.js" data-game="sudoku"></script>
-<script src="engine.js"></script>
+<script src="../common/supabase-config.js?v=1"></script>
+<script src="../common/cloud.js?v=3" data-game="sudoku"></script>
+<script src="engine.js?v=1"></script>
 <script>
 (function(){
 'use strict';
@@ -535,7 +535,7 @@ if(saved&&saved.sol&&!saved.done){G=saved;G.undo=G.undo||[];render();}
 else newGame(store('sudoku.lastLv')||'normal');
 })();
 </script>
-<script src="../common/home.js"></script>
+<script src="../common/home.js?v=1"></script>
 <script>if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(function(){});</script>
 </body>
 </html>
