@@ -97,7 +97,7 @@ main{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden}
 .lot.first{outline:2px solid var(--accent)}
 
 /* 판 */
-.board-wrap{position:relative;width:min(100%,calc(100dvh - 380px));min-width:250px;margin:0 auto;max-width:100%}
+.board-wrap{position:relative;width:min(100%,calc(100dvh - 430px));min-width:250px;margin:0 auto;max-width:100%}
 .board{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;aspect-ratio:1;width:100%;padding:8px;border-radius:18px;background:var(--line);box-shadow:0 6px 0 var(--shade);touch-action:manipulation;user-select:none;-webkit-user-select:none;container-type:inline-size}
 .cell{position:relative;border:0;padding:0;border-radius:22%;background:var(--cell);box-shadow:0 3px 0 var(--cell-edge);display:grid;place-items:center;font-family:var(--f-display);font-weight:700;font-size:8.5cqw;color:var(--ink);min-width:0;min-height:0;transition:transform .08s}
 .cell:active:not(:disabled){transform:translateY(2px)}
@@ -144,8 +144,17 @@ main{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden}
   background:radial-gradient(circle at 50% 50%,#FFFFFF 0 37%,var(--c) 38% 100%);box-shadow:inset -8px -10px 0 rgba(0,0,0,.18),inset 6px 6px 0 rgba(255,255,255,.35),0 8px 0 rgba(0,0,0,.25)}
 .ball b{font-family:var(--f-display);font-weight:700;font-size:11cqw;color:#22301F;line-height:1}
 .ball small{position:absolute;bottom:-28%;left:50%;transform:translateX(-50%);white-space:nowrap;font-weight:800;font-size:4cqw;background:var(--ink);color:var(--bg);padding:2px 9px;border-radius:9px}
-.ball.roll{animation:rollin 1.15s cubic-bezier(.2,.9,.3,1) forwards}
-@keyframes rollin{0%{transform:translateX(140cqw) rotate(540deg)}45%{transform:translateX(0) rotate(0)}55%{transform:translateX(-3cqw) rotate(-12deg)}65%,82%{transform:none;opacity:1}100%{transform:translateY(-14cqw) scale(.6);opacity:0}}
+/* 방금 부른 숫자: 판을 가리지 않게 판 아래 줄에 공이 굴러 들어와 다음 숫자까지 남는다 */
+.stage{display:flex;align-items:center;gap:10px;min-height:50px;overflow:hidden}
+.stage:empty{display:none}
+.sball{flex:none;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;
+  background:radial-gradient(circle at 50% 50%,#FFFFFF 0 37%,var(--c) 38% 100%);box-shadow:inset -4px -5px 0 rgba(0,0,0,.18),inset 3px 3px 0 rgba(255,255,255,.35),0 4px 0 rgba(0,0,0,.25)}
+.sball b{font-family:var(--f-display);font-weight:700;font-size:19px;color:#22301F;line-height:1}
+.sball.roll{animation:rollin .7s cubic-bezier(.2,.9,.3,1.2) both}
+@keyframes rollin{0%{transform:translateX(420px) rotate(720deg)}80%{transform:translateX(-4px) rotate(-10deg)}100%{transform:none}}
+.stage .who{font-weight:800;font-size:15px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stage .who.pop{animation:whopop .35s ease-out .35s both}
+@keyframes whopop{from{opacity:0;transform:translateX(12px)}}
 .balls{display:flex;gap:2cqw}
 .balls .ball{width:16cqw}
 .balls .ball b{font-size:8cqw}
@@ -255,6 +264,7 @@ table.rec td:first-child,table.rec th:first-child{text-align:left;font-weight:80
           <div class="card"><h2 id="resTitle"></h2><p id="resInfo"></p><div id="resBtns" class="list"></div></div>
         </div>
       </div>
+      <div class="stage" id="stage" aria-live="polite"></div>
       <div class="calls" id="calls"></div>
       <div class="actions" id="actions"></div>
       <div class="actions two">
@@ -331,7 +341,7 @@ function store(k,v){try{if(v===undefined)return JSON.parse(localStorage.getItem(
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 function reduced(){return matchMedia('(prefers-reduced-motion: reduce)').matches;}
 var MAX_PLAYERS=6;
-var VERSION='11.08-3';   // 고칠 때마다 올린다. 친구 탭 맨 아래에 보여서 폰이 새 버전인지 확인할 수 있다
+var VERSION='11.08-4';   // 고칠 때마다 올린다. 친구 탭 맨 아래에 보여서 폰이 새 버전인지 확인할 수 있다
 var BOT_NAMES=['토리','모모','콩이','보리','찰떡'];
 var LEVEL_NAMES=['쉬움','보통','어려움'];
 var COLORS=['#58B030','#2E9BD6','#E0533D','#F2A93B','#9B6BD6','#1AA39A'];
@@ -407,7 +417,7 @@ function renderStatus(nextN){
   else if(fill)t=nextN<=25?nextN+'을(를) 놓을 칸을 누르세요':'다 놓았어요!';
   else if(G.phase==='setup')t=G.mode==='friend'?(ready?'준비 완료! 시작을 기다려요':'숫자를 배치하고 준비 완료를 눌러요'):'숫자를 배치하고 시작을 눌러요';
   else if(G.phase==='play'){
-    var lc=G.lastCall&&G.lastCall.by!==myIdInGame()?playerName(G.lastCall.by)+' '+G.lastCall.n+'! · ':'';
+    var lc='';   // 방금 부른 숫자는 판 아래 줄(stage)에 보인다
     if(waiting)t=lc+'확인하는 중…';
     else if(G.turn===myIdInGame()){t=lc+(G.mode==='friend'?'내 차례! '+TURN_SEC+'초 안에 골라요':'내 차례! 숫자를 눌러요');go=true;}
     else t=lc+playerName(G.turn)+' 차례';
@@ -419,6 +429,7 @@ function renderStatus(nextN){
 }
 function renderCalls(){
   var c=G?G.called:[];
+  if(!c.length)$('stage').innerHTML='';
   $('calls').innerHTML=c.length?'<span class="lbl">부른 숫자</span>'+c.map(function(n,k){return '<span'+(k===c.length-1?' class="now"':'')+'>'+n+'</span>';}).join(''):'';
   $('calls').scrollLeft=$('calls').scrollWidth;
 }
@@ -643,11 +654,8 @@ function dingdong(){
 var BALL_COLORS=['#2E9BD6','#E0533D','#D9DCD2','#58B030','#F2A93B'];
 function ballColor(n){return BALL_COLORS[Math.min(4,Math.floor((n-1)/5))];}
 function callBall(n,by){
-  if(reduced())return;
-  $('wrap').querySelectorAll('.ballbox.call').forEach(function(x){x.remove();});
-  var box=document.createElement('div');box.className='ballbox call';
-  box.innerHTML='<div class="ball roll" style="--c:'+ballColor(n)+'"><b>'+n+'</b><small>'+esc(by===myIdInGame()?'내가 불렀어요':playerName(by))+'</small></div>';
-  $('wrap').appendChild(box);setTimeout(function(){box.remove();},1250);
+  var who=by===myIdInGame()?'내가 '+n+'을(를) 불렀어요':playerName(by)+' 님이 '+n+'을(를) 불렀어요';
+  $('stage').innerHTML='<div class="sball'+(reduced()?'':' roll')+'" style="--c:'+ballColor(n)+'"><b>'+n+'</b></div><span class="who'+(reduced()?'':' pop')+'">'+esc(who)+'</span>';
 }
 function winBalls(win){
   var box=document.createElement('div');box.className='ballbox';
