@@ -332,7 +332,7 @@ table.rec td:first-child,table.rec th:first-child{text-align:left;font-weight:80
         <li>놓은 칸 하나에 1점.</li>
         <li>줄을 지우면 보너스: 1줄 10점, 2줄 30점, 3줄 60점, 4줄 100점… 한 번에 많이 지울수록 커져요.</li>
         <li><b>연속</b>: 줄을 지울 때마다 지운 줄 수만큼 연속이 올라가요(한 번에 2줄이면 +2). 줄 보너스에 연속 수를 곱해요. 줄을 못 지우고 3번 놓으면 연속이 끝나요. 연속이 쌓일수록 소리가 높아지고 판 둘레가 노랑 → 빨강으로 달아올라요.</li>
-        <li>잘하면 상황에 맞는 감탄 문구가 나와요: 판을 비우면 <b>Perfect!</b>, 판이 거의 찼을 때 지우면 <b>Nice Save!</b>, 2줄 이상 한 번에 지우면 <b>Double!·Triple!</b>, 빠르게 연달아 지우면 <b>Speedy!</b>, 친구를 앞지르면 <b>Comeback!</b>, 연속 3줄부터는 <b>Great! → … → Legendary!</b></li>
+        <li>잘하면 상황에 맞는 감탄 문구가 나와요: 판을 비우면 <b>Perfect!</b>, 판이 거의 찼을 때 지우면 <b>Nice Save!</b>, 2줄 이상 한 번에 지우면 <b>Double!·Triple!</b>, 빠르게 연달아 지우면 <b>Speedy!</b>, 친구를 앞지르면 <b>Comeback!</b>, 들어갈 자리가 거의 없는 블록을 넣으면 <b>Genius!</b>, 구멍을 꼭 맞게 메우면 <b>Perfect Fit!</b>, 연속 3줄부터는 <b>Great! → … → Legendary!</b></li>
         <li><b>빠르게</b>: 지난번에 줄을 지운 뒤 <b>3초 안에</b> 또 지우면 추가 점수 +10, 계속 빠르게 지우면 +20, +30…으로 커져요.</li>
         <li>판을 완전히 비우면 <b>+300점</b>과 함께 <b>피버 타임</b>이 시작돼요. <b>10초 동안 모든 점수가 2배</b>이고, 판 테두리가 무지개로 빛나요. 피버 중에 또 비우면 다시 10초.</li>
         <li>줄을 지울 때 뜨는 숫자 아래에 연속·빠르게·피버 중 무엇을 받았는지 보여요.</li>
@@ -362,7 +362,7 @@ table.rec td:first-child,table.rec th:first-child{text-align:left;font-weight:80
 'use strict';
 
 var E=BlockEngine(),N=E.N;
-var VERSION='11.14-11';
+var VERSION='11.14-12';
 var RESCUE_MAX=3;   // 초급 혼자 하기 구조 블록 횟수
 var $=function(id){return document.getElementById(id);};
 function store(k,v){try{if(v===undefined)return JSON.parse(localStorage.getItem(k)||'null');localStorage.setItem(k,JSON.stringify(v));}catch(e){return null;}}
@@ -530,7 +530,12 @@ function placeAt(k,r0,c0){
   G.tray[k]=null;picked=-1;
   // 판 상태는 바로 확정한다(지운 칸은 곧바로 빈칸 → 이어서 바로 놓을 수 있음).
   // 지워지는 모습은 판 위에 따로 그린 '그림자 칸'으로만 보여 준다(예전처럼 잠깐 뒤에 지우면, 그사이 놓은 블록이 덮어써져 사라졌다)
-  var before=G.board.slice();res.placed.forEach(function(i){before[i]=p.color;});
+  var orig=G.board,before=G.board.slice();res.placed.forEach(function(i){before[i]=p.color;});
+  // 어려운 자리 판정: 놓기 전에 이 블록이 들어갈 수 있던 자리 수(opts)와, 블록 둘레가 벽·다른 블록에 맞닿은 비율(fit)
+  var opts=0;for(var rr=0;rr<8;rr++)for(var cc=0;cc<8;cc++)if(E.fits(orig,p,rr,cc))opts++;
+  var edge=0,touch=0,mine={};res.placed.forEach(function(i){mine[i]=1;});
+  res.placed.forEach(function(i){var r=i>>3,c=i&7;[[-1,0],[1,0],[0,-1],[0,1]].forEach(function(d){var nr=r+d[0],nc=c+d[1];if(nr>=0&&nr<8&&nc>=0&&nc<8&&mine[nr*8+nc])return;edge++;if(nr<0||nr>=8||nc<0||nc>=8||orig[nr*8+nc])touch++;});});
+  var fit=edge?touch/edge:0;
   G.board=res.board;
   var drop={};res.placed.forEach(function(i){if(res.board[i])drop[i]=1;});
   render({drop:drop});
@@ -544,7 +549,7 @@ function placeAt(k,r0,c0){
   }
   var gain=(res.gain+quick)*(fever?2:1);
   // 상황에 맞는 감탄을 고르기 위한 정보(점수를 더하기 전·후)
-  var ctx={lines:res.lines,perfect:res.perfect,fever:fever,quickChain:G.speed||0,combo:res.combo,
+  var ctx={lines:res.lines,perfect:res.perfect,fever:fever,quickChain:G.speed||0,combo:res.combo,opts:opts,fit:fit,size:res.placed.length,
     full:before.filter(Boolean).length/64,
     overtook:G.mode==='friend'&&opp&&G.score<=opp.score&&G.score+gain>opp.score&&opp.score>0,
     newBest:G.mode==='solo'&&!G.bestCelebrated&&best()>0&&G.score<=best()&&G.score+gain>best()};
@@ -561,7 +566,7 @@ function placeAt(k,r0,c0){
     praise(ctx);   // 상황에 맞는 감탄(해당하는 게 없으면 안 나옴)
     if(navigator.vibrate){try{navigator.vibrate(res.lines>1?[20,30,20]:20);}catch(e){}}
     afterPlace();
-  }else{plusAt(res.placed,'+'+gain,'',true);afterPlace();}
+  }else{plusAt(res.placed,'+'+gain,'',true);praise(ctx);afterPlace();}   // 줄을 못 지워도 어려운 자리·꼭 맞게 놓으면 감탄
 }
 // 지워진 칸 자리에 같은 색 '그림자 칸'을 잠깐 올려 하얗게 번쩍이며 작아져 사라지게 한다(판 상태와는 상관없음)
 function clearGhosts(list,colors,res){
@@ -804,13 +809,15 @@ document.addEventListener('visibilitychange',function(){if(document.hidden){if(B
 if(store('block.music')){document.addEventListener('pointerdown',function once(e){if(e.target.closest&&e.target.closest('#musicBtn'))return;document.removeEventListener('pointerdown',once);if(!BGM.on){bgmStart();paintMusic();}},{passive:true});}
 paintMusic();
 // ---------- 감탄 음성: 폰에 들어 있는 음성 합성(speechSynthesis, 파일·저작권 없음). 영어 남자 목소리로 아나운서처럼 길게 끌며("그뤠에에잇!") ----------
-// 모음을 늘린 철자(SAY) + 느린 속도·높은 음. iOS 는 처음 말하기를 터치 안에서 해야 해서 첫 터치 때 소리 없는 문장을 한 번 말해 둔다. 켜고 끄기 block.voice(기본 켜짐)
+// 짧고 힘찬 철자(SAY) + 빠른 속도·높은 음 + 앞 함성, 큰 감탄엔 환호 소리. iOS 는 처음 말하기를 터치 안에서 해야 해서 첫 터치 때 소리 없는 문장을 한 번 말해 둔다. 켜고 끄기 block.voice(기본 켜짐)
 var VOICE={on:store('block.voice')!==false,v:null,ready:false};
-var SAY={'Great!':'Grrreeeeeeat!','Nice!':'Niiiiiice!','Excellent!':'Exxxcellllennnt!','Superb!':'Supeeerrrb!','Amazing!':'Amaaaaazing!','Brilliant!':'Brrriiilliant!',
-  'Fantastic!':'Fantaaaastic!','Incredible!':'Incrediiiible!','Legendary!':'Legendaaaary!','Unstoppable!':'Unstoppaaaable!','Perfect!':'Perrrrfect!','Spotless!':'Spooootless!',
-  'Comeback!':'Commmme baaaack!','Take the Lead!':'Take the leeeead!','New Record!':'New reeecord!','Nice Save!':'Niiiice saaave!','Phew!':'Pheeeeew!','Clutch!':'Cluuuutch!',
-  'Double!':'Dooouble!','Two Lines!':'Twooo liiines!','Triple!':'Triiiiple!','Quadruple!':'Quadruuuuple!','Unreal!':'Unreeeeal!','Speedy!':'Speeeeedy!','Lightning!':'Liiiightning!','Rapid Fire!':'Rapid fiiiiire!',
-  'On Fire!':'On fiiiiire!','Hot Streak!':'Hot streeeeak!',"Let's go!":"Let's gooooo!"};
+// 짧고 힘차게: 모음은 살짝만 늘린다(많이 늘리면 힘들고 지친 목소리처럼 들렸다)
+var SAY={'Great!':'Greeat!','Nice!':'Niice!','Excellent!':'Excellent!','Superb!':'Superb!','Amazing!':'Amaazing!','Brilliant!':'Brilliant!',
+  'Fantastic!':'Fantaastic!','Incredible!':'Incredible!','Legendary!':'Legendary!','Unstoppable!':'Unstoppable!','Perfect!':'Perfect!','Spotless!':'Spotless!',
+  'Comeback!':'Comeback!','Take the Lead!':'Take the lead!','New Record!':'New record!','Nice Save!':'Nice save!','Phew!':'Phew!','Clutch!':'Clutch!',
+  'Double!':'Double!','Two Lines!':'Two lines!','Triple!':'Triple!','Quadruple!':'Quadruple!','Unreal!':'Unreal!','Speedy!':'Speedy!','Lightning!':'Lightning!','Rapid Fire!':'Rapid fire!',
+  'Genius!':'Genius!','Tight Squeeze!':'Tight squeeze!','Big Brain!':'Big brain!','Perfect Fit!':'Perfect fit!','Puzzle Master!':'Puzzle master!','Nice Fit!':'Nice fit!','Snug!':'Snug!',
+  'On Fire!':'On fire!','Hot Streak!':'Hot streak!',"Let's go!":"Let's go!"};
 var MALE=/aaron|daniel|fred|alex\b|arthur|rishi|tom\b|evan|nathan|gordon|reed|rocko|eddy|ralph|oliver|male|david|mark|guy|george|james|ryan|christopher|eric|roger|brian/i,FEMALE=/female|samantha|karen|moira|tessa|victoria|kate|serena|susan|zira|hazel|aria|jenny|libby|sonia|martha|catherine|nicky|allison|ava|zoe/i;
 function pickVoice(){
   if(!window.speechSynthesis)return null;
@@ -826,6 +833,19 @@ function unlockVoice(){
   try{var u=new SpeechSynthesisUtterance(' ');u.volume=0;speechSynthesis.speak(u);}catch(e){}
 }
 document.addEventListener('pointerdown',unlockVoice,{passive:true});
+// 관중 환호 비슷한 소리: 잡음을 사람 목소리 대역으로 걸러 부풀었다 사라지게(파일 없음). 큰 감탄 때 음성 뒤에 깔린다
+function cheer(power){
+  unlockAudio();if(!actx)return;
+  try{
+    var t=actx.currentTime,len=1.1,buf=actx.createBuffer(1,Math.floor(actx.sampleRate*len),actx.sampleRate),d=buf.getChannelData(0);
+    for(var i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*(.6+.4*Math.sin(i/actx.sampleRate*2*Math.PI*(9+Math.random()*4)));
+    var src=actx.createBufferSource(),bp=actx.createBiquadFilter(),g=actx.createGain();src.buffer=buf;
+    bp.type='bandpass';bp.frequency.setValueAtTime(900,t);bp.frequency.linearRampToValueAtTime(1500,t+.4);bp.Q.value=.8;
+    src.connect(bp);bp.connect(g);g.connect(actx.destination);
+    var v=.05+power*.012;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+.18);g.gain.exponentialRampToValueAtTime(.0001,t+len);
+    src.start(t);src.stop(t+len);
+  }catch(e){}
+}
 function sayPraise(text,power){
   if(!VOICE.on||!window.speechSynthesis)return;
   try{
@@ -834,10 +854,11 @@ function sayPraise(text,power){
     var male=VOICE.v&&MALE.test(VOICE.v.name),lift=male?0:-.4;   // 남자 목소리를 못 찾으면 낮춰서 남자처럼
     function mk(s,pitch,rate){var u=new SpeechSynthesisUtterance(s);if(VOICE.v){u.voice=VOICE.v;u.lang=VOICE.v.lang;}else u.lang='en-US';
       u.pitch=Math.max(.1,Math.min(2,pitch+lift));u.rate=rate;u.volume=1;return u;}
-    // 신나게: 세기 3 이상이면 앞에 짧은 함성("Woo!", "Oh yeah!")을 빠르고 높게, 이어서 길게 끈 감탄. 세질수록 음이 올라간다(고조)
-    if(power>=3){var HYPE=power>=5?['Oh yeah!','Boom!','Whoa!','Let\'s go!']:['Woo!','Yeah!','Wow!','Ooh!'];
-      speechSynthesis.speak(mk(HYPE[Math.floor(Math.random()*HYPE.length)],1.5+power*.05,1.25));}
-    speechSynthesis.speak(mk(SAY[text]||text,1.25+power*.08,Math.min(1.15,.92+power*.02)));
+    // 신나게: 앞에 짧은 함성("Woo!", "Oh yeah!")을 빠르고 높게, 이어서 짧고 힘찬 감탄을 높은 음·빠른 속도로. 세질수록 음이 올라간다(고조)
+    if(power>=2){var HYPE=power>=5?['Oh yeah!','Boom!','Whoa!','Yeah!']:['Woo!','Yeah!','Wow!','Hey!'];
+      speechSynthesis.speak(mk(HYPE[Math.floor(Math.random()*HYPE.length)],1.7+power*.04,1.3));}
+    speechSynthesis.speak(mk(SAY[text]||text,1.5+power*.07,Math.min(1.3,1.12+power*.03)));
+    if(power>=4)cheer(power);
   }catch(e){}
 }
 function paintVoice(){var b=$('voiceBtn');b.setAttribute('aria-pressed',VOICE.on);b.setAttribute('aria-label',VOICE.on?'감탄 음성 끄기':'감탄 음성 켜기');}
@@ -865,28 +886,34 @@ var PRAISE={
   lines2:[['Double!','두 줄 한 번에!'],['Two Lines!','한 번에 두 줄!']],lines3:[['Triple!','세 줄 한 번에!']],lines4:[['Quadruple!','네 줄 한 번에!']],lines5:[['Unreal!','다섯 줄 넘게 한 번에!']],
   quick:[['Speedy!','손이 정말 빨라요!'],['Lightning!','번개처럼 빨라요!'],['Rapid Fire!','쉬지 않고 지워요!']],
   fever:[['On Fire!','불타오르네요!'],['Hot Streak!','피버를 제대로 쓰고 있어요!']],
+  genius:[['Genius!','딱 한 자리를 찾았어요!'],['Tight Squeeze!','비좁은 틈에 쏙!'],['Big Brain!','머리 좋아요!']],
+  pfit:[['Perfect Fit!','빈틈없이 딱 맞아요!'],['Puzzle Master!','퍼즐 장인이에요!']],
+  nfit:[['Nice Fit!','꼭 맞게 넣었어요!'],['Snug!','쏙 들어갔어요!']],
   combo:[[['Great!','잘하고 있어요!'],['Nice!','좋아요, 계속!']],[['Excellent!','대단해요!'],['Superb!','훌륭해요!']],[['Amazing!','멋져요!'],['Brilliant!','반짝반짝해요!']],
     [['Fantastic!','최고예요!']],[['Incredible!','믿을 수 없어요!']],[['Legendary!','전설이에요!'],['Unstoppable!','아무도 못 말려요!']]]
 };
-var PRAISE_COLOR={perfect:'#E8A317',overtook:'#D9434B',newBest:'#E8A317',clutch:'#2FA37A',lines2:'#3E9BD6',lines3:'#8E6BE0',lines4:'#8E6BE0',lines5:'#8E6BE0',quick:'#3E9BD6',fever:'#E8642B',combo:['#3E9BD6','#6CB33F','#8E6BE0','#E0779F','#E8892B','#D9434B']};
+var PRAISE_COLOR={perfect:'#E8A317',overtook:'#D9434B',newBest:'#E8A317',clutch:'#2FA37A',lines2:'#3E9BD6',lines3:'#8E6BE0',lines4:'#8E6BE0',lines5:'#8E6BE0',quick:'#3E9BD6',fever:'#E8642B',genius:'#E8A317',pfit:'#2FA37A',nfit:'#6CB33F',combo:['#3E9BD6','#6CB33F','#8E6BE0','#E0779F','#E8892B','#D9434B']};
 var lastPraise='';
 // 콤보는 연속으로 지운 줄 수. 단계(Great → … → Legendary)는 이 줄 수가 넘은 기준 개수로
 
 function comboTier(n){var k=-1;[3,5,7,10,13,16].forEach(function(t,i){if(n>=t)k=i;});return k;}
 // 우선순위: 판 비움 > 역전 > 신기록 > 위기 탈출 > 2줄 이상 한 번에 > 빠르게 연달아 > 피버 중 > 콤보 3줄 이상
 function pickPraise(c){
-  var tier=comboTier(c.combo);
+  var tier=c.lines?comboTier(c.combo):-1;
+  // 어려운 자리: 놓기 전 들어갈 자리가 1~2곳뿐이던 2칸 이상 블록(genius). 줄을 못 지워도: 구멍을 빈틈없이 메움(pfit), 둘레 80% 이상 맞닿음(nfit)
+  var hard=c.opts>0&&c.opts<=2&&c.size>=2;
   var key=c.perfect?'perfect':c.overtook?'overtook':c.newBest?'newBest':(c.full>=.75&&c.lines)?'clutch':
-    c.lines>=5?'lines5':c.lines===4?'lines4':c.lines===3?'lines3':c.lines===2?'lines2':(c.quickChain>=2&&c.lines)?'quick':(c.fever&&c.lines&&c.combo>=2)?'fever':(tier>=0&&c.lines)?'combo':null;
+    c.lines>=5?'lines5':c.lines===4?'lines4':c.lines===3?'lines3':hard?'genius':c.lines===2?'lines2':(c.quickChain>=2&&c.lines)?'quick':(c.fever&&c.lines&&c.combo>=2)?'fever':(tier>=0&&c.lines)?'combo':
+    (!c.lines&&c.size>=2&&c.fit>=.999)?'pfit':(!c.lines&&c.size>=3&&c.fit>=.8&&c.full>=.25)?'nfit':null;
   if(!key)return null;
   var pool=key==='combo'?PRAISE.combo[Math.min(tier,PRAISE.combo.length-1)]:PRAISE[key];
   var cand=pool.filter(function(x){return x[0]!==lastPraise;});if(!cand.length)cand=pool;
   var t=cand[Math.floor(Math.random()*cand.length)];lastPraise=t[0];
   var col=key==='combo'?PRAISE_COLOR.combo[Math.min(tier,5)]:PRAISE_COLOR[key];
   // 세기(1~6): 클수록 흔들림·빛줄기·소리가 커진다. 한 번에 여러 줄은 크게
-  var power=key==='combo'?tier+1:{perfect:6,lines5:6,lines4:6,overtook:5,newBest:5,lines3:5,clutch:4,lines2:4,quick:3,fever:3}[key];
+  var power=key==='combo'?tier+1:{perfect:6,lines5:6,lines4:6,overtook:5,newBest:5,lines3:5,genius:4,clutch:4,lines2:4,quick:3,fever:3,pfit:3,nfit:2}[key];
   power=Math.max(power,tier+1);
-  return [t[0],t[1],col,power,c.combo];
+  return [t[0],t[1],col,power,c.lines?c.combo:0];
 }
 // 감탄 문구 연출: 판 번쩍 → 흔들림 → 글자가 한 자씩 통통 → 뒤로 빛줄기 → 연속 배지 쾅 → 쿵·반짝 소리·진동
 function praise(ctx){
