@@ -85,8 +85,8 @@ main{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden}
 
 /* 판 */
 /* 판은 화면에서 남는 높이를 최대한 쓴다(위 점수 줄·아래 블록·버튼 몫만 빼고). 친구 대전은 상대 점수 줄만큼 더 뺀다 */
-.board-wrap{position:relative;width:min(100%,calc(100dvh - 245px));min-width:260px;margin:0 auto;max-width:100%}
-.vs-mode .board-wrap{width:min(100%,calc(100dvh - 312px))}
+.board-wrap{position:relative;width:min(100%,calc(100dvh - 268px));min-width:260px;margin:0 auto;max-width:100%}
+.vs-mode .board-wrap{width:min(100%,calc(100dvh - 335px))}
 .board{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;aspect-ratio:1;width:100%;padding:6px;border-radius:16px;background:var(--grid);box-shadow:0 6px 0 var(--shade);touch-action:none;user-select:none;-webkit-user-select:none}
 .cell{border-radius:22%;background:var(--grid-cell);position:relative;min-width:0;min-height:0}
 .blk{background:var(--bc);box-shadow:inset 0 -4px 0 rgba(0,0,0,.18),inset 0 3px 0 rgba(255,255,255,.35)}
@@ -108,7 +108,10 @@ main{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden}
 .plus.mini{font-size:16px;-webkit-text-stroke:2.5px var(--accent-deep)}
 .cell.pop{animation:popc .45s ease-in both}
 /* 지워지는 칸 연출용 그림자 칸(판 위 fx 층에 잠깐) */
-.gcell{position:absolute;border-radius:22%;pointer-events:none;animation:popc .45s ease-in both}
+.gcell{position:absolute;border-radius:22%;pointer-events:none;animation:vanish .42s ease-out both}
+/* 지워질 때: 하얗게 번쩍 → 살짝 커지며 투명하게(작아지면 칸이 줄어드는 것처럼 보여서) */
+@keyframes vanish{0%{transform:none;filter:brightness(1)}30%{transform:scale(1.06);filter:brightness(2.2)}100%{transform:scale(1.18);opacity:0;filter:brightness(2.2)}}
+.verline{text-align:center;font-size:11px;font-weight:700;color:var(--muted);opacity:.8;margin-top:-2px}
 @keyframes popc{0%{transform:scale(1);background:#fff}40%{transform:scale(1.15);background:#fff}100%{transform:scale(0);opacity:0}}
 .board.over .cell.blk{filter:grayscale(1) brightness(.85);transition:filter .4s}
 .board{position:relative}
@@ -278,6 +281,7 @@ table.rec td:first-child,table.rec th:first-child{text-align:left;font-weight:80
         <button class="btn" id="manualBtn" type="button">설명서</button>
         <button class="btn primary" id="newBtn" type="button">새 게임</button>
       </div>
+      <div class="verline" id="verLine"></div>
     </section>
     <section class="view" id="view-friends" hidden></section>
     <section class="view" id="view-history" hidden></section>
@@ -342,7 +346,7 @@ table.rec td:first-child,table.rec th:first-child{text-align:left;font-weight:80
 'use strict';
 
 var E=BlockEngine(),N=E.N;
-var VERSION='11.14-5';
+var VERSION='11.14-6';
 var RESCUE_MAX=3;   // 초급 혼자 하기 구조 블록 횟수
 var $=function(id){return document.getElementById(id);};
 function store(k,v){try{if(v===undefined)return JSON.parse(localStorage.getItem(k)||'null');localStorage.setItem(k,JSON.stringify(v));}catch(e){return null;}}
@@ -369,6 +373,7 @@ function nextTray(round){return G.mode==='solo'&&G.level==='easy'&&E.helpfulTray
 function newGame(mode,seed,limit,level){
   G={mode:mode,seed:seed>>>0,round:0,board:new Array(64).fill(0),tray:[],level:LEVELS[level]?level:'normal',score:0,combo:0,miss:0,over:false,start:Date.now(),limit:limit||0,lines:0,ended:false};
   G.tray=nextTray(0);
+  if(mode==='solo')setTimeout(function(){toast('새 게임 · '+LEVELS[G.level]+' · 버전 '+VERSION);},50);
   picked=-1;$('result').hidden=true;$('board').classList.remove('over');
   if(mode==='solo')save();
   render();
@@ -1178,6 +1183,7 @@ function resumeSolo(){
   if(s&&s.board&&s.board.length===64&&s.mode==='solo'){G=s;if(!LEVELS[G.level])G.level='normal';picked=-1;$('result').hidden=true;$('board').classList.toggle('over',!!G.over);render();if(G.over)showResult();}
   else newGame('solo',newSeed(),0,prefLevel());
 }
+$('verLine').textContent='솔솔퍼즐(블록) · 버전 '+VERSION;
 resumeSolo();
 var m=(location.hash||'').match(/^#join-([A-Za-z0-9]{6})$/),savedRoom=store('block.room');
 if(m){
