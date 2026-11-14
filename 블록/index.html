@@ -117,7 +117,10 @@ main{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden}
 .verline{text-align:center;font-size:11px;font-weight:700;color:var(--muted);opacity:.8;margin-top:-2px}
 @keyframes popc{0%{transform:scale(1);background:#fff}40%{transform:scale(1.15);background:#fff}100%{transform:scale(0);opacity:0}}
 .board.over .cell.blk{filter:grayscale(1) brightness(.85);transition:filter .4s}
-.board{position:relative}
+/* 판 높이는 wrap 의 padding-top:100% 로 정하고 판은 그 위에 꽉 채운다. aspect-ratio + 자동 줄 높이는 아이폰 Safari 에서 줄 높이가 고르지 않아
+   위 7줄이 길어지고 맨 아래 줄이 납작해졌다. 줄·칸은 minmax(0,1fr) 로 늘 같은 크기 */
+.board-wrap::before{content:"";display:block;padding-top:100%}
+.board{position:absolute;inset:0;width:auto;aspect-ratio:auto;grid-template-columns:repeat(8,minmax(0,1fr));grid-template-rows:repeat(8,minmax(0,1fr))}
 /* 피버 타임: 판 테두리가 무지개로 빛나고 점수 2배 */
 .feverglow{position:absolute;inset:-5px;border-radius:21px;background:conic-gradient(#F26D6D,#F6A93B,#F2CF3E,#6CCB5F,#4FB3E8,#8E7CE8,#F28FC4,#F26D6D);filter:blur(1px);opacity:0;transition:opacity .3s}
 .board-wrap.fever .feverglow{opacity:1;animation:hue 1.4s linear infinite}
@@ -349,7 +352,7 @@ table.rec td:first-child,table.rec th:first-child{text-align:left;font-weight:80
 'use strict';
 
 var E=BlockEngine(),N=E.N;
-var VERSION='11.14-8';
+var VERSION='11.14-9';
 var RESCUE_MAX=3;   // 초급 혼자 하기 구조 블록 횟수
 var $=function(id){return document.getElementById(id);};
 function store(k,v){try{if(v===undefined)return JSON.parse(localStorage.getItem(k)||'null');localStorage.setItem(k,JSON.stringify(v));}catch(e){return null;}}
