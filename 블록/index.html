@@ -77,6 +77,8 @@ main{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden}
 .musicbtn{flex:none;width:38px;height:38px;border-radius:12px;border:2px solid var(--line);background:var(--surface);color:var(--muted);font-size:18px;font-weight:800;display:grid;place-items:center;padding:0;box-shadow:0 3px 0 var(--line);position:relative;align-self:center}
 .musicbtn[aria-pressed="false"]::after{content:"";position:absolute;width:26px;height:3px;border-radius:2px;background:var(--danger);transform:rotate(-40deg)}
 .musicbtn[aria-pressed="true"]{border-color:var(--accent);background:var(--accent);color:var(--on-accent);box-shadow:0 3px 0 var(--accent-deep);animation:beat .43s ease-in-out infinite alternate}
+#voiceBtn{margin-right:6px}
+#voiceBtn[aria-pressed="true"]{animation:none}
 @keyframes beat{to{transform:scale(1.08)}}
 .scorebar .right{margin-left:auto;text-align:right;font-weight:800;font-size:13px;color:var(--muted);padding-bottom:4px}
 .scorebar .timer{font-family:var(--f-display);font-weight:700;font-size:20px;color:var(--ink);font-variant-numeric:tabular-nums}
@@ -272,6 +274,7 @@ table.rec td:first-child,table.rec th:first-child{text-align:left;font-weight:80
         <div><div class="score" id="score">0</div></div>
         <div class="best" id="best"></div>
         <div class="right"><div class="timer" id="timer" hidden></div><div id="comboTxt"></div></div>
+        <button class="musicbtn" id="voiceBtn" type="button" aria-pressed="true" aria-label="감탄 음성 끄기"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
         <button class="musicbtn" id="musicBtn" type="button" aria-pressed="false" aria-label="배경음악 켜기">♪</button>
       </div>
       <div class="board-wrap" id="wrap">
@@ -328,6 +331,7 @@ table.rec td:first-child,table.rec th:first-child{text-align:left;font-weight:80
         <li>판을 완전히 비우면 <b>+300점</b>과 함께 <b>피버 타임</b>이 시작돼요. <b>10초 동안 모든 점수가 2배</b>이고, 판 테두리가 무지개로 빛나요. 피버 중에 또 비우면 다시 10초.</li>
         <li>줄을 지울 때 뜨는 숫자 아래에 연속·빠르게·피버 중 무엇을 받았는지 보여요.</li>
         <li>점수 옆 <b>♪</b> 버튼으로 신나는 배경음악을 켜고 끌 수 있어요(직접 만든 곡이라 저작권 걱정 없어요). 피버 타임에는 빨라져요.</li>
+        <li>점수 옆 <b>스피커</b> 버튼은 감탄 음성이에요. Great!·Perfect! 같은 감탄을 신나게 외쳐 줘요.</li>
         <li>줄이 지워질 때 효과음이 나요. 많이 지울수록 음이 늘고, 연속일수록 높아져요(아이폰 무음 모드에서는 안 들려요).</li></ul></section>
       <section><h3>친구와 하기 (2명)</h3><ul>
         <li><b>친구</b> 탭에서 방을 만들고 초대 링크를 카카오톡으로 보내요. 시간 제한(끝날 때까지·3분·5분)을 고를 수 있어요.</li>
@@ -352,7 +356,7 @@ table.rec td:first-child,table.rec th:first-child{text-align:left;font-weight:80
 'use strict';
 
 var E=BlockEngine(),N=E.N;
-var VERSION='11.14-9';
+var VERSION='11.14-10';
 var RESCUE_MAX=3;   // 초급 혼자 하기 구조 블록 횟수
 var $=function(id){return document.getElementById(id);};
 function store(k,v){try{if(v===undefined)return JSON.parse(localStorage.getItem(k)||'null');localStorage.setItem(k,JSON.stringify(v));}catch(e){return null;}}
@@ -784,6 +788,49 @@ $('musicBtn').onclick=function(){
 document.addEventListener('visibilitychange',function(){if(document.hidden){if(BGM.on){bgmStop();BGM.resume=true;}}else if(BGM.resume){BGM.resume=false;bgmStart();paintMusic();}});
 if(store('block.music')){document.addEventListener('pointerdown',function once(e){if(e.target.closest&&e.target.closest('#musicBtn'))return;document.removeEventListener('pointerdown',once);if(!BGM.on){bgmStart();paintMusic();}},{passive:true});}
 paintMusic();
+// ---------- 감탄 음성: 폰에 들어 있는 음성 합성(speechSynthesis, 파일·저작권 없음). 영어 남자 목소리로 아나운서처럼 길게 끌며("그뤠에에잇!") ----------
+// 모음을 늘린 철자(SAY) + 느린 속도·높은 음. iOS 는 처음 말하기를 터치 안에서 해야 해서 첫 터치 때 소리 없는 문장을 한 번 말해 둔다. 켜고 끄기 block.voice(기본 켜짐)
+var VOICE={on:store('block.voice')!==false,v:null,ready:false};
+var SAY={'Great!':'Grrreeeeeeat!','Nice!':'Niiiiiice!','Excellent!':'Exxxcellllennnt!','Superb!':'Supeeerrrb!','Amazing!':'Amaaaaazing!','Brilliant!':'Brrriiilliant!',
+  'Fantastic!':'Fantaaaastic!','Incredible!':'Incrediiiible!','Legendary!':'Legendaaaary!','Unstoppable!':'Unstoppaaaable!','Perfect!':'Perrrrfect!','Spotless!':'Spooootless!',
+  'Comeback!':'Commmme baaaack!','Take the Lead!':'Take the leeeead!','New Record!':'New reeecord!','Nice Save!':'Niiiice saaave!','Phew!':'Pheeeeew!','Clutch!':'Cluuuutch!',
+  'Triple!':'Triiiiple!','Quadruple!':'Quadruuuuple!','Unreal!':'Unreeeeal!','Speedy!':'Speeeeedy!','Lightning!':'Liiiightning!','Rapid Fire!':'Rapid fiiiiire!',
+  'On Fire!':'On fiiiiire!','Hot Streak!':'Hot streeeeak!',"Let's go!":"Let's gooooo!"};
+var MALE=/aaron|daniel|fred|alex\b|arthur|rishi|tom\b|evan|nathan|gordon|reed|rocko|eddy|ralph|oliver|male|david|mark|guy|george|james|ryan|christopher|eric|roger|brian/i,FEMALE=/female|samantha|karen|moira|tessa|victoria|kate|serena|susan|zira|hazel|aria|jenny|libby|sonia|martha|catherine|nicky|allison|ava|zoe/i;
+function pickVoice(){
+  if(!window.speechSynthesis)return null;
+  var vs=speechSynthesis.getVoices().filter(function(v){return /^en/i.test(v.lang);});
+  if(!vs.length)return null;
+  function score(v){var s=0;if(MALE.test(v.name))s+=10;if(FEMALE.test(v.name))s-=20;if(/en[-_]US/i.test(v.lang))s+=2;if(/enhanced|premium|neural|natural/i.test(v.name))s+=3;if(v.localService)s+=1;return s;}
+  vs.sort(function(a,b){return score(b)-score(a);});
+  return vs[0];
+}
+if(window.speechSynthesis){VOICE.v=pickVoice();try{speechSynthesis.addEventListener('voiceschanged',function(){VOICE.v=pickVoice();});}catch(e){}}
+function unlockVoice(){
+  if(VOICE.ready||!window.speechSynthesis)return;VOICE.ready=true;
+  try{var u=new SpeechSynthesisUtterance(' ');u.volume=0;speechSynthesis.speak(u);}catch(e){}
+}
+document.addEventListener('pointerdown',unlockVoice,{passive:true});
+function sayPraise(text,power){
+  if(!VOICE.on||!window.speechSynthesis)return;
+  try{
+    speechSynthesis.cancel();
+    var u=new SpeechSynthesisUtterance(SAY[text]||text);
+    if(!VOICE.v)VOICE.v=pickVoice();
+    if(VOICE.v){u.voice=VOICE.v;u.lang=VOICE.v.lang;}else u.lang='en-US';
+    var male=VOICE.v&&MALE.test(VOICE.v.name);
+    u.pitch=Math.min(1.6,(male?1.2:.8)+power*.06);   // 신나게 높게. 남자 목소리를 못 찾으면 낮춰서 남자처럼
+    u.rate=Math.max(.6,.8-power*.03);                 // 세질수록 더 길게 끈다
+    u.volume=1;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+function paintVoice(){var b=$('voiceBtn');b.setAttribute('aria-pressed',VOICE.on);b.setAttribute('aria-label',VOICE.on?'감탄 음성 끄기':'감탄 음성 켜기');}
+$('voiceBtn').onclick=function(){
+  VOICE.on=!VOICE.on;store('block.voice',VOICE.on);paintVoice();
+  if(VOICE.on)sayPraise("Let's go!",3);else if(window.speechSynthesis)speechSynthesis.cancel();
+};
+paintVoice();
 
 // ---------- 피버 타임·빠르게 지우기 ----------
 var FEVER_MS=10000,QUICK_MS=3000,wasFever=false;
@@ -832,6 +879,7 @@ function praise(ctx){
   var letters=t[0].split('').map(function(ch,i){return '<i style="animation-delay:'+(i*38)+'ms">'+(ch===' '?'&nbsp;':esc(ch))+'</i>';}).join('');
   el.innerHTML='<span class="rays"></span><b>'+letters+'</b>'+(combo>=3?'<em class="cbadge">x'+combo+'</em>':'')+'<small>'+esc(t[1])+'</small>';
   wrap.appendChild(el);setTimeout(function(){el.remove();},1500);
+  sayPraise(t[0],power);
   if(!reduced()){
     var fl=document.createElement('span');fl.className='flashw';fx.appendChild(fl);setTimeout(function(){fl.remove();},350);
     wrap.style.setProperty('--j',(2+power*1.6)+'px');
