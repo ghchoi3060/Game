@@ -107,6 +107,8 @@ main{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden}
 @keyframes thump{40%{transform:translateY(3px) scale(.995)}}
 .plus.mini{font-size:16px;-webkit-text-stroke:2.5px var(--accent-deep)}
 .cell.pop{animation:popc .45s ease-in both}
+/* 지워지는 칸 연출용 그림자 칸(판 위 fx 층에 잠깐) */
+.gcell{position:absolute;border-radius:22%;pointer-events:none;animation:popc .45s ease-in both}
 @keyframes popc{0%{transform:scale(1);background:#fff}40%{transform:scale(1.15);background:#fff}100%{transform:scale(0);opacity:0}}
 .board.over .cell.blk{filter:grayscale(1) brightness(.85);transition:filter .4s}
 .board{position:relative}
@@ -340,7 +342,7 @@ table.rec td:first-child,table.rec th:first-child{text-align:left;font-weight:80
 'use strict';
 
 var E=BlockEngine(),N=E.N;
-var VERSION='11.14-4';
+var VERSION='11.14-5';
 var RESCUE_MAX=3;   // 초급 혼자 하기 구조 블록 횟수
 var $=function(id){return document.getElementById(id);};
 function store(k,v){try{if(v===undefined)return JSON.parse(localStorage.getItem(k)||'null');localStorage.setItem(k,JSON.stringify(v));}catch(e){return null;}}
@@ -504,11 +506,13 @@ function playing(){return G&&!G.over&&(!G.countdown||Date.now()>=G.countdown);}
 function placeAt(k,r0,c0){
   var p=G.tray[k],res=E.place(G,p,r0,c0);
   G.tray[k]=null;picked=-1;
-  // 지울 줄이 있으면 놓은 모습을 잠깐 보여 준 뒤 지운다
+  // 판 상태는 바로 확정한다(지운 칸은 곧바로 빈칸 → 이어서 바로 놓을 수 있음).
+  // 지워지는 모습은 판 위에 따로 그린 '그림자 칸'으로만 보여 준다(예전처럼 잠깐 뒤에 지우면, 그사이 놓은 블록이 덮어써져 사라졌다)
   var before=G.board.slice();res.placed.forEach(function(i){before[i]=p.color;});
-  G.board=before;
-  var drop={};res.placed.forEach(function(i){drop[i]=1;});
+  G.board=res.board;
+  var drop={};res.placed.forEach(function(i){if(res.board[i])drop[i]=1;});
   render({drop:drop});
+  if(res.lines)clearGhosts(res.cleared,before);
   placeFx(res.placed,p.color);placeSound(res.placed.length);
   // 점수 = 엔진 점수(칸 + 줄 보너스 × 연속) + 빠르게 보너스, 피버 중이면 모두 2배
   var now=Date.now(),fever=feverLeft()>0,quick=0;
@@ -527,8 +531,6 @@ function placeAt(k,r0,c0){
   if(res.perfect){G.feverUntil=now+FEVER_MS;}
   bumpScore();
   if(res.lines){
-    var delay=reduced()?0:120;
-    res.cleared.forEach(function(i,n){cells[i].style.animationDelay=(delay?((n%8)*25):0)+'ms';cells[i].classList.add('pop');});
     burst(res.cleared);
     clearSound(res.lines,G.combo,fever||res.perfect,res.perfect);
     var tags=[];if(G.combo>=2)tags.push('연속 x'+G.combo);if(quick)tags.push('빠르게 +'+quick);if(fever)tags.push('피버 x2');
@@ -536,11 +538,22 @@ function placeAt(k,r0,c0){
     if(res.perfect)ribbon('피버 타임! 10초 동안 점수 2배','fever');
     praise(ctx);   // 상황에 맞는 감탄(해당하는 게 없으면 안 나옴)
     if(navigator.vibrate){try{navigator.vibrate(res.lines>1?[20,30,20]:20);}catch(e){}}
-    setTimeout(function(){
-      G.board=res.board;cells.forEach(function(c){c.classList.remove('pop');c.style.animationDelay='';});
-      afterPlace();
-    },reduced()?0:470);
-  }else{G.board=res.board;plusAt(res.placed,'+'+gain,'',true);afterPlace();}
+    afterPlace();
+  }else{plusAt(res.placed,'+'+gain,'',true);afterPlace();}
+}
+// 지워진 칸 자리에 같은 색 '그림자 칸'을 잠깐 올려 하얗게 번쩍이며 작아져 사라지게 한다(판 상태와는 상관없음)
+function clearGhosts(list,colors){
+  if(reduced())return;
+  var fx=$('fx'),wr=$('wrap').getBoundingClientRect();
+  list.forEach(function(i,n){
+    var r=cells[i].getBoundingClientRect(),g=document.createElement('span');
+    g.className='gcell blk c'+(colors[i]||1);
+    // 판 크기가 바뀌어도(아이폰 주소창이 줄었다 늘었다 할 때) 같이 따라가도록 % 로
+    g.style.left=(r.left-wr.left)*100/wr.width+'%';g.style.top=(r.top-wr.top)*100/wr.height+'%';g.style.width=r.width*100/wr.width+'%';g.style.height=r.height*100/wr.height+'%';
+    g.style.animationDelay=((n%8)*25)+'ms';
+    fx.appendChild(g);
+  });
+  setTimeout(function(){fx.querySelectorAll('.gcell').forEach(function(x){x.remove();});},700);
 }
 function afterPlace(){
   if(G.tray.every(function(x){return !x;})){G.round++;G.tray=nextTray(G.round);}
