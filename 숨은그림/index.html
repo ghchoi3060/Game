@@ -1,0 +1,535 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>솔솔퍼즐(숨은그림)</title>
+<meta name="description" content="귀여운 블록 친구 숨은그림찾기. 초급·중급 틀린 그림 찾기, 고급은 군중 속에서 똑같은 친구 찾기.">
+<meta name="theme-color" content="#F2F6EC" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111711" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="솔솔퍼즐(숨은그림)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-512.png">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Jua&family=Nunito:wght@400;600;700;800&display=swap">
+<style>
+/* 레이아웃: 한 화면 앱. 위 탭 → 난이도 → 상태 줄(찾은 개수·시간·힌트·음성) → 그림(틀린 그림 두 장 또는 군중) → 설명서·새 게임 → 버전 */
+:root{
+  --bg:#F2F6EC; --surface:#FFFFFF; --ink:#22301F; --muted:#64735D; --line:#D9E3CE;
+  --accent:#58B030; --accent-deep:#3E871C; --on-accent:#FFFFFF;
+  --sky:#2E9BD6; --danger:#E0533D; --danger-deep:#AE3826; --sun:#F6C945;
+  --shade:rgba(34,48,31,.14);
+  --f-display:"Fredoka","Jua","Nunito",ui-rounded,system-ui,sans-serif;
+  --f-body:"Nunito",ui-rounded,system-ui,-apple-system,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#111711; --surface:#1B231A; --ink:#E5EEDF; --muted:#9AAA92; --line:#2C3A29;
+  --accent:#68C23E; --accent-deep:#427F24; --on-accent:#0E160B;
+  --sky:#3AA6DF; --danger:#EC6A55; --danger-deep:#A2402F; --sun:#F2C94C;
+  --shade:rgba(0,0,0,.45);
+  color-scheme:dark;
+}}
+[hidden]{display:none!important}
+html{height:100%;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+*,*::before,*::after{box-sizing:inherit}
+body{height:100%;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible{outline:3px solid var(--sky);outline-offset:2px}
+#app{height:100%;max-width:600px;margin:0 auto;display:flex;flex-direction:column;gap:8px;
+  padding-left:max(14px,env(safe-area-inset-left,0px));padding-right:max(14px,env(safe-area-inset-right,0px));padding-block:10px 8px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.brand{font-family:var(--f-display);font-weight:700;font-size:20px;display:flex;align-items:center;gap:6px;letter-spacing:-.01em;cursor:pointer}
+.brand .logo svg{width:28px;height:28px;display:block}
+.tabs{display:flex;background:var(--line);border-radius:14px;padding:3px;gap:2px}
+.tabs button{border:0;background:transparent;padding:7px 13px;border-radius:11px;font-weight:800;font-size:14px;color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:0 2px 0 var(--shade)}
+main{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden}
+.view{display:flex;flex-direction:column;gap:8px;min-height:100%}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.seg button{border:2px solid var(--line);background:var(--surface);border-radius:14px;padding:6px 4px;font-weight:800;box-shadow:0 3px 0 var(--line);font-size:14px;line-height:1.2}
+.seg button small{display:block;font-size:10.5px;color:var(--muted);font-weight:700}
+.seg button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent);color:var(--on-accent);box-shadow:0 3px 0 var(--accent-deep)}
+.seg button[aria-pressed="true"] small{color:var(--on-accent)}
+
+/* 상태 줄 */
+.status{display:flex;align-items:center;gap:8px}
+.dots{display:flex;gap:4px;flex-wrap:wrap;flex:1;min-width:0}
+.dots i{width:18px;height:18px;border-radius:50%;border:2.5px solid var(--line);background:var(--surface)}
+.dots i.on{background:var(--accent);border-color:var(--accent-deep);animation:dot .4s cubic-bezier(.3,1.6,.5,1)}
+@keyframes dot{from{transform:scale(.3)}}
+.timer{font-family:var(--f-display);font-weight:700;font-size:22px;font-variant-numeric:tabular-nums;min-width:56px;text-align:center}
+.timer.pen{color:var(--danger);animation:pen .5s}
+@keyframes pen{30%{transform:scale(1.25)}}
+.ibtn{flex:none;height:38px;min-width:38px;border-radius:12px;border:2px solid var(--line);background:var(--surface);color:var(--muted);font-size:14px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:3px;padding:0 8px;box-shadow:0 3px 0 var(--line)}
+.ibtn svg{width:20px;height:20px}
+.ibtn:disabled{opacity:.45}
+.ibtn[aria-pressed="true"]{border-color:var(--accent);background:var(--accent);color:var(--on-accent);box-shadow:0 3px 0 var(--accent-deep)}
+.ibtn[aria-pressed="false"]{position:relative}
+.ibtn[aria-pressed="false"]::after{content:"";position:absolute;width:24px;height:3px;border-radius:2px;background:var(--danger);transform:rotate(-40deg)}
+
+/* 틀린 그림: 위·아래 두 장. 화면 높이에 맞춰 폭을 정한다(svh: 아이폰 주소창이 접혔다 펴져도 안 변함) */
+.pair{display:flex;flex-direction:column;gap:6px;align-items:center}
+.pane{position:relative;width:min(100%,calc((100vh - 282px) * 0.74));width:min(100%,calc((100svh - 282px) * 0.74));min-width:240px;aspect-ratio:400/270;border-radius:14px;overflow:hidden;box-shadow:0 4px 0 var(--shade);touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.pane svg{display:block;width:100%;height:100%}
+.pane .tag{position:absolute;left:6px;top:6px;font-size:10.5px;font-weight:800;background:rgba(0,0,0,.35);color:#fff;padding:1px 7px;border-radius:8px;pointer-events:none}
+.pane.jolt,.crowd.jolt{animation:jolt .35s ease-in-out}
+@keyframes jolt{20%{transform:translateX(-6px)}45%{transform:translateX(5px)}70%{transform:translateX(-3px)}}
+
+/* 군중 */
+.target{display:flex;align-items:center;gap:10px;background:var(--surface);border:2px solid var(--line);border-radius:16px;padding:6px 10px}
+.target svg{width:46px;height:72px;flex:none;background:linear-gradient(#DDF3FF,#BFE6FF);border-radius:10px}
+.target b{font-family:var(--f-display);font-size:16px;font-weight:700;display:block}
+.target span{font-size:12px;color:var(--muted);font-weight:700}
+.crowd{position:relative;height:calc(100vh - 330px);height:calc(100svh - 330px);min-height:260px;overflow:auto;border-radius:14px;box-shadow:0 4px 0 var(--shade);touch-action:pan-x pan-y;-webkit-overflow-scrolling:touch;background:#7CC152;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.crowd svg{display:block}
+.crowdwrap{position:relative}
+.zoom{position:absolute;right:8px;bottom:8px;display:flex;flex-direction:column;gap:6px;z-index:3}
+.zoom button{width:40px;height:40px;border-radius:12px;border:2px solid rgba(0,0,0,.15);background:rgba(255,255,255,.92);color:#22301F;font-size:22px;font-weight:800;padding:0;display:grid;place-items:center;box-shadow:0 3px 0 rgba(0,0,0,.18)}
+
+/* 표시 */
+.mk-ok{fill:none;stroke:#FF3B6B;stroke-width:3.5;animation:mk .45s cubic-bezier(.3,1.6,.5,1) both;transform-box:fill-box;transform-origin:center}
+.mk-ok2{fill:none;stroke:#fff;stroke-width:7;stroke-opacity:.85;animation:mk .45s cubic-bezier(.3,1.6,.5,1) both;transform-box:fill-box;transform-origin:center}
+@keyframes mk{from{transform:scale(2.2);opacity:0}}
+.mk-x{stroke:var(--danger);stroke-width:5;stroke-linecap:round;animation:mkx .7s ease-out forwards}
+@keyframes mkx{0%{opacity:1}70%{opacity:1}100%{opacity:0}}
+.mk-hint{fill:rgba(255,235,80,.18);stroke:#FFD400;stroke-width:4;stroke-dasharray:10 7;animation:hint .6s ease-in-out infinite alternate}
+@keyframes hint{to{stroke-width:7;fill:rgba(255,235,80,.32)}}
+.mk-spark{animation:spk .6s ease-out forwards}
+@keyframes spk{to{transform:translate(var(--dx),var(--dy)) scale(.2);opacity:0}}
+.pen-pop{position:fixed;font-family:var(--f-display);font-weight:700;color:var(--danger);font-size:20px;pointer-events:none;z-index:20;animation:penpop .9s ease-out forwards;-webkit-text-stroke:3px #fff;paint-order:stroke}
+@keyframes penpop{to{transform:translateY(-36px);opacity:0}}
+.praise{position:fixed;left:50%;top:34%;transform:translate(-50%,-50%);z-index:25;pointer-events:none;font-family:var(--f-display);font-weight:700;font-size:40px;color:#fff;-webkit-text-stroke:6px var(--pc,#E8A317);paint-order:stroke;white-space:nowrap;animation:prz 1.2s ease-out forwards;text-align:center}
+.praise small{display:block;font-size:15px;-webkit-text-stroke:3px var(--pc,#E8A317)}
+@keyframes prz{0%{transform:translate(-50%,-50%) scale(.3) rotate(-8deg);opacity:0}18%{transform:translate(-50%,-50%) scale(1.15) rotate(3deg);opacity:1}30%{transform:translate(-50%,-50%) scale(1) rotate(0)}80%{opacity:1}100%{transform:translate(-50%,-70%) scale(1);opacity:0}}
+
+/* 결과 */
+.overlay{position:fixed;inset:0;display:grid;place-items:center;background:rgba(17,23,17,.45);z-index:15;padding:16px}
+.overlay .card{animation:pop .32s cubic-bezier(.3,1.5,.5,1)}
+@keyframes pop{0%{transform:scale(.85)}70%{transform:scale(1.04)}100%{transform:scale(1)}}
+.card{background:var(--surface);border-radius:20px;padding:18px;box-shadow:0 6px 0 var(--shade);text-align:center;width:min(100%,320px);display:flex;flex-direction:column;gap:10px}
+.card h2{margin:0;font-family:var(--f-display);font-size:28px;font-weight:700}
+.card p{margin:0;color:var(--muted);font-weight:700}
+.card .big{font-family:var(--f-display);font-size:34px;font-weight:700;font-variant-numeric:tabular-nums}
+.card .new{color:var(--accent-deep);font-weight:800}
+.list{display:flex;flex-direction:column;gap:8px}
+.conf{position:fixed;top:-20px;width:9px;height:14px;border-radius:2px;z-index:16;pointer-events:none;animation:fall var(--t) cubic-bezier(.25,.6,.5,1) forwards}
+@keyframes fall{to{transform:translate(var(--dx),105vh) rotate(var(--r));opacity:.3}}
+
+/* 아래 버튼 */
+.actions{display:grid;grid-template-columns:1fr 1.3fr;gap:8px;margin-top:auto}
+.btn{border:0;border-radius:16px;padding:11px 10px;font-weight:800;font-size:15px;background:var(--surface);color:var(--ink);border:2px solid var(--line);box-shadow:0 4px 0 var(--line);display:flex;align-items:center;justify-content:center;gap:6px;min-height:46px}
+.btn:active:not(:disabled){transform:translateY(4px);box-shadow:0 0 0 var(--line)}
+.btn.primary{background:var(--accent);color:var(--on-accent);border-color:var(--accent);box-shadow:0 4px 0 var(--accent-deep)}
+.verline{text-align:center;font-size:11px;font-weight:700;color:var(--muted);opacity:.8}
+
+/* 기록 */
+.panel{background:var(--surface);border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:10px;border:2px solid var(--line)}
+.panel h3{margin:0;font-family:var(--f-display);font-size:18px;font-weight:600}
+.panel .hint{font-size:13px;color:var(--muted);font-weight:600;margin:0}
+table.rec{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:14px}
+table.rec th,table.rec td{padding:7px 4px;text-align:center;border-bottom:1px solid var(--line)}
+table.rec th{font-size:11px;color:var(--muted);font-weight:800}
+table.rec td:first-child,table.rec th:first-child{text-align:left;font-weight:800}
+.recent{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
+.recent div{display:flex;gap:10px}
+/* 설명서 */
+.modal-bg{position:fixed;inset:0;background:rgba(17,23,17,.5);z-index:30;display:grid;place-items:center;padding:max(16px,env(safe-area-inset-top,0px)) 16px max(16px,env(safe-area-inset-bottom,0px))}
+.modal{background:var(--bg);border-radius:22px;width:min(100%,520px);max-height:100%;display:flex;flex-direction:column;box-shadow:0 8px 0 var(--shade);animation:pop .3s cubic-bezier(.3,1.5,.5,1);overflow:hidden}
+.modal header{display:flex;align-items:center;gap:10px;padding:14px 14px 10px 18px;border-bottom:2px solid var(--line)}
+.modal h2{margin:0;font-family:var(--f-display);font-size:22px;font-weight:700;flex:1}
+.modal .x{width:38px;height:38px;border-radius:12px;border:2px solid var(--line);background:var(--surface);font-size:18px;font-weight:800;display:grid;place-items:center;padding:0}
+.manual{overflow-y:auto;padding:14px 18px 18px;display:flex;flex-direction:column;gap:16px;-webkit-overflow-scrolling:touch}
+.manual h3{margin:0 0 6px;font-family:var(--f-display);font-size:16px;font-weight:700;color:var(--accent)}
+.manual p,.manual li{margin:0;font-size:14px;line-height:1.6;font-weight:600}
+.manual ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.manual b{font-weight:800}
+.modal footer{padding:10px 18px 14px;border-top:2px solid var(--line)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:14px;font-weight:800;font-size:14px;z-index:40;max-width:calc(100% - 32px);text-align:center}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:380px){.tabs button{padding:6px 9px}.brand{font-size:17px}}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <header class="top">
+    <div class="brand"><span class="logo" id="logo"></span>솔솔퍼즐(숨은그림)</div>
+    <nav class="tabs" role="tablist" aria-label="화면">
+      <button role="tab" id="tab-play" data-tab="play" aria-selected="true">게임</button>
+      <button role="tab" id="tab-history" data-tab="history" aria-selected="false">기록</button>
+    </nav>
+  </header>
+
+  <main>
+    <section class="view" id="view-play">
+      <div class="seg" id="lvSeg"></div>
+      <div class="status">
+        <div class="dots" id="dots" aria-label="찾은 개수"></div>
+        <div class="timer" id="timer">0</div>
+        <button class="ibtn" id="hintBtn" type="button" aria-label="힌트"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z" fill="#F6C945" stroke="#B5850F" stroke-width="1.5"/><rect x="8.5" y="18" width="7" height="3" rx="1.2" fill="#9AA5B1"/></svg><span id="hintN">3</span></button>
+        <button class="ibtn" id="voiceBtn" type="button" aria-pressed="true" aria-label="음성 끄기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+      </div>
+      <div class="pair" id="pair">
+        <div class="pane" id="pane0"><span class="tag">위</span></div>
+        <div class="pane" id="pane1"><span class="tag">아래</span></div>
+      </div>
+      <div id="crowdBox" hidden>
+        <div class="target"><svg id="targetSvg" viewBox="-28 -92 56 97" aria-hidden="true"></svg><div><b>이 친구와 똑같은 친구 <span id="needN" style="font-size:inherit;color:inherit">3</span>명을 찾아요</b><span>모자·얼굴·옷 무늬·들고 있는 것까지 전부 같아야 해요. 두 손가락으로 확대</span></div></div>
+        <div class="crowdwrap"><div class="crowd" id="crowd"><div id="crowdIn"></div></div><div class="zoom"><button type="button" id="zin" aria-label="확대">＋</button><button type="button" id="zout" aria-label="축소">－</button></div></div>
+      </div>
+      <div class="actions">
+        <button class="btn" id="manualBtn" type="button">설명서</button>
+        <button class="btn primary" id="newBtn" type="button">새 게임</button>
+      </div>
+      <div class="verline" id="verLine"></div>
+    </section>
+
+    <section class="view" id="view-history" hidden></section>
+  </main>
+</div>
+<div class="overlay" id="result" hidden>
+  <div class="card"><h2 id="resTitle"></h2><div class="big" id="resTime"></div><p id="resInfo"></p><div id="resBtns" class="list"></div></div>
+</div>
+<div class="modal-bg" id="manualBg" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="manualTitle">
+    <header><h2 id="manualTitle">숨은그림 설명서</h2><button class="x" id="manualClose" type="button" aria-label="닫기">✕</button></header>
+    <div class="manual">
+      <section>
+        <h3>초급·중급: 틀린 그림 찾기</h3>
+        <p>위·아래 두 그림에서 <b>다른 곳</b>을 찾아 눌러요(어느 그림을 눌러도 돼요). 초급은 3곳, 중급은 6곳이에요.</p>
+        <ul>
+          <li>옷·바지 색, 모자, 들고 있는 것, 팔 자세, 지붕 색, 한쪽에만 있는 물건…</li>
+          <li>중급은 표정, 옷 무늬, 모자 색, 창문 개수처럼 작은 차이도 있어요.</li>
+        </ul>
+      </section>
+      <section>
+        <h3>고급: 똑같은 친구 찾기</h3>
+        <p>공원에 블록 친구가 200명 넘게 모여 있어요. 위에 보이는 친구와 <b>모든 게 똑같은 친구 3명</b>을 찾아 눌러요.</p>
+        <ul>
+          <li>한 군데만 다른 닮은꼴이 40명쯤 섞여 있어요. 모자 색, 표정, 옷 무늬, 풍선 색, 팔 자세까지 꼼꼼히!</li>
+          <li><b>두 손가락</b>으로 벌려 확대하고, 한 손가락으로 끌어 둘러봐요. ＋ － 버튼도 있어요.</li>
+        </ul>
+      </section>
+      <section>
+        <h3>시간·힌트</h3>
+        <ul>
+          <li>시작하면 시간이 가요. 빨리 찾을수록 좋은 기록이에요.</li>
+          <li>틀린 곳을 누르면 <b>+3초</b>(고급은 다른 친구를 누르면 +5초).</li>
+          <li>💡 <b>힌트</b>는 한 판에 3번. 남은 곳 근처를 깜빡여 줘요(초급·중급 +10초, 고급 +15초).</li>
+        </ul>
+      </section>
+      <section>
+        <h3>기록</h3>
+        <p>하던 판은 자동으로 저장돼요. 난이도별 최고 기록은 <b>기록</b> 탭에서, 전체 순위표도 볼 수 있어요. 설명서를 보는 동안에는 시간이 멈춰요.</p>
+      </section>
+    </div>
+    <footer><button class="btn primary" id="manualOk" type="button" style="width:100%">알겠어요</button></footer>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script src="../common/supabase-config.js?v=1"></script>
+<script src="../common/cloud.js?v=4" data-game="hidden"></script>
+<script src="engine.js?v=1"></script>
+<script>
+(function(){
+'use strict';
+var VERSION='11.14-1';
+var E=HiddenEngine();
+var LV={easy:{t:'초급',d:'틀린 그림 3곳'},normal:{t:'중급',d:'틀린 그림 6곳'},hard:{t:'고급',d:'똑같은 친구 3명'}};
+var LV_KEYS=['easy','normal','hard'];
+var HINTS=3,PEN_WRONG={diff:3,crowd:5},PEN_HINT={diff:10,crowd:15};
+var $=function(id){return document.getElementById(id);};
+function store(k,v){try{if(v===undefined)return JSON.parse(localStorage.getItem(k)||'null');localStorage.setItem(k,JSON.stringify(v));}catch(e){return null;}}
+function reduced(){return matchMedia('(prefers-reduced-motion: reduce)').matches;}
+var NS='http://www.w3.org/2000/svg';
+function svgEl(tag,attrs){var e=document.createElementNS(NS,tag);for(var k in attrs)e.setAttribute(k,attrs[k]);return e;}
+
+$('logo').innerHTML='<svg viewBox="0 0 512 512" aria-hidden="true"><rect width="512" height="512" rx="112" fill="#58B030"/><rect x="104" y="96" width="236" height="214" rx="40" fill="#F7D046" stroke="#B5850F" stroke-width="14"/><circle cx="178" cy="190" r="20" fill="#22301F"/><circle cx="268" cy="190" r="20" fill="#22301F"/><path d="M170 240q53 44 106 0" stroke="#22301F" stroke-width="16" fill="none" stroke-linecap="round"/><circle cx="330" cy="330" r="92" fill="#fff" fill-opacity=".35" stroke="#fff" stroke-width="30"/><path d="M398 398l52 52" stroke="#3B2A14" stroke-width="40" stroke-linecap="round"/></svg>';
+$('verLine').textContent='솔솔퍼즐(숨은그림) · 버전 '+VERSION;
+
+// ---------- 상태 ----------
+// G: {lv, seed, found[](찾은 차이 번호 또는 친구 번호), time(초, 벌점 포함), wrong, hints, over}
+var G=null,S=null,tab='play';
+function newGame(lv){
+  lv=lv||G.lv;
+  G={lv:lv,seed:(Date.now()^Math.floor(Math.random()*1e9))>>>0,found:[],time:0,wrong:0,hints:0,over:false};
+  store('hidden.lastLv',lv);
+  var st=store('hidden.stats')||{};st[lv]=st[lv]||{played:0,won:0,best:null,recent:[]};st[lv].played++;store('hidden.stats',st);
+  $('result').hidden=true;
+  build();save();
+  toast(LV[lv].t+' · '+LV[lv].d+' · 버전 '+VERSION);
+}
+function need(){return S.mode==='diff'?S.diffs.length:S.copies.length;}
+
+// ---------- 그리기 ----------
+var zoom=1.6,crowdW=0;
+function build(){
+  S=G.lv==='hard'?E.genCrowd(G.seed):E.genDiff(G.seed,G.lv);
+  var diff=S.mode==='diff';
+  $('pair').hidden=!diff;$('crowdBox').hidden=diff;
+  if(diff){
+    [0,1].forEach(function(k){
+      var p=$('pane'+k),old=p.querySelector('svg');if(old)old.remove();
+      p.insertAdjacentHTML('afterbegin','<svg viewBox="0 0 '+S.w+' '+S.h+'" aria-label="'+(k?'아래':'위')+' 그림">'+E.diffSvg(S,k,k)+'<g class="marks"></g></svg>');
+    });
+  }else{
+    $('targetSvg').innerHTML=E.charSvg(S.target,0,0,1);
+    $('needN').textContent=S.copies.length;
+    $('crowdIn').innerHTML='<svg viewBox="0 0 '+S.w+' '+S.h+'" aria-label="공원 그림">'+E.crowdSvg(S)+'<g class="marks"></g></svg>';
+    zoom=store('hidden.zoom')||1.6;sizeCrowd(null);
+  }
+  G.found.forEach(function(f){markFound(f,true);});
+  renderStatus();
+}
+function sizeCrowd(anchor){
+  var box=$('crowd'),svg=$('crowdIn').querySelector('svg');if(!svg)return;
+  var cw=box.clientWidth||360,old=crowdW,nw=Math.round(cw*zoom);
+  var ax=anchor?anchor[0]:cw/2,ay=anchor?anchor[1]:box.clientHeight/2;
+  var fx=old?(box.scrollLeft+ax)/old:.5,fy=old?(box.scrollTop+ay)/(old*S.h/S.w):.5;
+  crowdW=nw;svg.style.width=nw+'px';svg.style.height=Math.round(nw*S.h/S.w)+'px';
+  box.scrollLeft=fx*nw-ax;box.scrollTop=fy*nw*S.h/S.w-ay;
+}
+function renderStatus(){
+  var n=need(),h='';for(var i=0;i<n;i++)h+='<i class="'+(i<G.found.length?'on':'')+'"></i>';$('dots').innerHTML=h;
+  $('timer').textContent=Math.floor(G.time);
+  $('hintN').textContent=HINTS-G.hints;$('hintBtn').disabled=G.over||G.hints>=HINTS;
+  Array.prototype.forEach.call($('lvSeg').children,function(b){b.setAttribute('aria-pressed',b.dataset.lv===G.lv);});
+}
+function marksOf(svg){return svg.querySelector('.marks');}
+function circleAt(svg,cx,cy,r){
+  var g=marksOf(svg);
+  g.appendChild(svgEl('circle',{cx:cx,cy:cy,r:r,class:'mk-ok2'}));
+  g.appendChild(svgEl('circle',{cx:cx,cy:cy,r:r,class:'mk-ok'}));
+}
+function boxOf(f){return S.mode==='diff'?S.diffs[f].box:E.personBox(S,f);}
+function markFound(f,quiet){
+  var b=boxOf(f),cx=b[0]+b[2]/2,cy=b[1]+b[3]/2,r=Math.max(b[2],b[3])/2+(S.mode==='diff'?5:3);
+  if(S.mode==='diff')r=Math.max(r,14);
+  svgs().forEach(function(svg){circleAt(svg,cx,cy,r);if(!quiet)sparks(svg,cx,cy);});
+}
+function svgs(){return S.mode==='diff'?[$('pane0').querySelector('svg'),$('pane1').querySelector('svg')]:[$('crowdIn').querySelector('svg')];}
+function sparks(svg,cx,cy){
+  if(reduced())return;
+  var g=marksOf(svg),cols=['#FF3B6B','#F6C945','#58B030','#2E9BD6'];
+  for(var i=0;i<10;i++){var a=Math.PI*2*i/10,d=18+Math.random()*14,c=svgEl('circle',{cx:cx,cy:cy,r:3,fill:cols[i%4],class:'mk-spark'});
+    c.style.setProperty('--dx',Math.cos(a)*d+'px');c.style.setProperty('--dy',Math.sin(a)*d+'px');g.appendChild(c);setTimeout(function(x){return function(){x.remove();};}(c),650);}
+}
+
+// ---------- 누르기 ----------
+function toScene(svg,e){var r=svg.getBoundingClientRect();return [(e.clientX-r.left)/r.width*S.w,(e.clientY-r.top)/r.height*S.h];}
+function tapDiff(svg,e){
+  if(!G||G.over)return;
+  var p=toScene(svg,e),best=-1,bd=1e9;
+  S.diffs.forEach(function(d,k){
+    if(G.found.indexOf(k)>=0)return;
+    // 작은 물건도 누르기 쉽게 최소 30 크기로 넓혀서 판정
+    var b=d.box,cx=b[0]+b[2]/2,cy=b[1]+b[3]/2,hw=Math.max(b[2]/2,15)+4,hh=Math.max(b[3]/2,15)+4;
+    if(Math.abs(p[0]-cx)<=hw&&Math.abs(p[1]-cy)<=hh){var dd=Math.hypot(p[0]-cx,p[1]-cy);if(dd<bd){bd=dd;best=k;}}
+  });
+  if(best>=0)found(best);else wrong(svg,p,e);
+}
+function tapCrowd(svg,e){
+  if(!G||G.over||Date.now()<noTapUntil)return;
+  var p=toScene(svg,e),k=E.personAt(S,p[0],p[1]);
+  if(k<0)return;   // 빈 땅은 그냥 둘러보는 중일 수 있어서 벌점 없음
+  if(S.copies.indexOf(k)>=0){if(G.found.indexOf(k)<0)found(k);}
+  else wrong(svg,p,e);
+}
+$('pane0').addEventListener('click',function(e){tapDiff(this.querySelector('svg'),e);});
+$('pane1').addEventListener('click',function(e){tapDiff(this.querySelector('svg'),e);});
+$('crowdIn').addEventListener('click',function(e){var svg=this.querySelector('svg');if(svg)tapCrowd(svg,e);});
+
+var lastFoundAt=0;
+function found(f){
+  G.found.push(f);
+  markFound(f,false);
+  var now=Date.now(),quick=lastFoundAt&&now-lastFoundAt<4000;lastFoundAt=now;
+  dingSound(G.found.length);
+  if(navigator.vibrate){try{navigator.vibrate(25);}catch(e){}}
+  var left=need()-G.found.length;
+  if(left<=0){win();return;}
+  // 찾을 때마다 짧게, 빠르게 연달아 찾으면 더 크게
+  var W=quick?['Speedy!','Sharp eyes!','Wow!']:['Nice!','Found it!','Good eye!','Yes!'];
+  var w=W[Math.floor(Math.random()*W.length)];
+  praise(w,left===1?'하나 남았어요!':left+'개 남았어요',quick?'#2E9BD6':'#58B030',quick?3:2);
+  save();renderStatus();
+}
+function wrong(svg,p,e){
+  var pen=PEN_WRONG[S.mode];G.time+=pen;G.wrong++;
+  var g=marksOf(svg),s=S.mode==='diff'?9:7,x=svgEl('path',{d:'M'+(p[0]-s)+' '+(p[1]-s)+'L'+(p[0]+s)+' '+(p[1]+s)+'M'+(p[0]+s)+' '+(p[1]-s)+'L'+(p[0]-s)+' '+(p[1]+s),class:'mk-x'});
+  g.appendChild(x);setTimeout(function(){x.remove();},750);
+  var host=S.mode==='diff'?svg.parentNode:$('crowd');
+  if(!reduced()){host.classList.remove('jolt');void host.offsetWidth;host.classList.add('jolt');}
+  var pp=document.createElement('div');pp.className='pen-pop';pp.textContent='+'+pen+'초';pp.style.left=(e.clientX-18)+'px';pp.style.top=(e.clientY-30)+'px';document.body.appendChild(pp);setTimeout(function(){pp.remove();},950);
+  var t=$('timer');t.classList.remove('pen');void t.offsetWidth;t.classList.add('pen');
+  buzzSound();if(navigator.vibrate){try{navigator.vibrate([40,30,40]);}catch(err){}}
+  save();renderStatus();
+}
+$('hintBtn').onclick=function(){
+  if(!G||G.over||G.hints>=HINTS)return;
+  var left=[];if(S.mode==='diff')S.diffs.forEach(function(d,k){if(G.found.indexOf(k)<0)left.push(k);});else S.copies.forEach(function(k){if(G.found.indexOf(k)<0)left.push(k);});
+  if(!left.length)return;
+  G.hints++;G.time+=PEN_HINT[S.mode];
+  var f=left[Math.floor(Math.random()*left.length)],b=boxOf(f),cx=b[0]+b[2]/2,cy=b[1]+b[3]/2;
+  // 정확한 자리 대신 근처를 크게 깜빡인다(고급은 더 넓게)
+  var R=S.mode==='diff'?Math.max(b[2],b[3])/2+26:70,ox=(Math.random()*2-1)*R*.35,oy=(Math.random()*2-1)*R*.35;
+  svgs().forEach(function(svg){var c=svgEl('circle',{cx:cx+ox,cy:cy+oy,r:R,class:'mk-hint'});marksOf(svg).appendChild(c);setTimeout(function(){c.remove();},2600);});
+  if(S.mode==='crowd'){var box=$('crowd'),sc=crowdW/S.w;box.scrollTo({left:(cx+ox)*sc-box.clientWidth/2,top:(cy+oy)*sc-box.clientHeight/2,behavior:reduced()?'auto':'smooth'});}
+  toast('힌트: 깜빡이는 곳 근처를 살펴봐요 (+'+PEN_HINT[S.mode]+'초)');
+  save();renderStatus();
+};
+
+// ---------- 군중 확대: 두 손가락 벌리기, ＋ － 버튼 ----------
+var pinch=null,noTapUntil=0;
+function setZoom(z,anchor){zoom=Math.max(1,Math.min(4.5,z));sizeCrowd(anchor);store('hidden.zoom',Math.round(zoom*100)/100);}
+$('zin').onclick=function(e){e.stopPropagation();setZoom(zoom*1.35);};
+$('zout').onclick=function(e){e.stopPropagation();setZoom(zoom/1.35);};
+var cb=$('crowd');
+cb.addEventListener('touchstart',function(e){
+  if(e.touches.length===2){var a=e.touches[0],b=e.touches[1],r=cb.getBoundingClientRect();
+    pinch={d:Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY),z:zoom,mid:[(a.clientX+b.clientX)/2-r.left,(a.clientY+b.clientY)/2-r.top]};e.preventDefault();}
+},{passive:false});
+cb.addEventListener('touchmove',function(e){
+  if(pinch&&e.touches.length===2){var a=e.touches[0],b=e.touches[1],d=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);e.preventDefault();setZoom(pinch.z*d/pinch.d,pinch.mid);}
+},{passive:false});
+cb.addEventListener('touchend',function(e){if(pinch&&e.touches.length<2){pinch=null;noTapUntil=Date.now()+350;}});
+cb.addEventListener('wheel',function(e){if(e.ctrlKey){e.preventDefault();var r=cb.getBoundingClientRect();setZoom(zoom*(e.deltaY<0?1.1:1/1.1),[e.clientX-r.left,e.clientY-r.top]);}},{passive:false});
+
+// ---------- 끝 ----------
+function win(){
+  G.over=true;
+  var st=store('hidden.stats')||{},s=st[G.lv]||(st[G.lv]={played:1,won:0,best:null,recent:[]});
+  var t=Math.max(1,Math.floor(G.time)),record=s.best===null||t<s.best;
+  s.won++;if(record)s.best=t;
+  s.recent.unshift({t:t,w:G.wrong,h:G.hints,ts:Date.now()});s.recent=s.recent.slice(0,10);
+  store('hidden.stats',st);save();renderStatus();
+  if(window.SolsolCloud)SolsolCloud.submitScore(G.lv,t);
+  var clean=!G.wrong&&!G.hints;
+  praise(clean?'Perfect!':record?'New Record!':'Great!',clean?'실수 없이 다 찾았어요!':record?'최고 기록이에요!':'다 찾았어요!','#E8A317',6);
+  fanfare();
+  setTimeout(function(){confetti();showResult(record);},900);
+}
+function showResult(record){
+  $('resTitle').textContent='다 찾았어요!';
+  $('resTime').textContent=Math.max(1,Math.floor(G.time))+'초';
+  $('resInfo').innerHTML=LV[G.lv].t+' · 틀림 '+G.wrong+' · 힌트 '+G.hints+(record?'<br><span class="new">최고 기록!</span>':'');
+  var btns=$('resBtns');btns.innerHTML='';
+  function add(label,cls,fn){var b=document.createElement('button');b.type='button';b.className='btn '+cls;b.textContent=label;b.onclick=fn;btns.appendChild(b);}
+  var idx=LV_KEYS.indexOf(G.lv);
+  if(idx<2)add(LV[LV_KEYS[idx+1]].t+' 도전','primary',function(){newGame(LV_KEYS[idx+1]);});
+  add('한 판 더',idx<2?'':'primary',function(){newGame(G.lv);});
+  add('그림 보기','',function(){$('result').hidden=true;});
+  $('result').hidden=false;
+}
+
+// ---------- 이펙트·소리 ----------
+function praise(title,sub,color,power){
+  var old=document.querySelector('.praise');if(old)old.remove();
+  var el=document.createElement('div');el.className='praise';el.style.setProperty('--pc',color);
+  el.style.fontSize=(30+power*3)+'px';
+  el.innerHTML=title+'<small>'+sub+'</small>';document.body.appendChild(el);setTimeout(function(){el.remove();},1250);
+  sayPraise(title,power);
+}
+function confetti(){
+  if(reduced())return;
+  var cols=['#F6C945','#58B030','#2E9BD6','#FF8FA3','#E0533D'];
+  for(var i=0;i<70;i++){var c=document.createElement('span');c.className='conf';c.style.left=Math.random()*100+'vw';c.style.background=cols[i%5];
+    c.style.setProperty('--dx',(Math.random()*80-40)+'px');c.style.setProperty('--r',(Math.random()*900-450)+'deg');c.style.setProperty('--t',(1.6+Math.random()*1.2)+'s');c.style.animationDelay=Math.random()*.4+'s';
+    if(i%4===0){c.style.borderRadius='50%';c.style.height='9px';}document.body.appendChild(c);}
+  setTimeout(function(){document.querySelectorAll('.conf').forEach(function(n){n.remove();});},3400);
+}
+var actx=null;
+function unlockAudio(){try{if(!actx){var AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;actx=new AC();}if(actx.state==='suspended')actx.resume();}catch(e){}}
+['pointerdown','touchstart','keydown'].forEach(function(ev){document.addEventListener(ev,unlockAudio,{passive:true});});
+function note(f,at,dur,type,vol){var t=actx.currentTime+at,o=actx.createOscillator(),g=actx.createGain();o.type=type||'triangle';o.frequency.value=f;o.connect(g);g.connect(actx.destination);
+  g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(vol||.2,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.start(t);o.stop(t+dur+.03);}
+// 찾을 때 "띵동": 찾을수록 한 음씩 올라간다
+function dingSound(n){unlockAudio();if(!actx)return;try{var PS=[0,2,4,7,9,12,14,16],b=659.25*Math.pow(2,PS[Math.min(n-1,7)]/12);note(b,0,.18,'sine',.22);note(b*1.5,.08,.3,'sine',.18);note(b*3,.08,.25,'sine',.05);}catch(e){}}
+function buzzSound(){unlockAudio();if(!actx)return;try{note(150,0,.16,'square',.07);note(120,.1,.2,'square',.06);}catch(e){}}
+function fanfare(){unlockAudio();if(!actx)return;try{[0,4,7,12].forEach(function(s,k){note(523.25*Math.pow(2,s/12),k*.1,.35,'square',.06);});note(1046.5,.45,.8,'triangle',.18);}catch(e){}}
+
+// 감탄 음성: 폰 내장 음성 합성, 영어 남자 목소리로 짧고 신나게(블록 게임과 같은 방식). 켜고 끄기 hidden.voice(기본 켜짐)
+var VOICE={on:store('hidden.voice')!==false,v:null,ready:false};
+var MALE=/aaron|daniel|fred|alex\b|arthur|rishi|tom\b|evan|nathan|gordon|reed|rocko|eddy|ralph|oliver|male|david|mark|guy|george|james|ryan|christopher|eric|roger|brian/i,FEMALE=/female|samantha|karen|moira|tessa|victoria|kate|serena|susan|zira|hazel|aria|jenny|libby|sonia|martha|catherine|nicky|allison|ava|zoe/i;
+function pickVoice(){if(!window.speechSynthesis)return null;var vs=speechSynthesis.getVoices().filter(function(v){return /^en/i.test(v.lang);});if(!vs.length)return null;
+  function sc(v){var s=0;if(MALE.test(v.name))s+=10;if(FEMALE.test(v.name))s-=20;if(/en[-_]US/i.test(v.lang))s+=2;if(/enhanced|premium|neural|natural/i.test(v.name))s+=3;if(v.localService)s+=1;return s;}
+  vs.sort(function(a,b){return sc(b)-sc(a);});return vs[0];}
+if(window.speechSynthesis){VOICE.v=pickVoice();try{speechSynthesis.addEventListener('voiceschanged',function(){VOICE.v=pickVoice();});}catch(e){}}
+document.addEventListener('pointerdown',function(){if(VOICE.ready||!window.speechSynthesis)return;VOICE.ready=true;try{var u=new SpeechSynthesisUtterance(' ');u.volume=0;speechSynthesis.speak(u);}catch(e){}},{passive:true});
+var SAY={'Great!':'Greeat!','Nice!':'Niice!','Speedy!':'Speedy!','Sharp eyes!':'Sharp eyes!','Found it!':'Found it!','Good eye!':'Good eye!'};
+function sayPraise(text,power){
+  if(!VOICE.on||!window.speechSynthesis)return;
+  try{
+    speechSynthesis.cancel();if(!VOICE.v)VOICE.v=pickVoice();
+    var lift=VOICE.v&&MALE.test(VOICE.v.name)?0:-.4;
+    function mk(s,p,r){var u=new SpeechSynthesisUtterance(s);if(VOICE.v){u.voice=VOICE.v;u.lang=VOICE.v.lang;}else u.lang='en-US';u.pitch=Math.max(.1,Math.min(2,p+lift));u.rate=r;u.volume=1;return u;}
+    if(power>=3){var H=power>=5?['Oh yeah!','Boom!','Whoa!']:['Woo!','Hey!','Wow!'];speechSynthesis.speak(mk(H[Math.floor(Math.random()*H.length)],1.7+power*.04,1.3));}
+    speechSynthesis.speak(mk(SAY[text]||text,1.5+power*.07,Math.min(1.3,1.12+power*.03)));
+  }catch(e){}
+}
+function paintVoice(){var b=$('voiceBtn');b.setAttribute('aria-pressed',VOICE.on);b.setAttribute('aria-label',VOICE.on?'음성 끄기':'음성 켜기');}
+$('voiceBtn').onclick=function(){VOICE.on=!VOICE.on;store('hidden.voice',VOICE.on);paintVoice();if(VOICE.on)sayPraise("Let's go!",3);else if(window.speechSynthesis)speechSynthesis.cancel();};
+paintVoice();
+
+// ---------- 버튼·시간·저장 ----------
+$('newBtn').onclick=function(){newGame(G.lv);};
+$('lvSeg').innerHTML=LV_KEYS.map(function(k){return '<button type="button" data-lv="'+k+'">'+LV[k].t+'<small>'+LV[k].d+'</small></button>';}).join('');
+$('lvSeg').addEventListener('click',function(e){var b=e.target.closest('button');if(b)newGame(b.dataset.lv);});
+setInterval(function(){
+  if(!G||G.over||document.hidden||tab!=='play'||!$('manualBg').hidden)return;
+  G.time+=1;$('timer').textContent=Math.floor(G.time);
+  if(Math.floor(G.time)%5===0)save();
+},1000);
+function save(){if(G)store('hidden.game',G);}
+document.addEventListener('visibilitychange',function(){if(document.hidden)save();});
+
+// ---------- 탭·기록 ----------
+function setTab(t){
+  tab=t;
+  ['play','history'].forEach(function(n){$('view-'+n).hidden=n!==t;$('tab-'+n).setAttribute('aria-selected',n===t);});
+  if(t==='history')renderHistory();
+}
+document.querySelector('.tabs').addEventListener('click',function(e){var b=e.target.closest('button');if(b)setTab(b.dataset.tab);});
+function fmtDate(ts){var d=new Date(ts);return (d.getMonth()+1)+'/'+d.getDate();}
+function renderHistory(){
+  var st=store('hidden.stats')||{},rows='',recent=[];
+  LV_KEYS.forEach(function(k){
+    var s=st[k]||{played:0,won:0,best:null,recent:[]};
+    rows+='<tr><td>'+LV[k].t+'</td><td>'+s.won+' / '+s.played+'</td><td>'+(s.best!==null?s.best+'초':'—')+'</td></tr>';
+    s.recent.forEach(function(r){recent.push({lv:k,r:r});});
+  });
+  recent.sort(function(a,b){return b.r.ts-a.r.ts;});
+  var items=recent.slice(0,15).map(function(x){return '<div><span>'+fmtDate(x.r.ts)+'</span><span>'+LV[x.lv].t+'</span><span>'+x.r.t+'초</span><span>틀림 '+x.r.w+' · 힌트 '+x.r.h+'</span></div>';});
+  $('view-history').innerHTML='<div class="panel"><h3>난이도별 기록</h3><table class="rec"><thead><tr><th>난이도</th><th>성공 / 시작</th><th>최고 기록</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+    '<div class="panel"><h3>최근 판</h3>'+(items.length?'<div class="recent">'+items.join('')+'</div>':'<p class="hint">아직 끝낸 판이 없어요</p>')+'<p class="hint">'+(window.SolsolCloud&&SolsolCloud.enabled?'기록은 이 폰과 서버에 함께 저장돼요.':'기록은 이 폰에만 저장돼요.')+'</p></div>'+
+    '<p class="verline">솔솔퍼즐(숨은그림) · 버전 '+VERSION+'</p>';
+  if(window.SolsolCloud)SolsolCloud.mount($('view-history'),{board:true,level:G&&G.lv,levels:LV_KEYS.map(function(k){return [k,LV[k].t];}),fmt:function(s){return s+'초';}});
+}
+
+// ---------- 설명서 ----------
+function openManual(){$('manualBg').hidden=false;$('manualBg').querySelector('.manual').scrollTop=0;$('manualClose').focus();}
+function closeManual(){$('manualBg').hidden=true;$('manualBtn').focus();}
+$('manualBtn').onclick=openManual;$('manualClose').onclick=closeManual;$('manualOk').onclick=closeManual;
+$('manualBg').addEventListener('click',function(e){if(e.target.id==='manualBg')closeManual();});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!$('manualBg').hidden)closeManual();});
+var toastTimer=0;
+function toast(msg){var t=$('toast');t.textContent=msg;t.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(function(){t.hidden=true;},2400);}
+
+// ---------- 시작 ----------
+var saved=store('hidden.game');
+if(saved&&saved.seed&&!saved.over&&E.LEVELS[saved.lv]){G=saved;build();}
+else{newGame(store('hidden.lastLv')||'easy');if(!store('hidden.seenManual')){store('hidden.seenManual',true);openManual();}}
+window.addEventListener('resize',function(){if(S&&S.mode==='crowd')sizeCrowd(null);});
+})();
+</script>
+<script src="../common/home.js?v=1"></script>
+<script>if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(function(){});</script>
+</body>
+</html>

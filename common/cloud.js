@@ -14,7 +14,8 @@
     sudoku:{prefix:['sudoku.']},
     mine:{prefix:['mine.']},
     bingo:{prefix:['bingo.'],skip:['bingo.room']},
-    block:{prefix:['block.'],skip:['block.room']}
+    block:{prefix:['block.'],skip:['block.room']},
+    hidden:{prefix:['hidden.'],skip:['hidden.zoom']}
   }[GAME]||{prefix:[]};
   function owned(k){
     if(!k)return false;
