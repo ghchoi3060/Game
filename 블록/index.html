@@ -108,7 +108,7 @@ main{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden}
 @keyframes pring{from{opacity:1;transform:translate(-50%,-50%) scale(1.06)}to{opacity:0;transform:translate(-50%,-50%) scale(1.6)}}
 .pring.two{animation-delay:.12s;opacity:0;border-width:3px}
 /* 내려놓을 때 판 전체가 살짝 눌림 */
-.board-wrap.thump .board{animation:thump .22s ease-out}
+.board-wrap.thump .board.board{animation:thump .22s ease-out}
 @keyframes thump{40%{transform:translateY(3px) scale(.995)}}
 .plus.mini{font-size:16px;-webkit-text-stroke:2.5px var(--accent-deep)}
 .cell.pop{animation:popc .45s ease-in both}
@@ -125,6 +125,12 @@ main{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden}
 .board{position:absolute;inset:0;width:auto;aspect-ratio:auto;grid-template-columns:repeat(8,minmax(0,1fr));grid-template-rows:repeat(8,minmax(0,1fr))}
 /* 피버 타임: 판 테두리가 무지개로 빛나고 점수 2배 */
 .feverglow{position:absolute;inset:-5px;border-radius:21px;background:conic-gradient(#F26D6D,#F6A93B,#F2CF3E,#6CCB5F,#4FB3E8,#8E7CE8,#F28FC4,#F26D6D);filter:blur(1px);opacity:0;transition:opacity .3s}
+/* 콤보 열기: 연속으로 지운 줄이 많을수록 판 둘레 빛이 노랑 → 주황 → 빨강으로 세지고 맥박친다(피버 빛이 더 우선) */
+.board-wrap[data-heat="1"] .board{box-shadow:0 6px 0 var(--shade),0 0 14px 2px rgba(246,201,69,.45)}
+.board-wrap[data-heat="2"] .board{box-shadow:0 6px 0 var(--shade),0 0 20px 4px rgba(246,169,59,.6);animation:heat 1s ease-in-out infinite alternate}
+.board-wrap[data-heat="3"] .board{box-shadow:0 6px 0 var(--shade),0 0 26px 6px rgba(242,109,60,.7);animation:heat .7s ease-in-out infinite alternate}
+.board-wrap[data-heat="4"] .board{box-shadow:0 6px 0 var(--shade),0 0 34px 9px rgba(230,60,60,.8);animation:heat .45s ease-in-out infinite alternate}
+@keyframes heat{to{filter:brightness(1.12)}}
 .board-wrap.fever .feverglow{opacity:1;animation:hue 1.4s linear infinite}
 @keyframes hue{to{filter:blur(1px) hue-rotate(360deg)}}
 .board-wrap.fever .board{box-shadow:0 0 24px 6px rgba(246,169,59,.55)}
@@ -325,8 +331,8 @@ table.rec td:first-child,table.rec th:first-child{text-align:left;font-weight:80
       <section><h3>점수</h3><ul>
         <li>놓은 칸 하나에 1점.</li>
         <li>줄을 지우면 보너스: 1줄 10점, 2줄 30점, 3줄 60점, 4줄 100점… 한 번에 많이 지울수록 커져요.</li>
-        <li><b>연속</b>: 줄을 연속으로 지우면 줄 보너스에 연속 횟수를 곱해요(연속 x3이면 3배). 줄을 못 지우고 3번 놓으면 연속이 끝나요.</li>
-        <li>잘하면 상황에 맞는 감탄 문구가 나와요: 판을 비우면 <b>Perfect!</b>, 판이 거의 찼을 때 지우면 <b>Nice Save!</b>, 3줄 이상이면 <b>Triple!</b>, 빠르게 연달아 지우면 <b>Speedy!</b>, 친구를 앞지르면 <b>Comeback!</b>, 3연속부터는 <b>Great! → … → Legendary!</b></li>
+        <li><b>연속</b>: 줄을 지울 때마다 지운 줄 수만큼 연속이 올라가요(한 번에 2줄이면 +2). 줄 보너스에 연속 수를 곱해요. 줄을 못 지우고 3번 놓으면 연속이 끝나요. 연속이 쌓일수록 소리가 높아지고 판 둘레가 노랑 → 빨강으로 달아올라요.</li>
+        <li>잘하면 상황에 맞는 감탄 문구가 나와요: 판을 비우면 <b>Perfect!</b>, 판이 거의 찼을 때 지우면 <b>Nice Save!</b>, 2줄 이상 한 번에 지우면 <b>Double!·Triple!</b>, 빠르게 연달아 지우면 <b>Speedy!</b>, 친구를 앞지르면 <b>Comeback!</b>, 연속 3줄부터는 <b>Great! → … → Legendary!</b></li>
         <li><b>빠르게</b>: 지난번에 줄을 지운 뒤 <b>3초 안에</b> 또 지우면 추가 점수 +10, 계속 빠르게 지우면 +20, +30…으로 커져요.</li>
         <li>판을 완전히 비우면 <b>+300점</b>과 함께 <b>피버 타임</b>이 시작돼요. <b>10초 동안 모든 점수가 2배</b>이고, 판 테두리가 무지개로 빛나요. 피버 중에 또 비우면 다시 10초.</li>
         <li>줄을 지울 때 뜨는 숫자 아래에 연속·빠르게·피버 중 무엇을 받았는지 보여요.</li>
@@ -349,14 +355,14 @@ table.rec td:first-child,table.rec th:first-child{text-align:left;font-weight:80
 
 <script src="../common/supabase-config.js?v=1"></script>
 <script src="../common/cloud.js?v=3" data-game="block"></script>
-<script src="engine.js?v=4"></script>
+<script src="engine.js?v=5"></script>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script>
 (function(){
 'use strict';
 
 var E=BlockEngine(),N=E.N;
-var VERSION='11.14-10';
+var VERSION='11.14-11';
 var RESCUE_MAX=3;   // 초급 혼자 하기 구조 블록 횟수
 var $=function(id){return document.getElementById(id);};
 function store(k,v){try{if(v===undefined)return JSON.parse(localStorage.getItem(k)||'null');localStorage.setItem(k,JSON.stringify(v));}catch(e){return null;}}
@@ -418,6 +424,7 @@ function renderScore(){
   $('comboTxt').innerHTML=(fl?'<span class="combo fever">피버 '+Math.ceil(fl/1000)+'초</span> ':'')+(G.combo>=2?'<span class="combo">연속 x'+G.combo+'</span>':'');
   $('score').classList.toggle('fever',!!fl);
   $('wrap').classList.toggle('fever',!!fl);
+  var ht=G.over?0:Math.min(4,comboTier(G.combo)+1);if($('wrap').dataset.heat!=String(ht))$('wrap').dataset.heat=ht;
 }
 function renderTray(){
   var h='';
@@ -527,7 +534,7 @@ function placeAt(k,r0,c0){
   G.board=res.board;
   var drop={};res.placed.forEach(function(i){if(res.board[i])drop[i]=1;});
   render({drop:drop});
-  if(res.lines)clearGhosts(res.cleared,before);
+  if(res.lines)clearGhosts(res.cleared,before,res);
   placeFx(res.placed,p.color);placeSound(res.placed.length);
   // 점수 = 엔진 점수(칸 + 줄 보너스 × 연속) + 빠르게 보너스, 피버 중이면 모두 2배
   var now=Date.now(),fever=feverLeft()>0,quick=0;
@@ -557,18 +564,21 @@ function placeAt(k,r0,c0){
   }else{plusAt(res.placed,'+'+gain,'',true);afterPlace();}
 }
 // 지워진 칸 자리에 같은 색 '그림자 칸'을 잠깐 올려 하얗게 번쩍이며 작아져 사라지게 한다(판 상태와는 상관없음)
-function clearGhosts(list,colors){
+function clearGhosts(list,colors,res){
   if(reduced())return;
   var fx=$('fx'),wr=$('wrap').getBoundingClientRect();
+  // 여러 줄이면 한 줄씩 차례로(물결처럼) 사라진다. 겹치는 칸은 먼저 사라지는 줄을 따른다
+  var lineOf={};if(res){var k=0;(res.rows||[]).forEach(function(r){for(var c=0;c<8;c++)if(lineOf[r*8+c]===undefined)lineOf[r*8+c]=k;k++;});(res.cols||[]).forEach(function(c){for(var r=0;r<8;r++)if(lineOf[r*8+c]===undefined)lineOf[r*8+c]=k;k++;});}
+  var nl=res?(res.rows||[]).length+(res.cols||[]).length:1;
   list.forEach(function(i,n){
     var r=cells[i].getBoundingClientRect(),g=document.createElement('span');
     g.className='gcell blk c'+(colors[i]||1);
     // 판 크기가 바뀌어도(아이폰 주소창이 줄었다 늘었다 할 때) 같이 따라가도록 % 로
     g.style.left=(r.left-wr.left)*100/wr.width+'%';g.style.top=(r.top-wr.top)*100/wr.height+'%';g.style.width=r.width*100/wr.width+'%';g.style.height=r.height*100/wr.height+'%';
-    g.style.animationDelay=((n%8)*25)+'ms';
+    g.style.animationDelay=(((lineOf[i]||0)*110)+((n%8)*22))+'ms';
     fx.appendChild(g);
   });
-  setTimeout(function(){fx.querySelectorAll('.gcell').forEach(function(x){x.remove();});},700);
+  setTimeout(function(){fx.querySelectorAll('.gcell').forEach(function(x){x.remove();});},700+nl*110);
 }
 function afterPlace(){
   if(G.tray.every(function(x){return !x;})){G.round++;G.tray=nextTray(G.round);}
@@ -715,10 +725,15 @@ function placeSound(cellsN){
 function clearSound(lines,combo,bright,perfect){
   unlockAudio();if(!actx)return;
   try{
-    var base=523.25*Math.pow(2,Math.min(Math.max(combo-1,0),6)*2/12),steps=[0,4,7,12,16,19];
-    var n=Math.min(lines+1,steps.length);
-    for(var k=0;k<n;k++)note(base*Math.pow(2,steps[k]/12),k*.06,.22,'triangle',.2);
-    note(base*4,n*.06,.3,'sine',bright?.12:.07);   // 끝에 반짝
+    // 점점 고조: 콤보(연속으로 지운 줄 수)마다 5음계로 한 칸씩 올라간다(15칸까지). 줄 수만큼 음을 더 쌓고, 콤보가 크면 위로 쓸어 올리는 소리
+    var PS=[0,2,4,7,9],cs=Math.min(Math.max(combo-1,0),15),semi=Math.floor(cs/5)*12+PS[cs%5];
+    var base=392*Math.pow(2,semi/12),steps=[0,4,7,12,16,19,24];
+    var n=Math.min(lines+2,steps.length);
+    for(var k=0;k<n;k++)note(base*Math.pow(2,steps[k]/12),k*.055,.24,'triangle',.18+Math.min(cs,10)*.006);
+    if(cs>=4){var t=actx.currentTime,o=actx.createOscillator(),g=actx.createGain();o.type='sawtooth';
+      o.frequency.setValueAtTime(base,t);o.frequency.exponentialRampToValueAtTime(base*4,t+n*.055+.15);o.connect(g);g.connect(actx.destination);
+      g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.03+Math.min(cs,12)*.004,t+.05);g.gain.exponentialRampToValueAtTime(.0001,t+n*.055+.2);o.start(t);o.stop(t+n*.055+.25);}
+    note(base*4,n*.055,.3,'sine',bright?.12:.07);   // 끝에 반짝
     if(perfect){[0,4,7,12].forEach(function(s,k){note(523.25*Math.pow(2,s/12),.35+k*.09,.5,'square',.06);});note(1046.5,.75,.9,'triangle',.18);}
   }catch(e){}
 }
@@ -794,7 +809,7 @@ var VOICE={on:store('block.voice')!==false,v:null,ready:false};
 var SAY={'Great!':'Grrreeeeeeat!','Nice!':'Niiiiiice!','Excellent!':'Exxxcellllennnt!','Superb!':'Supeeerrrb!','Amazing!':'Amaaaaazing!','Brilliant!':'Brrriiilliant!',
   'Fantastic!':'Fantaaaastic!','Incredible!':'Incrediiiible!','Legendary!':'Legendaaaary!','Unstoppable!':'Unstoppaaaable!','Perfect!':'Perrrrfect!','Spotless!':'Spooootless!',
   'Comeback!':'Commmme baaaack!','Take the Lead!':'Take the leeeead!','New Record!':'New reeecord!','Nice Save!':'Niiiice saaave!','Phew!':'Pheeeeew!','Clutch!':'Cluuuutch!',
-  'Triple!':'Triiiiple!','Quadruple!':'Quadruuuuple!','Unreal!':'Unreeeeal!','Speedy!':'Speeeeedy!','Lightning!':'Liiiightning!','Rapid Fire!':'Rapid fiiiiire!',
+  'Double!':'Dooouble!','Two Lines!':'Twooo liiines!','Triple!':'Triiiiple!','Quadruple!':'Quadruuuuple!','Unreal!':'Unreeeeal!','Speedy!':'Speeeeedy!','Lightning!':'Liiiightning!','Rapid Fire!':'Rapid fiiiiire!',
   'On Fire!':'On fiiiiire!','Hot Streak!':'Hot streeeeak!',"Let's go!":"Let's gooooo!"};
 var MALE=/aaron|daniel|fred|alex\b|arthur|rishi|tom\b|evan|nathan|gordon|reed|rocko|eddy|ralph|oliver|male|david|mark|guy|george|james|ryan|christopher|eric|roger|brian/i,FEMALE=/female|samantha|karen|moira|tessa|victoria|kate|serena|susan|zira|hazel|aria|jenny|libby|sonia|martha|catherine|nicky|allison|ava|zoe/i;
 function pickVoice(){
@@ -815,14 +830,14 @@ function sayPraise(text,power){
   if(!VOICE.on||!window.speechSynthesis)return;
   try{
     speechSynthesis.cancel();
-    var u=new SpeechSynthesisUtterance(SAY[text]||text);
     if(!VOICE.v)VOICE.v=pickVoice();
-    if(VOICE.v){u.voice=VOICE.v;u.lang=VOICE.v.lang;}else u.lang='en-US';
-    var male=VOICE.v&&MALE.test(VOICE.v.name);
-    u.pitch=Math.min(1.6,(male?1.2:.8)+power*.06);   // 신나게 높게. 남자 목소리를 못 찾으면 낮춰서 남자처럼
-    u.rate=Math.max(.6,.8-power*.03);                 // 세질수록 더 길게 끈다
-    u.volume=1;
-    speechSynthesis.speak(u);
+    var male=VOICE.v&&MALE.test(VOICE.v.name),lift=male?0:-.4;   // 남자 목소리를 못 찾으면 낮춰서 남자처럼
+    function mk(s,pitch,rate){var u=new SpeechSynthesisUtterance(s);if(VOICE.v){u.voice=VOICE.v;u.lang=VOICE.v.lang;}else u.lang='en-US';
+      u.pitch=Math.max(.1,Math.min(2,pitch+lift));u.rate=rate;u.volume=1;return u;}
+    // 신나게: 세기 3 이상이면 앞에 짧은 함성("Woo!", "Oh yeah!")을 빠르고 높게, 이어서 길게 끈 감탄. 세질수록 음이 올라간다(고조)
+    if(power>=3){var HYPE=power>=5?['Oh yeah!','Boom!','Whoa!','Let\'s go!']:['Woo!','Yeah!','Wow!','Ooh!'];
+      speechSynthesis.speak(mk(HYPE[Math.floor(Math.random()*HYPE.length)],1.5+power*.05,1.25));}
+    speechSynthesis.speak(mk(SAY[text]||text,1.25+power*.08,Math.min(1.15,.92+power*.02)));
   }catch(e){}
 }
 function paintVoice(){var b=$('voiceBtn');b.setAttribute('aria-pressed',VOICE.on);b.setAttribute('aria-label',VOICE.on?'감탄 음성 끄기':'감탄 음성 켜기');}
@@ -847,26 +862,30 @@ var PRAISE={
   overtook:[['Comeback!','역전했어요!'],['Take the Lead!','앞서기 시작했어요!']],
   newBest:[['New Record!','최고 기록을 넘었어요!']],
   clutch:[['Nice Save!','위기 탈출!'],['Phew!','휴, 살았다!'],['Clutch!','아슬아슬했어요!']],
-  lines3:[['Triple!','세 줄 한 번에!']],lines4:[['Quadruple!','네 줄 한 번에!']],lines5:[['Unreal!','다섯 줄 넘게 한 번에!']],
+  lines2:[['Double!','두 줄 한 번에!'],['Two Lines!','한 번에 두 줄!']],lines3:[['Triple!','세 줄 한 번에!']],lines4:[['Quadruple!','네 줄 한 번에!']],lines5:[['Unreal!','다섯 줄 넘게 한 번에!']],
   quick:[['Speedy!','손이 정말 빨라요!'],['Lightning!','번개처럼 빨라요!'],['Rapid Fire!','쉬지 않고 지워요!']],
   fever:[['On Fire!','불타오르네요!'],['Hot Streak!','피버를 제대로 쓰고 있어요!']],
   combo:[[['Great!','잘하고 있어요!'],['Nice!','좋아요, 계속!']],[['Excellent!','대단해요!'],['Superb!','훌륭해요!']],[['Amazing!','멋져요!'],['Brilliant!','반짝반짝해요!']],
     [['Fantastic!','최고예요!']],[['Incredible!','믿을 수 없어요!']],[['Legendary!','전설이에요!'],['Unstoppable!','아무도 못 말려요!']]]
 };
-var PRAISE_COLOR={perfect:'#E8A317',overtook:'#D9434B',newBest:'#E8A317',clutch:'#2FA37A',lines3:'#8E6BE0',lines4:'#8E6BE0',lines5:'#8E6BE0',quick:'#3E9BD6',fever:'#E8642B',combo:['#3E9BD6','#6CB33F','#8E6BE0','#E0779F','#E8892B','#D9434B']};
+var PRAISE_COLOR={perfect:'#E8A317',overtook:'#D9434B',newBest:'#E8A317',clutch:'#2FA37A',lines2:'#3E9BD6',lines3:'#8E6BE0',lines4:'#8E6BE0',lines5:'#8E6BE0',quick:'#3E9BD6',fever:'#E8642B',combo:['#3E9BD6','#6CB33F','#8E6BE0','#E0779F','#E8892B','#D9434B']};
 var lastPraise='';
-// 우선순위: 판 비움 > 역전 > 신기록 > 위기 탈출 > 3줄 이상 > 빠르게 연달아 > 피버 중 > 3연속 이상
+// 콤보는 연속으로 지운 줄 수. 단계(Great → … → Legendary)는 이 줄 수가 넘은 기준 개수로
+
+function comboTier(n){var k=-1;[3,5,7,10,13,16].forEach(function(t,i){if(n>=t)k=i;});return k;}
+// 우선순위: 판 비움 > 역전 > 신기록 > 위기 탈출 > 2줄 이상 한 번에 > 빠르게 연달아 > 피버 중 > 콤보 3줄 이상
 function pickPraise(c){
+  var tier=comboTier(c.combo);
   var key=c.perfect?'perfect':c.overtook?'overtook':c.newBest?'newBest':(c.full>=.75&&c.lines)?'clutch':
-    c.lines>=5?'lines5':c.lines===4?'lines4':c.lines===3?'lines3':(c.quickChain>=2&&c.lines)?'quick':(c.fever&&c.lines&&c.combo>=2)?'fever':c.combo>=3?'combo':null;
+    c.lines>=5?'lines5':c.lines===4?'lines4':c.lines===3?'lines3':c.lines===2?'lines2':(c.quickChain>=2&&c.lines)?'quick':(c.fever&&c.lines&&c.combo>=2)?'fever':(tier>=0&&c.lines)?'combo':null;
   if(!key)return null;
-  var pool=key==='combo'?PRAISE.combo[Math.min(c.combo-3,PRAISE.combo.length-1)]:PRAISE[key];
+  var pool=key==='combo'?PRAISE.combo[Math.min(tier,PRAISE.combo.length-1)]:PRAISE[key];
   var cand=pool.filter(function(x){return x[0]!==lastPraise;});if(!cand.length)cand=pool;
   var t=cand[Math.floor(Math.random()*cand.length)];lastPraise=t[0];
-  var col=key==='combo'?PRAISE_COLOR.combo[Math.min(c.combo-3,5)]:PRAISE_COLOR[key];
-  // 세기(1~6): 클수록 흔들림·빛줄기·소리가 커진다
-  var power=key==='combo'?Math.min(c.combo-2,6):{perfect:6,lines5:6,overtook:5,newBest:5,lines4:5,clutch:4,lines3:4,quick:3,fever:3}[key];
-  power=Math.max(power,Math.min(c.combo-2,6));
+  var col=key==='combo'?PRAISE_COLOR.combo[Math.min(tier,5)]:PRAISE_COLOR[key];
+  // 세기(1~6): 클수록 흔들림·빛줄기·소리가 커진다. 한 번에 여러 줄은 크게
+  var power=key==='combo'?tier+1:{perfect:6,lines5:6,lines4:6,overtook:5,newBest:5,lines3:5,clutch:4,lines2:4,quick:3,fever:3}[key];
+  power=Math.max(power,tier+1);
   return [t[0],t[1],col,power,c.combo];
 }
 // 감탄 문구 연출: 판 번쩍 → 흔들림 → 글자가 한 자씩 통통 → 뒤로 빛줄기 → 연속 배지 쾅 → 쿵·반짝 소리·진동

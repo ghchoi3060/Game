@@ -3,7 +3,7 @@ function BlockEngine(){
   // 판: 8×8, 칸 i = 줄*8 + 칸, 값 0 은 빈칸·1~7 은 블록 색
   var N=8;
   // 블록 모양·순서가 바뀌면 올린다(친구 대전에서 두 사람이 같은 버전인지 확인)
-  var VERSION=4;
+  var VERSION=5;
   // [모양(줄, 칸) 목록, 나올 확률 가중치]. 모양 묶음마다 합이 비슷하도록 방향이 많은 모양은 가중치를 나눴다
   var SHAPES=[
     [[[0,0]],1],
@@ -130,7 +130,7 @@ function BlockEngine(){
     l.cols.forEach(function(c){for(var r=0;r<N;r++)s[r*N+c]=1;});
     return Object.keys(s).map(Number);
   }
-  // 블록을 놓고 줄을 지운다. combo: 연속으로 지운 횟수, miss: 못 지우고 놓은 횟수
+  // 블록을 놓고 줄을 지운다. combo: 연속으로 지운 줄 수(한 번에 2줄이면 +2), miss: 못 지우고 놓은 횟수
   // 점수 = 놓은 칸 수 + 줄 보너스(1줄 10, 2줄 30, 3줄 60, 4줄 100 …) × 콤보, 판을 다 비우면 +300
   function place(state,p,r0,c0){
     var b=state.board.slice(),c=cells(p),placed=[];
@@ -138,7 +138,7 @@ function BlockEngine(){
     var l=fullLines(b),lines=l.rows.length+l.cols.length,cleared=lineCells(l);
     var combo=state.combo,miss=state.miss,gain=c.length,bonus=0,perfect=false;
     if(lines){
-      combo+=1;miss=0;
+      combo+=lines;miss=0;
       bonus=10*lines*(lines+1)/2*combo;
       cleared.forEach(function(i){b[i]=0;});
       if(b.every(function(v){return !v;})){perfect=true;bonus+=300;}
