@@ -122,7 +122,8 @@ main{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden}
 .mini i{width:13px;height:13px;border-radius:4px}
 .mini i.blk::after{display:none}
 /* 끌고 다니는 블록(손가락 위로 띄워서 가리지 않게) */
-.drag{position:fixed;left:0;top:0;z-index:50;display:grid;gap:3px;pointer-events:none;filter:drop-shadow(0 8px 6px rgba(0,0,0,.3));transform-origin:0 0}
+.drag{position:fixed;left:0;top:0;z-index:50;display:grid;gap:3px;pointer-events:none;filter:drop-shadow(0 8px 6px rgba(0,0,0,.3));transform-origin:0 0;will-change:transform}
+.slot.dragging .mini{opacity:.2}
 .drag i{border-radius:22%}
 
 /* 이펙트 */
@@ -133,7 +134,24 @@ main{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden}
 @keyframes plus{0%{transform:translate(-50%,-30%) scale(.6);opacity:0}20%{transform:translate(-50%,-50%) scale(1.15);opacity:1}100%{transform:translate(-50%,-160%);opacity:0}}
 /* 3연속부터 감탄 문구: 단계마다 색이 바뀌고 기울어진 채 통통 튀어나온다 */
 .praise{position:absolute;left:0;right:0;top:14%;z-index:8;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:2px}
-.praise b{font-family:var(--f-display);font-weight:700;font-size:clamp(36px,12vw,60px);line-height:1;color:#fff;-webkit-text-stroke:6px var(--pc);paint-order:stroke fill;text-shadow:0 6px 0 rgba(0,0,0,.25);white-space:nowrap;animation:praise 1.25s cubic-bezier(.2,1.5,.4,1) forwards}
+.praise b{position:relative;z-index:1;display:inline-block;transform-origin:50% 60%}
+.praise b i{display:inline-block;font-style:normal;animation:letter .5s cubic-bezier(.3,1.8,.5,1) both}
+@keyframes letter{0%{transform:translateY(-60%) scale(.3);opacity:0}60%{transform:translateY(8%) scale(1.15);opacity:1}100%{transform:none}}
+/* 문구 뒤 빛줄기(햇살) */
+.praise .rays{position:absolute;left:50%;top:32px;width:min(110vw,560px);aspect-ratio:1;transform:translate(-50%,-50%);z-index:0;border-radius:50%;
+  background:repeating-conic-gradient(from 0deg,color-mix(in srgb,var(--pc) 55%,transparent) 0deg 9deg,transparent 9deg 24deg);
+  -webkit-mask:radial-gradient(circle,#000 0 18%,transparent 62%);mask:radial-gradient(circle,#000 0 18%,transparent 62%);animation:rays 1.45s ease-out forwards}
+@keyframes rays{0%{opacity:0;transform:translate(-50%,-50%) scale(.3) rotate(0)}20%{opacity:.95}70%{opacity:.75}100%{opacity:0;transform:translate(-50%,-50%) scale(1.15) rotate(70deg)}}
+/* 연속 배지 */
+.praise .cbadge{position:relative;z-index:1;font-style:normal;font-family:var(--f-display);font-weight:700;font-size:clamp(18px,5.5vw,26px);color:var(--pc);background:#fff;border:4px solid var(--pc);border-radius:999px;padding:0 12px;margin-top:-4px;box-shadow:0 4px 0 rgba(0,0,0,.2);animation:badge .6s cubic-bezier(.3,1.9,.5,1) .18s both}
+@keyframes badge{0%{transform:scale(2.4) rotate(-20deg);opacity:0}60%{transform:scale(.9) rotate(4deg);opacity:1}100%{transform:rotate(-4deg)}}
+.praise small{position:relative;z-index:1}
+/* 판이 순간 하얗게 번쩍, 그리고 흔들림(세기 --j) */
+.flashw{position:absolute;inset:0;border-radius:16px;background:#fff;opacity:0;animation:flashw .32s ease-out}
+@keyframes flashw{0%{opacity:.55}100%{opacity:0}}
+.board-wrap.jolt{animation:jolt .42s ease-in-out}
+@keyframes jolt{15%{transform:translate(calc(var(--j) * -1),calc(var(--j) * .4))}30%{transform:translate(var(--j),calc(var(--j) * -.5))}45%{transform:translate(calc(var(--j) * -.7),calc(var(--j) * .3))}60%{transform:translate(calc(var(--j) * .5),0)}80%{transform:translate(calc(var(--j) * -.2),0)}}
+.praise b{font-family:var(--f-display);font-weight:700;font-size:calc(clamp(36px,12vw,60px) * var(--ps,1));line-height:1;color:#fff;-webkit-text-stroke:6px var(--pc);paint-order:stroke fill;text-shadow:0 6px 0 rgba(0,0,0,.25);white-space:nowrap;animation:praise 1.25s cubic-bezier(.2,1.5,.4,1) forwards}
 .praise small{font-family:"Jua",var(--f-display);font-size:clamp(15px,4.6vw,22px);color:#fff;background:var(--pc);padding:2px 12px;border-radius:12px;box-shadow:0 3px 0 rgba(0,0,0,.2);animation:praiseSub 1.25s ease-out forwards}
 @keyframes praise{0%{transform:rotate(-14deg) scale(.2);opacity:0}22%{transform:rotate(-6deg) scale(1.18);opacity:1}34%{transform:rotate(-8deg) scale(.95)}46%,80%{transform:rotate(-7deg) scale(1);opacity:1}100%{transform:rotate(-7deg) translateY(-24px) scale(1.05);opacity:0}}
 @keyframes praiseSub{0%,15%{transform:scale(0);opacity:0}32%{transform:scale(1.1);opacity:1}80%{opacity:1;transform:none}100%{opacity:0;transform:translateY(-14px)}}
@@ -311,7 +329,7 @@ table.rec td:first-child,table.rec th:first-child{text-align:left;font-weight:80
 'use strict';
 
 var E=BlockEngine(),N=E.N;
-var VERSION='11.09-3';
+var VERSION='11.14-1';
 var RESCUE_MAX=3;   // 초급 혼자 하기 구조 블록 횟수
 var $=function(id){return document.getElementById(id);};
 function store(k,v){try{if(v===undefined)return JSON.parse(localStorage.getItem(k)||'null');localStorage.setItem(k,JSON.stringify(v));}catch(e){return null;}}
@@ -362,7 +380,8 @@ function render(fx){
     if(fx.drop&&fx.drop[i])cls+=' drop';
     if(cells[i].className!==cls)cells[i].className=cls;
   }
-  renderTray();renderScore();renderOpp();
+  if(!drag)renderTray();   // 끄는 동안 블록 칸을 다시 만들면 아이폰이 손가락을 놓친다
+  renderScore();renderOpp();
 }
 function renderScore(){
   $('score').textContent=G.score;
@@ -401,31 +420,58 @@ $('tray').addEventListener('pointerdown',function(e){
   el.innerHTML=h;document.body.appendChild(el);
   // 손가락보다 블록 한 덩이만큼 위에 띄운다
   var w=sz.w*cs+(sz.w-1)*3,hh=sz.h*cs+(sz.h-1)*3;
-  drag={k:k,el:el,cs:cs,offX:w/2,offY:hh+Math.max(40,cs*1.4),sx:e.clientX,sy:e.clientY,moved:false,pid:e.pointerId};
-  try{s.setPointerCapture(e.pointerId);}catch(err){}
-  moveDrag(e.clientX,e.clientY);
+  // 판 위치는 끄는 동안 안 바뀌니 한 번만 잰다(움직일 때마다 재면 느려진다)
+  drag={k:k,el:el,cs:cs,offX:w/2,offY:hh+Math.max(40,cs*1.4),sx:e.clientX,sy:e.clientY,x:e.clientX,y:e.clientY,moved:false,pid:e.pointerId,o:boardOrigin(),slot:s,raf:0};
+  s.classList.add('dragging');
+  // 슬롯에 pointer capture 를 걸지 않는다: 슬롯이 다시 그려지면 아이폰은 그 뒤 움직임을 버린다
+  moveDrag();
 });
-function moveDrag(x,y){
+// 손가락이 움직일 때마다가 아니라 화면 그리기 주기(rAF)에 맞춰 한 번만 옮긴다
+function queueMove(x,y){
   if(!drag)return;
+  drag.x=x;drag.y=y;
   if(Math.abs(x-drag.sx)>6||Math.abs(y-drag.sy)>6)drag.moved=true;
-  var left=x-drag.offX,top=y-drag.offY;
-  drag.el.style.transform='translate('+left+'px,'+top+'px)';
-  // 블록 왼쪽 위 칸이 판의 어느 칸에 오는지
-  var o=boardOrigin(),step=drag.cs+3,c0=Math.round((left-o.x)/step),r0=Math.round((top-o.y)/step);
-  setPreview(drag.k,r0,c0);
+  if(!drag.raf)drag.raf=requestAnimationFrame(function(){if(drag){drag.raf=0;moveDrag();}});
+}
+function moveDrag(){
+  if(!drag)return;
+  var left=drag.x-drag.offX,top=drag.y-drag.offY;
+  drag.el.style.transform='translate3d('+left+'px,'+top+'px,0)';
+  // 블록 왼쪽 위 칸이 판의 어느 칸에 오는지(소수점까지). 그 자리가 막혔으면 한 칸 안의 놓을 수 있는 가장 가까운 자리로 끌어당긴다
+  var step=drag.cs+3,fc=(left-drag.o.x)/step,fr=(top-drag.o.y)/step;
+  var spot=snapSpot(G.tray[drag.k],fr,fc);
+  setPreview(drag.k,spot?spot[0]:-99,spot?spot[1]:-99);
+}
+function snapSpot(p,fr,fc){
+  if(!p)return null;
+  var r=Math.round(fr),c=Math.round(fc);
+  if(E.fits(G.board,p,r,c))return [r,c];
+  var best=null,bd=1.25;
+  for(var dr=-1;dr<=1;dr++)for(var dc=-1;dc<=1;dc++){
+    var rr=r+dr,cc=c+dc,d=Math.hypot(fr-rr,fc-cc);
+    if(d<bd&&E.fits(G.board,p,rr,cc)){bd=d;best=[rr,cc];}
+  }
+  return best;
 }
 function setPreview(k,r0,c0){
-  var p=G.tray[k],old=preview;preview=null;
+  var p=G.tray[k],old=preview;
+  if(old&&old.k===k&&old.r0===r0&&old.c0===c0)return;   // 같은 자리면 다시 그리지 않는다
+  preview=null;
   if(p&&E.fits(G.board,p,r0,c0)){
     var b=G.board.slice(),pc=[];E.cells(p).forEach(function(x){var i=(r0+x[0])*N+c0+x[1];b[i]=p.color;pc.push(i);});
     preview={k:k,r0:r0,c0:c0,cells:pc,clear:E.lineCells(E.fullLines(b)),color:p.color};
   }
-  if(JSON.stringify(old)!==JSON.stringify(preview))render();
+  if(!!old!==!!preview||preview)render();
 }
-window.addEventListener('pointermove',function(e){if(drag&&e.pointerId===drag.pid){e.preventDefault();moveDrag(e.clientX,e.clientY);}},{passive:false});
+window.addEventListener('pointermove',function(e){if(drag&&e.pointerId===drag.pid){e.preventDefault();queueMove(e.clientX,e.clientY);}},{passive:false});
+// 아이폰: 끄는 동안 화면이 같이 스크롤되지 않게
+document.addEventListener('touchmove',function(e){if(drag)e.preventDefault();},{passive:false});
 function endDrag(e){
   if(!drag||(e&&e.pointerId!==drag.pid))return;
-  var d=drag;drag=null;d.el.remove();
+  // 손을 뗀 바로 그 위치로 마지막 자리 계산(아직 안 그린 움직임이 남았을 수 있다)
+  if(drag.raf){cancelAnimationFrame(drag.raf);drag.raf=0;}
+  if(e&&typeof e.clientX==='number'&&drag.moved){drag.x=e.clientX;drag.y=e.clientY;moveDrag();}
+  var d=drag;drag=null;d.el.remove();if(d.slot)d.slot.classList.remove('dragging');
   if(!d.moved){   // 톡 눌렀으면 고르기(칸을 눌러 놓기)
     preview=null;picked=picked===d.k?-1:d.k;render();
     if(picked>=0)toast('놓을 칸(블록의 왼쪽 위)을 누르세요');
@@ -435,7 +481,7 @@ function endDrag(e){
   if(pv&&pv.k===d.k)placeAt(d.k,pv.r0,pv.c0);else render();
 }
 window.addEventListener('pointerup',endDrag);
-window.addEventListener('pointercancel',function(e){if(drag&&e.pointerId===drag.pid){drag.el.remove();drag=null;preview=null;render();}});
+window.addEventListener('pointercancel',function(e){if(drag&&e.pointerId===drag.pid){drag.el.remove();if(drag.slot)drag.slot.classList.remove('dragging');drag=null;preview=null;render();}});
 boardEl.addEventListener('click',function(e){
   var c=e.target.closest('.cell');if(!c||picked<0||!G||G.over||!playing())return;
   var i=+c.dataset.i,p=G.tray[picked];if(!p)return;
@@ -667,27 +713,45 @@ function pickPraise(c){
   var cand=pool.filter(function(x){return x[0]!==lastPraise;});if(!cand.length)cand=pool;
   var t=cand[Math.floor(Math.random()*cand.length)];lastPraise=t[0];
   var col=key==='combo'?PRAISE_COLOR.combo[Math.min(c.combo-3,5)]:PRAISE_COLOR[key];
-  return [t[0],t[1]+(c.combo>=3?' · '+c.combo+'연속':''),col];
+  // 세기(1~6): 클수록 흔들림·빛줄기·소리가 커진다
+  var power=key==='combo'?Math.min(c.combo-2,6):{perfect:6,lines5:6,overtook:5,newBest:5,lines4:5,clutch:4,lines3:4,quick:3,fever:3}[key];
+  power=Math.max(power,Math.min(c.combo-2,6));
+  return [t[0],t[1],col,power,c.combo];
 }
+// 감탄 문구 연출: 판 번쩍 → 흔들림 → 글자가 한 자씩 통통 → 뒤로 빛줄기 → 연속 배지 쾅 → 쿵·반짝 소리·진동
 function praise(ctx){
   var t=pickPraise(ctx);if(!t)return;
-  $('wrap').querySelectorAll('.praise').forEach(function(x){x.remove();});
-  var el=document.createElement('div');el.className='praise';el.style.setProperty('--pc',t[2]);
-  el.innerHTML='<b>'+esc(t[0])+'</b><small>'+esc(t[1])+'</small>';
-  $('wrap').appendChild(el);setTimeout(function(){el.remove();},1300);
-  // 글자 둘레로 별
+  var power=t[3],combo=t[4],wrap=$('wrap'),fx=$('fx');
+  wrap.querySelectorAll('.praise').forEach(function(x){x.remove();});
+  var el=document.createElement('div');el.className='praise';
+  el.style.setProperty('--pc',t[2]);el.style.setProperty('--ps',(1+power*.05).toFixed(2));
+  var letters=t[0].split('').map(function(ch,i){return '<i style="animation-delay:'+(i*38)+'ms">'+(ch===' '?'&nbsp;':esc(ch))+'</i>';}).join('');
+  el.innerHTML='<span class="rays"></span><b>'+letters+'</b>'+(combo>=3?'<em class="cbadge">x'+combo+'</em>':'')+'<small>'+esc(t[1])+'</small>';
+  wrap.appendChild(el);setTimeout(function(){el.remove();},1500);
   if(!reduced()){
-    var fx=$('fx');
-    for(var i=0;i<12;i++){
-      var s=document.createElement('span'),a=Math.PI*2*i/12,d=60+Math.random()*30;
-      s.className='star';s.style.left='50%';s.style.top='18%';s.style.background=i%2?t[2]:'#fff';
-      s.style.setProperty('--dx',Math.cos(a)*d+'px');s.style.setProperty('--dy',Math.sin(a)*d*.5+'px');s.style.animationDuration='.9s';
+    var fl=document.createElement('span');fl.className='flashw';fx.appendChild(fl);setTimeout(function(){fl.remove();},350);
+    wrap.style.setProperty('--j',(2+power*1.6)+'px');
+    wrap.classList.remove('jolt');void wrap.offsetWidth;wrap.classList.add('jolt');
+    for(var i=0;i<10+power*3;i++){
+      var s=document.createElement('span'),a=Math.PI*2*i/(10+power*3),d=60+Math.random()*40+power*6;
+      s.className='star';s.style.left='50%';s.style.top='20%';s.style.background=i%2?t[2]:'#fff';
+      s.style.setProperty('--dx',Math.cos(a)*d+'px');s.style.setProperty('--dy',Math.sin(a)*d*.55+'px');s.style.animationDuration='.95s';
       fx.appendChild(s);
     }
-    setTimeout(function(){fx.querySelectorAll('.star').forEach(function(x){x.remove();});},1000);
+    setTimeout(function(){fx.querySelectorAll('.star').forEach(function(x){x.remove();});},1050);
   }
-  // 반짝 효과음(줄 지우기 소리 뒤에 이어서)
-  if(actx){try{[0,4,7,12].forEach(function(s,k){note(1046.5*Math.pow(2,s/12),.32+k*.05,.18,'sine',.09);});}catch(e){}}
+  if(navigator.vibrate){try{navigator.vibrate(power>=4?[35,40,25+power*12]:[30,30,30]);}catch(e){}}
+  // 쿵(낮은 음이 떨어짐) + 세기만큼 올라가는 반짝
+  if(actx){
+    try{
+      var tt=actx.currentTime+.28,o=actx.createOscillator(),g=actx.createGain();
+      o.type='sine';o.frequency.setValueAtTime(150,tt);o.frequency.exponentialRampToValueAtTime(45,tt+.25);
+      o.connect(g);g.connect(actx.destination);
+      g.gain.setValueAtTime(.0001,tt);g.gain.exponentialRampToValueAtTime(.45,tt+.01);g.gain.exponentialRampToValueAtTime(.0001,tt+.32);
+      o.start(tt);o.stop(tt+.35);
+      [0,4,7,12,16,19].slice(0,2+Math.ceil(power/1.5)).forEach(function(s,k){note(1046.5*Math.pow(2,s/12),.34+k*.05,.2,'sine',.08);});
+    }catch(e){}
+  }
 }
 function ribbon(text,cls){
   var r=document.createElement('div');r.className='ribbon'+(cls?' '+cls:'');r.innerHTML='<span>'+esc(text)+'</span>';
