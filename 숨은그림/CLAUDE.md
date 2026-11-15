@@ -58,3 +58,8 @@ GitHub 저장소 `ghchoi3060/Game` 을 Pages 로 공개한다. 주소는 `https:
 ## 파일 버전
 
 `engine.js?v=N`, `../common/*.js?v=N` 처럼 주소에 버전을 붙여 불러온다. 파일을 바꾸면 그 번호를 올리고 `sw.js` 의 SHELL·CACHE 도 맞춘다.
+
+## 이펙트·소리 (11.16-1)
+- 찾을 때: 누른 자리에서 `yay()`가 별 모양 폭발 + 글자별 색 튀어나오기 + 이모지가 날아가요. 칭찬 단계 `YAY[0..3]`(Good → Great → Excellent → Amazing)는 찾은 비율로 오르고, 4초 안에 연달아 찾으면 한 단계 더 올라가요. 다 찾으면 기존 `praise()`(가운데 큰 글씨)가 나와요.
+- 배경음악: `TUNES`는 장르 묶음(게임 8비트 / 만화 쿵짝 / 영화 모험)마다 직접 만든 곡이고, 파일 없이 WebAudio로 연주해요. 기본은 켜짐이고 첫 터치 때 시작해요. 🎵 버튼으로 끄면 `hidden.music=false`로 저장돼요.
+- 창(설명서·장르·결과)이 떠 있으면 뒤 화면이 스크롤되지 않아요. CSS(`:has`, overscroll-behavior)와 touchmove 차단을 함께 써요.
