@@ -152,14 +152,16 @@ table.rec td:first-child,table.rec th:first-child{text-align:left;font-weight:80
 .modal footer{padding:10px 18px 14px;border-top:2px solid var(--line)}
 /* 장르 고르기 */
 .picklv{font-size:13px;font-weight:800;color:var(--muted);padding:10px 18px 0}
-.genres{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:10px 16px 18px;overflow-y:auto;-webkit-overflow-scrolling:touch}
-.gcard{border:2px solid var(--line);background:var(--surface);border-radius:16px;padding:6px 6px 8px;display:flex;flex-direction:column;align-items:center;gap:3px;box-shadow:0 3px 0 var(--line);font-weight:800;font-size:15px;line-height:1.2}
+.genres{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:8px 14px 18px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.ghead{grid-column:1/-1;font-family:var(--f-display);font-weight:700;font-size:15px;margin-top:4px}
+.gcard{border:2px solid var(--line);background:var(--surface);border-radius:14px;padding:4px 4px 6px;display:flex;flex-direction:column;align-items:center;gap:3px;box-shadow:0 3px 0 var(--line);font-weight:800;font-size:13px;line-height:1.2;min-width:0}
 .gcard:active{transform:translateY(3px);box-shadow:0 0 0 var(--line)}
-.gcard .pv{width:100%;height:78px;border-radius:11px;display:flex;align-items:flex-end;justify-content:center;gap:4px;overflow:hidden;padding-bottom:4px}
-.gcard .pv svg{height:66px;width:auto;max-width:48%}
-.gcard .chip{font-size:11px;color:var(--muted);font-weight:800}
+.gcard .pv{width:100%;height:60px;border-radius:10px;display:flex;align-items:flex-end;justify-content:center;gap:2px;overflow:hidden;padding-bottom:3px}
+.gcard .pv svg{height:52px;width:auto;max-width:48%}
+.gcard .chip{display:block;font-size:11px;color:var(--muted);font-weight:800}
 .gcard[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 3px 0 var(--accent-deep)}
-.gcard.any .pv{font-size:44px;align-items:center;padding:0;background:linear-gradient(135deg,#FFE6F0,#DDF3FF 50%,#E8F7D8)}
+.gcard.any{grid-column:1/-1;flex-direction:row;justify-content:center;gap:10px;font-size:16px;padding:6px 10px;text-align:left}
+.gcard.any .pv{width:52px;height:44px;font-size:30px;align-items:center;justify-content:center;padding:0;background:linear-gradient(135deg,#FFE6F0,#DDF3FF 50%,#E8F7D8)}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:14px;font-weight:800;font-size:14px;z-index:40;max-width:calc(100% - 32px);text-align:center}
 @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
 @media (max-width:380px){.tabs button{padding:6px 9px}.brand{font-size:17px}}
@@ -220,7 +222,7 @@ table.rec td:first-child,table.rec th:first-child{text-align:left;font-weight:80
       </section>
       <section>
         <h3>고급: 똑같은 친구 찾기</h3>
-        <p>친구들이 200명 넘게 모여 있어요(장르마다 블록 친구·만화 친구·외계인·물고기·아기 공룡·눈사람). 위에 보이는 친구와 <b>모든 게 똑같은 친구 3명</b>을 찾아 눌러요.</p>
+        <p>친구들이 200명 넘게 모여 있어요(장르마다 블록 친구·로봇·슬라임·만화 친구·동물 친구·꼬마 마법사·외계인·물고기·아기 공룡·눈사람·유령·해적). 위에 보이는 친구와 <b>모든 게 똑같은 친구 3명</b>을 찾아 눌러요.</p>
         <ul>
           <li>한 군데만 다른 닮은꼴이 40명쯤 섞여 있어요. 색, 표정, 무늬, 쓰고 있는 것, 들고 있는 것까지 꼼꼼히!</li>
           <li><b>두 손가락</b>으로 벌려 확대하고, 한 손가락으로 끌어 둘러봐요. ＋ － 버튼도 있어요.</li>
@@ -253,11 +255,11 @@ table.rec td:first-child,table.rec th:first-child{text-align:left;font-weight:80
 
 <script src="../common/supabase-config.js?v=1"></script>
 <script src="../common/cloud.js?v=4" data-game="hidden"></script>
-<script src="engine.js?v=2"></script>
+<script src="engine.js?v=3"></script>
 <script>
 (function(){
 'use strict';
-var VERSION='11.15-1';
+var VERSION='11.15-2';
 var E=HiddenEngine();
 var LV={easy:{t:'초급',d:'틀린 그림 3곳'},normal:{t:'중급',d:'틀린 그림 6곳'},hard:{t:'고급',d:'똑같은 친구 3명'}};
 var LV_KEYS=['easy','normal','hard'];
@@ -546,13 +548,17 @@ function openPick(lv){
   pickLv=E.LEVELS[lv]?lv:'easy';
   var cur=(G&&G.theme)||store('hidden.lastTheme');
   $('pickLv').textContent=LV[pickLv].t+' · '+LV[pickLv].d+(pickLv==='hard'?' (군중 속 찾기)':' (틀린 그림 찾기)');
-  var h=E.THEME_KEYS.map(function(k){
-    var t=E.THEMES[k],a=E.sample(k,3),b=E.sample(k,11);
-    return '<button type="button" class="gcard" data-th="'+k+'" aria-pressed="'+(k===cur)+'"><span class="pv" style="background:linear-gradient('+t.card[0]+','+t.card[1]+')">'+
-      '<svg viewBox="'+a.view+'" aria-hidden="true">'+a.svg+'</svg><svg viewBox="'+b.view+'" aria-hidden="true">'+b.svg+'</svg></span>'+
-      t.name+'<span class="chip">'+GENRE_EMOJI[t.genre]+' '+t.genre+'</span></button>';
-  }).join('');
-  h+='<button type="button" class="gcard any" data-th="any"><span class="pv">🎲</span>아무거나<span class="chip">장르 섞기</span></button>';
+  // 🎲 아무거나 → 게임·만화·영화 묶음별로
+  var h='<button type="button" class="gcard any" data-th="any"><span class="pv">🎲</span><span>아무거나<span class="chip">'+E.THEME_KEYS.length+'가지 장르 중 하나</span></span></button>';
+  ['게임','만화','영화'].forEach(function(gn){
+    h+='<div class="ghead">'+GENRE_EMOJI[gn]+' '+gn+'</div>';
+    E.THEME_KEYS.forEach(function(k){
+      var t=E.THEMES[k];if(t.genre!==gn)return;
+      var a=E.sample(k,3),b=E.sample(k,11);
+      h+='<button type="button" class="gcard" data-th="'+k+'" aria-pressed="'+(k===cur)+'"><span class="pv" style="background:linear-gradient('+t.card[0]+','+t.card[1]+')">'+
+        '<svg viewBox="'+a.view+'" aria-hidden="true">'+a.svg+'</svg><svg viewBox="'+b.view+'" aria-hidden="true">'+b.svg+'</svg></span>'+t.name+'</button>';
+    });
+  });
   $('genres').innerHTML=h;
   $('pickClose').hidden=!G;
   $('pickBg').hidden=false;

@@ -355,6 +355,270 @@ function HiddenEngine(){
   function itemSvg(it){return it.t==='char'?charSvg(it.c,it.x,it.y,it.s):propSvg(it);}
   function overlap(a,b,m){return a[0]<b[0]+b[2]+m&&b[0]<a[0]+a[2]+m&&a[1]<b[1]+b[3]+m&&b[1]<a[1]+a[3]+m;}
 
+  // ---------- 캐릭터 종류 더: 로봇·슬라임·동물 친구·꼬마 마법사·유령·해적 ----------
+  var GRY='#6B7480';
+  CT.robot={
+    opt:{body:['#9AA5B1','#E84A4A','#3E8EDE','#F7C531','#4DBA5A','#F5F5F5'],head:['box','round','tv'],eye:['dots','visor','one','heart'],eyeC:['#3BE0FF','#FF4D6D','#7CFF6B','#FFD54A'],
+      ant:['none','ball','bolt','dish'],chest:['none','screen','heart','bolt'],arm:['claw','hand'],leg:['legs','wheel'],pose:['down','wave']},
+    keys:['body','head','eye','eyeC','ant','chest','arm','leg','pose'],
+    ez:['body','head','eye','ant','leg','pose'],nm:['body','head','eye','eyeC','ant','chest','arm','leg','pose'],
+    confuse:[['body'],['head','ant']],
+    vis:function(){return true;},
+    rand:function(r,c){if(r()<.3)c.ant=0;if(r()<.35)c.chest=0;},
+    box:function(){return [-22,-76,44,76];},
+    draw:function(c){
+      var O=this.opt,bc=O.body[c.body],hd=O.head[c.head],ey=O.eye[c.eye],ec=O.eyeC[c.eyeC],an=O.ant[c.ant],ch=O.chest[c.chest],claw=O.arm[c.arm]==='claw',wheel=O.leg[c.leg]==='wheel',wave=O.pose[c.pose]==='wave',o='';
+      if(an==='ball')o+=ln('M0 -62V-69',GRY,2)+'<circle cx="0" cy="-71" r="3" fill="#E84A4A"/>';
+      else if(an==='bolt')o+='<path d="M1 -62L-3 -68H1L-1 -75L5 -67H1Z" fill="#F7C531"/>';
+      else if(an==='dish')o+=ln('M0 -62V-67',GRY,2)+'<path d="M-7 -72Q0 -64 7 -72Z" fill="#D5DCE3"/>';
+      if(wheel)o+='<rect x="-3" y="-17" width="6" height="5" fill="'+GRY+'"/><circle cx="0" cy="-7" r="7" fill="#333C46"/><circle cx="0" cy="-7" r="2.5" fill="#9AA5B1"/>';
+      else o+='<rect x="-9" y="-17" width="6" height="14" fill="'+GRY+'"/><rect x="3" y="-17" width="6" height="14" fill="'+GRY+'"/><rect x="-11" y="-4" width="9" height="4" rx="1.5" fill="#333C46"/><rect x="2" y="-4" width="9" height="4" rx="1.5" fill="#333C46"/>';
+      function hand(x,y){return claw?ln('M'+(x-2.5)+' '+y+'v4M'+(x+2.5)+' '+y+'v4',GRY,2):'<circle cx="'+x+'" cy="'+(y+2)+'" r="3" fill="'+GRY+'"/>';}
+      o+='<rect x="-18" y="-38" width="5" height="16" rx="2" fill="'+GRY+'"/>'+hand(-15.5,-22);
+      if(wave)o+='<rect x="13" y="-56" width="5" height="17" rx="2" fill="'+GRY+'"/><circle cx="15.5" cy="-58" r="3.2" fill="'+GRY+'"/>';
+      else o+='<rect x="13" y="-38" width="5" height="16" rx="2" fill="'+GRY+'"/>'+hand(15.5,-22);
+      o+='<rect x="-13" y="-40" width="26" height="24" rx="3" fill="'+bc+'"/><rect x="-13" y="-21" width="26" height="2.5" fill="#000" fill-opacity=".15" stroke="none"/>';
+      if(ch==='screen')o+='<rect x="-7" y="-37" width="14" height="9" rx="1.5" fill="#22303A"/>'+ln('M-5 -32.5h2l1.5 -3l2 6l1.5 -3h3',ec,1.2);
+      else if(ch==='heart')o+='<path d="M0 -26C-7 -31 -6 -37 -2.5 -37C-1 -37 0 -36 0 -35C0 -36 1 -37 2.5 -37C6 -37 7 -31 0 -26Z" fill="'+ec+'"/>';
+      else if(ch==='bolt')o+='<path d="M2 -38L-4 -30H0L-2 -24L5 -32H1Z" fill="#F7C531"/>';
+      o+='<rect x="-3" y="-43" width="6" height="4" fill="'+GRY+'"/>';
+      var tv=hd==='tv';
+      if(tv)o+='<rect x="-15" y="-63" width="30" height="21" rx="4" fill="'+bc+'"/><rect x="-11" y="-60" width="22" height="15" rx="3" fill="#22303A"/>';
+      else o+='<rect x="-12" y="-62" width="24" height="20" rx="'+(hd==='round'?10:3)+'" fill="'+bc+'"/>';
+      if(ey==='dots')o+='<circle cx="-5" cy="-54" r="3" fill="'+ec+'" stroke="#22303A" stroke-opacity="1"/><circle cx="5" cy="-54" r="3" fill="'+ec+'" stroke="#22303A" stroke-opacity="1"/>';
+      else if(ey==='visor')o+='<rect x="-9" y="-57" width="18" height="6" rx="3" fill="#22303A"/><rect x="-7" y="-55" width="14" height="2" rx="1" fill="'+ec+'" stroke="none"/>';
+      else if(ey==='one')o+='<circle cx="0" cy="-54" r="4.6" fill="'+ec+'" stroke="#22303A" stroke-opacity="1"/><circle cx="0" cy="-54" r="1.8" fill="#22303A" stroke="none"/>';
+      else [-5,5].forEach(function(x){o+='<path d="M'+x+' -51C'+(x-4)+' -54 '+(x-3.5)+' -57.5 '+(x-1.5)+' -57.5C'+(x-.6)+' -57.5 '+x+' -57 '+x+' -56.4C'+x+' -57 '+(x+.6)+' -57.5 '+(x+1.5)+' -57.5C'+(x+3.5)+' -57.5 '+(x+4)+' -54 '+x+' -51Z" fill="'+ec+'" stroke="none"/>';});
+      o+='<rect x="-5" y="-48.5" width="10" height="2.6" rx="1" fill="'+(tv?ec:'#22303A')+'" stroke="none"/>';
+      return o;
+    }
+  };
+  CT.slime={
+    opt:{col:['#5AC8FA','#7BD36A','#F07AB0','#F7C531','#B07AE0','#F29B30'],shape:['drop','round','wide'],eye:['dots','big','sleepy','angry'],mouth:['smile','open','tongue','cat'],
+      hat:['none','crown','helmet','wizard','leaf'],hatC:['#E84A4A','#3E8EDE','#9AA5B1','#4B3B8F','#F7C531'],cheek:['none','blush']},
+    keys:['col','shape','eye','mouth','hat','hatC','cheek'],
+    ez:['col','shape','eye','hat'],nm:['col','shape','eye','mouth','hat','hatC','cheek'],
+    confuse:[['col'],['shape']],ds:1.1,cs:.6,
+    vis:function(c,k){if(k==='hatC')return ['helmet','wizard'].indexOf(this.opt.hat[c.hat])>=0;return true;},
+    rand:function(r,c){if(r()<.4)c.hat=0;},
+    box:function(){return [-23,-56,46,56];},
+    draw:function(c){
+      var O=this.opt,cl=O.col[c.col],sh=O.shape[c.shape],ey=O.eye[c.eye],mo=O.mouth[c.mouth],ht=O.hat[c.hat],hc=O.hatC[c.hatC],o='';
+      var P={drop:'M-18 0Q-21 -16 -8 -27Q-1 -33 0 -40Q2 -32 9 -26Q21 -15 18 0Z',round:'M-17 0Q-19 -31 0 -31Q19 -31 17 0Z',wide:'M-22 0Q-23 -26 0 -26Q23 -26 22 0Z'};
+      var top=sh==='drop'?-40:sh==='round'?-31:-26;
+      o+='<ellipse cx="0" cy="0" rx="17" ry="2.5" fill="#000" fill-opacity=".15" stroke="none"/><path d="'+P[sh]+'" fill="'+cl+'"/><ellipse cx="-9" cy="-18" rx="3" ry="4.5" fill="#fff" fill-opacity=".6" stroke="none" transform="rotate(25 -9 -18)"/>';
+      if(ey==='dots')o+='<circle cx="-6" cy="-13" r="2.3" fill="'+D+'" stroke="none"/><circle cx="6" cy="-13" r="2.3" fill="'+D+'" stroke="none"/>';
+      else if(ey==='big')[-6,6].forEach(function(x){o+='<circle cx="'+x+'" cy="-13" r="4" fill="#fff"/><circle cx="'+x+'" cy="-12.5" r="2.2" fill="#1E1E2A" stroke="none"/><circle cx="'+(x-1)+'" cy="-14" r=".8" fill="#fff" stroke="none"/>';});
+      else if(ey==='sleepy')o+=ln('M-8.5 -13Q-6 -10.5 -3.5 -13M3.5 -13Q6 -10.5 8.5 -13',D,1.6);
+      else o+='<circle cx="-6" cy="-12.5" r="2.2" fill="'+D+'" stroke="none"/><circle cx="6" cy="-12.5" r="2.2" fill="'+D+'" stroke="none"/>'+ln('M-9.5 -18L-3.5 -16M9.5 -18L3.5 -16',D,1.6);
+      if(O.cheek[c.cheek]==='blush')o+='<ellipse cx="-11" cy="-8" rx="2.6" ry="1.5" fill="#FF6A8A" fill-opacity=".5" stroke="none"/><ellipse cx="11" cy="-8" rx="2.6" ry="1.5" fill="#FF6A8A" fill-opacity=".5" stroke="none"/>';
+      if(mo==='smile')o+=ln('M-3 -7.5Q0 -4.5 3 -7.5');
+      else if(mo==='open')o+='<path d="M-3.2 -8Q0 -2.5 3.2 -8Z" fill="#C2414B" stroke="'+D+'" stroke-opacity=".9"/>';
+      else if(mo==='tongue')o+=ln('M-3 -7.5Q0 -4.5 3 -7.5')+'<ellipse cx="1.4" cy="-4.6" rx="1.8" ry="2.2" fill="#FF7A9A" stroke="none"/>';
+      else o+=ln('M-4 -7.5q2 2 4 0q2 2 4 0',D,1.2);
+      var hy=sh==='drop'?-34:top+2;
+      if(ht==='crown')o+='<path d="M-8 '+hy+'v-8l4 3.5l4 -6l4 6l4 -3.5v8Z" fill="#F7C531" stroke="#B5850F" stroke-opacity="1"/>';
+      else if(ht==='helmet')o+='<path d="M-12 '+(hy+3)+'Q-12 '+(hy-11)+' 0 '+(hy-11)+'Q12 '+(hy-11)+' 12 '+(hy+3)+'Z" fill="'+hc+'"/><rect x="-1.5" y="'+(hy-16)+'" width="3" height="6" fill="#E84A4A"/>';
+      else if(ht==='wizard')o+='<path d="M-12 '+(hy+1)+'H12L2 '+(hy-20)+'Z" fill="'+hc+'"/><path d="'+starD(1,hy-6,3.2)+'" fill="#F7C531" stroke="none"/>';
+      else if(ht==='leaf')o+=ln('M0 '+hy+'V'+(hy-5),'#3E871C',1.6)+'<path d="M0 '+(hy-5)+'Q6 '+(hy-12)+' 11 '+(hy-7)+'Q5 '+(hy-2)+' 0 '+(hy-5)+'Z" fill="#6CBF3A"/>';
+      return o;
+    }
+  };
+  CT.animal={
+    opt:{kind:['cat','dog','bear','rabbit','panda','fox'],fur:['#F2C59A','#8A5A3B','#F5F5F5','#9AA5B1','#F29B30','#5A4A42'],shirt:['#E84A4A','#3E8EDE','#4DBA5A','#F7C531','#9B6BDF','#F07AB0'],
+      pat:['plain','stripe','dots'],acc:['none','bow','scarf','glasses','flower'],accC:['#E84A4A','#3E8EDE','#F7C531','#F07AB0','#4DBA5A'],mouth:['smile','open','tongue'],pose:['down','wave']},
+    keys:['kind','fur','shirt','pat','acc','accC','mouth','pose'],
+    ez:['kind','fur','shirt','acc','pose'],nm:['kind','fur','shirt','pat','acc','accC','mouth','pose'],
+    confuse:[['shirt'],['kind']],
+    vis:function(c,k){var O=this.opt;if(k==='fur')return O.kind[c.kind]!=='panda';if(k==='accC')return ['bow','scarf','flower'].indexOf(O.acc[c.acc])>=0;return true;},
+    rand:function(r,c){if(r()<.35)c.acc=0;if(r()<.4)c.pat=0;},
+    box:function(){return [-24,-88,48,88];},
+    draw:function(c){
+      var O=this.opt,kd=O.kind[c.kind],panda=kd==='panda',fc=panda?'#FFFFFF':O.fur[c.fur],dk=panda?'#2A2A2A':fc,sh=O.shirt[c.shirt],pt=O.pat[c.pat],ac=O.acc[c.acc],a2=O.accC[c.accC],mo=O.mouth[c.mouth],wave=O.pose[c.pose]==='wave',o='';
+      o+='<rect x="-9" y="-15" width="7" height="15" rx="2.5" fill="'+dk+'"/><rect x="2" y="-15" width="7" height="15" rx="2.5" fill="'+dk+'"/>';
+      o+='<rect x="-16" y="-35" width="5" height="16" rx="2.5" fill="'+sh+'"/><circle cx="-13.5" cy="-18" r="3" fill="'+dk+'"/>';
+      if(!wave)o+='<rect x="11" y="-35" width="5" height="16" rx="2.5" fill="'+sh+'"/><circle cx="13.5" cy="-18" r="3" fill="'+dk+'"/>';
+      o+='<rect x="-11" y="-37" width="22" height="24" rx="4" fill="'+sh+'"/>';
+      if(pt==='stripe')o+='<rect x="-11" y="-30" width="22" height="4" fill="#fff" fill-opacity=".8" stroke="none"/><rect x="-11" y="-22" width="22" height="4" fill="#fff" fill-opacity=".8" stroke="none"/>';
+      else if(pt==='dots')o+='<g fill="#fff" fill-opacity=".85" stroke="none"><circle cx="-5" cy="-30" r="1.8"/><circle cx="5" cy="-27" r="1.8"/><circle cx="-3" cy="-20" r="1.8"/><circle cx="6" cy="-18" r="1.8"/></g>';
+      if(ac==='scarf')o+='<rect x="-11" y="-39" width="22" height="5" rx="2.5" fill="'+a2+'"/><rect x="4" y="-36" width="5" height="10" rx="1.5" fill="'+a2+'"/>';
+      if(kd==='cat')o+='<path d="M-13 -59L-12 -71L-4 -64ZM13 -59L12 -71L4 -64Z" fill="'+fc+'"/><path d="M-11 -62L-10.5 -68L-6.5 -64.5ZM11 -62L10.5 -68L6.5 -64.5Z" fill="#FFB3C7" stroke="none"/>';
+      else if(kd==='fox')o+='<path d="M-14 -58L-13 -75L-3 -64ZM14 -58L13 -75L3 -64Z" fill="'+fc+'"/><path d="M-12 -62L-12 -71L-6 -65ZM12 -62L12 -71L6 -65Z" fill="#fff" stroke="none"/>';
+      else if(kd==='bear'||panda)o+='<circle cx="-11" cy="-63" r="5.5" fill="'+dk+'"/><circle cx="11" cy="-63" r="5.5" fill="'+dk+'"/>'+(panda?'':'<circle cx="-11" cy="-63" r="2.6" fill="#FFB3C7" stroke="none"/><circle cx="11" cy="-63" r="2.6" fill="#FFB3C7" stroke="none"/>');
+      else if(kd==='rabbit')o+='<ellipse cx="-6" cy="-74" rx="4.2" ry="12.5" fill="'+fc+'"/><ellipse cx="6" cy="-74" rx="4.2" ry="12.5" fill="'+fc+'"/><ellipse cx="-6" cy="-74" rx="2" ry="8.5" fill="#FFB3C7" stroke="none"/><ellipse cx="6" cy="-74" rx="2" ry="8.5" fill="#FFB3C7" stroke="none"/>';
+      o+='<circle cx="0" cy="-52" r="15" fill="'+fc+'"/>';
+      if(kd==='dog')o+='<ellipse cx="-14" cy="-53" rx="4.5" ry="9" fill="'+fc+'" transform="rotate(15 -14 -53)"/><ellipse cx="-14" cy="-53" rx="4.5" ry="9" fill="#000" fill-opacity=".2" transform="rotate(15 -14 -53)"/><ellipse cx="14" cy="-53" rx="4.5" ry="9" fill="'+fc+'" transform="rotate(-15 14 -53)"/><ellipse cx="14" cy="-53" rx="4.5" ry="9" fill="#000" fill-opacity=".2" transform="rotate(-15 14 -53)"/>';
+      if(panda)o+='<ellipse cx="-6" cy="-53" rx="3.6" ry="4.6" fill="#2A2A2A" stroke="none" transform="rotate(20 -6 -53)"/><ellipse cx="6" cy="-53" rx="3.6" ry="4.6" fill="#2A2A2A" stroke="none" transform="rotate(-20 6 -53)"/>';
+      if(kd==='fox')o+='<path d="M-15 -50Q-8 -40 0 -44Q8 -40 15 -50Q8 -46 0 -48Q-8 -46 -15 -50Z" fill="#fff" stroke="none"/>';
+      o+='<ellipse cx="0" cy="-46" rx="6" ry="4.5" fill="#fff" fill-opacity=".55" stroke="none"/>';
+      if(panda)o+='<circle cx="-6" cy="-53.5" r="1.5" fill="#fff" stroke="none"/><circle cx="6" cy="-53.5" r="1.5" fill="#fff" stroke="none"/>';
+      else o+='<circle cx="-6" cy="-54" r="2" fill="'+D+'" stroke="none"/><circle cx="6" cy="-54" r="2" fill="'+D+'" stroke="none"/>';
+      o+='<path d="M-2.2 -49H2.2L0 -46.8Z" fill="'+D+'" stroke="none"/>';
+      if(mo==='smile')o+=ln('M-3 -44.5Q-1.5 -43 0 -45M0 -45Q1.5 -43 3 -44.5',D,1.1);
+      else if(mo==='open')o+='<ellipse cx="0" cy="-43.5" rx="2.2" ry="2.2" fill="#C2414B" stroke="none"/>';
+      else o+=ln('M-3 -44.5Q-1.5 -43 0 -45M0 -45Q1.5 -43 3 -44.5',D,1.1)+'<rect x="-1.3" y="-44.6" width="2.6" height="3" rx="1.3" fill="#FF7A9A" stroke="none"/>';
+      if(ac==='bow')o+='<path d="M9 -64l-6 -4v8ZM9 -64l6 -4v8Z" fill="'+a2+'"/><circle cx="9" cy="-64" r="1.8" fill="'+a2+'"/>';
+      else if(ac==='glasses')o+='<circle cx="-6" cy="-54" r="4.3" fill="none" stroke="#333" stroke-opacity="1" stroke-width="1.3"/><circle cx="6" cy="-54" r="4.3" fill="none" stroke="#333" stroke-opacity="1" stroke-width="1.3"/>'+ln('M-1.7 -54H1.7','#333',1.3);
+      else if(ac==='flower')o+='<g fill="'+a2+'"><circle cx="-11" cy="-67" r="2.6"/><circle cx="-7" cy="-65" r="2.6"/><circle cx="-11" cy="-62" r="2.6"/><circle cx="-15" cy="-65" r="2.6"/></g><circle cx="-11" cy="-65" r="1.6" fill="#F7C531" stroke="none"/>';
+      if(wave)o+='<rect x="15" y="-52" width="5" height="17" rx="2.5" fill="'+sh+'"/><circle cx="17.5" cy="-54" r="3" fill="'+dk+'"/>';
+      return o;
+    }
+  };
+  CT.wizard={
+    opt:{skin:['#FFE3CC','#F6C9A2','#C98C62'],robe:['#4B3B8F','#2C3E66','#8E2F4F','#2E7D46','#333C46'],hat:['pointy','bent','wide'],hatC:['#4B3B8F','#2C3E66','#8E2F4F','#2E7D46','#333C46','#E84A4A'],
+      deco:['none','star','moon'],hair:['short','long','twin'],hairC:['#2B2B38','#7A4A2A','#F2C94C','#E58A2C','#DADFE8','#F48FB8'],wand:['none','stick','star','orb'],wandC:['#F7C531','#5AC8FA','#F07AB0','#7BD36A'],
+      scarf:['none','scarf'],scarfC:['#E84A4A','#F7C531','#3E8EDE','#4DBA5A'],glass:['none','round'],pose:['down','wave']},
+    keys:['skin','robe','hat','hatC','deco','hair','hairC','wand','wandC','scarf','scarfC','glass','pose'],
+    ez:['robe','hat','hatC','deco','hair','wand','scarf'],nm:['robe','hat','hatC','deco','hair','hairC','wand','wandC','scarf','scarfC','glass','pose'],
+    confuse:[['robe'],['hat','hatC']],cs:.45,
+    vis:function(c,k){var O=this.opt;if(k==='wandC')return ['star','orb'].indexOf(O.wand[c.wand])>=0;if(k==='scarfC')return c.scarf!==0;return true;},
+    rand:function(r,c){if(r()<.25)c.wand=0;if(r()<.5)c.scarf=0;if(r()<.7)c.glass=0;if(r()<.35)c.deco=0;},
+    box:function(){return [-26,-93,52,93];},
+    draw:function(c){
+      var O=this.opt,sk=O.skin[c.skin],rb=O.robe[c.robe],ht=O.hat[c.hat],hc=O.hatC[c.hatC],dc=O.deco[c.deco],hs=O.hair[c.hair],hrc=O.hairC[c.hairC],wd=O.wand[c.wand],wc=O.wandC[c.wandC],sc=O.scarfC[c.scarfC],wave=O.pose[c.pose]==='wave',o='';
+      if(hs==='long')o+='<path d="M-15 -52Q-16 -66 0 -66Q16 -66 15 -52L16 -32Q0 -28 -16 -32Z" fill="'+hrc+'"/>';
+      else if(hs==='twin')o+='<ellipse cx="-17" cy="-42" rx="4.5" ry="10" fill="'+hrc+'"/><ellipse cx="17" cy="-42" rx="4.5" ry="10" fill="'+hrc+'"/>';
+      o+='<rect x="-8" y="-4" width="7" height="4" rx="1.5" fill="#3A2E2A"/><rect x="1" y="-4" width="7" height="4" rx="1.5" fill="#3A2E2A"/>';
+      o+='<path d="M-10 -37L10 -37L15 -3L-15 -3Z" fill="'+rb+'"/>'+ln('M-15 -3H15','#F7C531',1.6)+ln('M0 -34V-4','#000',.8).replace('stroke-opacity="1"','stroke-opacity=".25"');
+      if(c.scarf)o+='<rect x="-9" y="-39" width="18" height="4.5" rx="2" fill="'+sc+'"/><rect x="3" y="-36" width="4.5" height="11" rx="1.5" fill="'+sc+'"/><rect x="3" y="-30" width="4.5" height="2" fill="#fff" fill-opacity=".8" stroke="none"/>';
+      o+='<path d="M-10 -36L-17 -22L-12 -20L-8 -30Z" fill="'+rb+'"/><circle cx="-14.5" cy="-20" r="2.8" fill="'+sk+'"/>';
+      var hx=wave?16:14.5,hy=wave?-52:-20,tx=wave?21:22,ty=wave?-66:-34;
+      if(wave)o+='<path d="M10 -36L18 -50L14 -52L8 -42Z" fill="'+rb+'"/>';else o+='<path d="M10 -36L17 -22L12 -20L8 -30Z" fill="'+rb+'"/>';
+      if(wd!=='none'){o+=ln('M'+hx+' '+hy+'L'+tx+' '+ty,'#8B5A2B',1.8);
+        if(wd==='star')o+='<path d="'+starD(tx,ty-1,4.5)+'" fill="'+wc+'"/>';else if(wd==='orb')o+='<circle cx="'+tx+'" cy="'+(ty-1)+'" r="5" fill="'+wc+'" fill-opacity=".35" stroke="none"/><circle cx="'+tx+'" cy="'+(ty-1)+'" r="3" fill="'+wc+'"/>';}
+      o+='<circle cx="'+hx+'" cy="'+hy+'" r="2.8" fill="'+sk+'"/>';
+      o+='<circle cx="0" cy="-50" r="14" fill="'+sk+'"/>';
+      [-5,5].forEach(function(x){o+='<ellipse cx="'+x+'" cy="-48" rx="2.2" ry="3" fill="#1E1E2A" stroke="none"/><circle cx="'+(x-.7)+'" cy="-49.2" r=".9" fill="#fff" stroke="none"/>';});
+      o+='<ellipse cx="-9" cy="-43.5" rx="2.2" ry="1.2" fill="#FF7A9A" fill-opacity=".45" stroke="none"/><ellipse cx="9" cy="-43.5" rx="2.2" ry="1.2" fill="#FF7A9A" fill-opacity=".45" stroke="none"/>'+ln('M-2.5 -42Q0 -40 2.5 -42',D,1.2);
+      if(O.glass[c.glass]==='round')o+='<circle cx="-5" cy="-48" r="4.3" fill="none" stroke="#333" stroke-opacity="1" stroke-width="1.2"/><circle cx="5" cy="-48" r="4.3" fill="none" stroke="#333" stroke-opacity="1" stroke-width="1.2"/>';
+      o+='<path d="M-14.5 -50Q-15 -63 0 -63Q15 -63 14.5 -50Q10 -56 4 -56Q0 -52 -4 -56Q-10 -56 -14.5 -50Z" fill="'+hrc+'"/>';
+      if(ht==='pointy')o+='<path d="M-11 -60L1 -92L11 -60Z" fill="'+hc+'"/><ellipse cx="0" cy="-60" rx="18" ry="4" fill="'+hc+'"/>';
+      else if(ht==='bent')o+='<path d="M-11 -60Q-6 -78 6 -88L20 -84L8 -79Q10 -70 11 -60Z" fill="'+hc+'"/><ellipse cx="0" cy="-60" rx="18" ry="4" fill="'+hc+'"/>';
+      else o+='<path d="M-9 -61L0 -82L9 -61Z" fill="'+hc+'"/><ellipse cx="0" cy="-60" rx="23" ry="5" fill="'+hc+'"/>';
+      o+='<rect x="-10" y="-65" width="20" height="2.6" fill="#F7C531" fill-opacity=".9" stroke="none"/>';
+      if(dc==='star')o+='<path d="'+starD(0,-71,4)+'" fill="#F7C531" stroke="none"/>';
+      else if(dc==='moon')o+='<circle cx="0" cy="-71" r="4" fill="#F7E6A8" stroke="none"/><circle cx="2" cy="-72.2" r="3.4" fill="'+hc+'" stroke="none"/>';
+      return o;
+    }
+  };
+  CT.ghost={
+    opt:{col:['#FFFFFF','#CFE3FF','#FFD0E6','#D2F5D0','#FFF0B0','#E2D2FF'],shape:['round','tall'],eye:['dots','big','angry','sleepy'],mouth:['o','smile','tongue','fang'],
+      hat:['none','witch','pumpkin','bow','crown'],hatC:['#4B3B8F','#222831','#E84A4A','#F29B30'],arm:['down','up'],hold:['none','candy','lantern','balloon'],holdC:['#E84A4A','#F7C531','#9B6BDF','#4DBA5A']},
+    keys:['col','shape','eye','mouth','hat','hatC','arm','hold','holdC'],
+    ez:['col','shape','hat','arm','hold'],nm:['col','shape','eye','mouth','hat','hatC','arm','hold','holdC'],
+    confuse:[['col'],['hat','hatC']],
+    vis:function(c,k){var O=this.opt;if(k==='hatC')return ['witch','bow'].indexOf(O.hat[c.hat])>=0;if(k==='holdC')return ['candy','balloon'].indexOf(O.hold[c.hold])>=0;return true;},
+    rand:function(r,c){if(r()<.3)c.hat=0;if(r()<.4)c.hold=0;},
+    box:function(){return [-24,-84,52,84];},
+    draw:function(c){
+      var O=this.opt,cl=O.col[c.col],t=O.shape[c.shape]==='tall'?-60:-52,ey=O.eye[c.eye],mo=O.mouth[c.mouth],ht=O.hat[c.hat],hc=O.hatC[c.hatC],up=O.arm[c.arm]==='up',hd=O.hold[c.hold],hl=O.holdC[c.holdC],o='';
+      var hx=up?19:18,hy=up?-40:-22;
+      o+='<ellipse cx="0" cy="0" rx="10" ry="2" fill="#000" fill-opacity=".18" stroke="none"/>';
+      if(hd==='balloon')o+=ln('M'+hx+' '+hy+'L21 '+(t-6),'#555',.9)+'<ellipse cx="21" cy="'+(t-13)+'" rx="6" ry="7.5" fill="'+hl+'"/>';
+      o+='<path d="M-16 -6V'+(t+18)+'Q-16 '+t+' 0 '+t+'Q16 '+t+' 16 '+(t+18)+'V-6L11 -10L5.5 -5L0 -10L-5.5 -5L-11 -10Z" fill="'+cl+'"/>';
+      if(up)o+='<ellipse cx="-18" cy="-37" rx="4" ry="6" fill="'+cl+'" transform="rotate(-30 -18 -37)"/><ellipse cx="18" cy="-37" rx="4" ry="6" fill="'+cl+'" transform="rotate(30 18 -37)"/>';
+      else o+='<ellipse cx="-17" cy="-24" rx="4" ry="6" fill="'+cl+'" transform="rotate(25 -17 -24)"/><ellipse cx="17" cy="-24" rx="4" ry="6" fill="'+cl+'" transform="rotate(-25 17 -24)"/>';
+      var e=t+16;
+      if(ey==='dots')o+='<ellipse cx="-5" cy="'+e+'" rx="2.2" ry="3" fill="'+D+'" stroke="none"/><ellipse cx="5" cy="'+e+'" rx="2.2" ry="3" fill="'+D+'" stroke="none"/>';
+      else if(ey==='big')[-5.5,5.5].forEach(function(x){o+='<ellipse cx="'+x+'" cy="'+e+'" rx="3.4" ry="4.4" fill="'+D+'" stroke="none"/><circle cx="'+(x-1)+'" cy="'+(e-1.5)+'" r="1.2" fill="#fff" stroke="none"/>';});
+      else if(ey==='angry')o+='<ellipse cx="-5" cy="'+(e+.5)+'" rx="2.2" ry="2.6" fill="'+D+'" stroke="none"/><ellipse cx="5" cy="'+(e+.5)+'" rx="2.2" ry="2.6" fill="'+D+'" stroke="none"/>'+ln('M-8.5 '+(e-5)+'L-2.5 '+(e-3)+'M8.5 '+(e-5)+'L2.5 '+(e-3),D,1.5);
+      else o+=ln('M-7.5 '+e+'Q-5 '+(e+2.5)+' -2.5 '+e+'M2.5 '+e+'Q5 '+(e+2.5)+' 7.5 '+e,D,1.5);
+      o+='<ellipse cx="-10" cy="'+(e+5)+'" rx="2.4" ry="1.4" fill="#FF7A9A" fill-opacity=".45" stroke="none"/><ellipse cx="10" cy="'+(e+5)+'" rx="2.4" ry="1.4" fill="#FF7A9A" fill-opacity=".45" stroke="none"/>';
+      var m=e+8;
+      if(mo==='o')o+='<ellipse cx="0" cy="'+m+'" rx="2.2" ry="2.8" fill="'+D+'" stroke="none"/>';
+      else if(mo==='smile')o+=ln('M-3 '+(m-1)+'Q0 '+(m+2)+' 3 '+(m-1));
+      else if(mo==='tongue')o+='<path d="M-3.5 '+(m-1.5)+'Q0 '+(m+4)+' 3.5 '+(m-1.5)+'Z" fill="'+D+'"/><ellipse cx="0" cy="'+(m+1.2)+'" rx="1.8" ry="1.3" fill="#FF7A9A" stroke="none"/>';
+      else o+=ln('M-4 '+(m-1)+'Q0 '+(m+2)+' 4 '+(m-1))+'<path d="M-2.6 '+(m-.2)+'l1 2.4l1 -2ZM1.6 '+(m)+'l1 2.4l1 -2.6Z" fill="#fff" stroke="'+D+'" stroke-opacity=".7"/>';
+      if(ht==='witch')o+='<path d="M-9 '+(t+1)+'L4 '+(t-20)+'L9 '+(t+1)+'Z" fill="'+hc+'"/><ellipse cx="0" cy="'+(t+1)+'" rx="15" ry="3.5" fill="'+hc+'"/>';
+      else if(ht==='pumpkin')o+='<ellipse cx="0" cy="'+(t-3)+'" rx="8" ry="6" fill="#F29B30"/><path d="M-1 '+(t-9)+'l1 -3l2 1l-1 2Z" fill="#4E7A2A"/>';
+      else if(ht==='bow')o+='<path d="M8 '+(t+3)+'l-6 -4v8ZM8 '+(t+3)+'l6 -4v8Z" fill="'+hc+'"/><circle cx="8" cy="'+(t+3)+'" r="1.8" fill="'+hc+'"/>';
+      else if(ht==='crown')o+='<path d="M-7 '+(t+2)+'v-8l3.5 3l3.5 -5l3.5 5l3.5 -3v8Z" fill="#F7C531" stroke="#B5850F" stroke-opacity="1"/>';
+      if(hd==='candy')o+='<path d="M'+(hx-3)+' '+hy+'l-4 -3v6ZM'+(hx+3)+' '+hy+'l4 -3v6Z" fill="'+hl+'"/><ellipse cx="'+hx+'" cy="'+hy+'" rx="3.5" ry="2.6" fill="'+hl+'"/>';
+      else if(hd==='lantern')o+=ln('M'+hx+' '+(hy-3)+'v-2',GRY,1)+'<rect x="'+(hx-3)+'" y="'+(hy-3)+'" width="6" height="8" rx="2" fill="#F29B30"/><rect x="'+(hx-1.5)+'" y="'+(hy-1)+'" width="3" height="4" fill="#FFE38A" stroke="none"/>';
+      return o;
+    }
+  };
+  CT.pirate={
+    opt:{skin:['#F6C9A2','#E0A878','#A86E48'],hat:['tricorn','bandana','none'],hatC:['#222831','#E84A4A','#3E8EDE','#7A4B2A'],eye:['both','patch'],beard:['none','beard','mustache'],
+      beardC:['#2B2B38','#7A4A2A','#E58A2C','#DADFE8'],shirt:['stripe','vest','coat'],shirtC:['#E84A4A','#3E8EDE','#222831','#2E7D46','#F7C531'],leg:['boots','peg'],
+      hold:['none','sword','hook','map','scope'],bird:['none','parrot'],birdC:['#E84A4A','#4DBA5A','#3E8EDE','#F7C531']},
+    keys:['skin','hat','hatC','eye','beard','beardC','shirt','shirtC','leg','hold','bird','birdC'],
+    ez:['hat','eye','beard','shirt','shirtC','hold','bird'],nm:['hat','hatC','eye','beard','beardC','shirt','shirtC','leg','hold','bird','birdC'],
+    confuse:[['shirtC'],['hat','hatC']],
+    vis:function(c,k){if(k==='hatC')return c.hat!==2;if(k==='beardC')return c.beard!==0;if(k==='birdC')return c.bird!==0;return true;},
+    rand:function(r,c){if(r()<.2)c.hat=2;if(r()<.4)c.beard=0;if(r()<.3)c.hold=0;if(r()<.6)c.bird=0;},
+    box:function(){return [-26,-80,52,80];},
+    draw:function(c){
+      var O=this.opt,sk=O.skin[c.skin],ht=O.hat[c.hat],hc=O.hatC[c.hatC],sh=O.shirt[c.shirt],sc=O.shirtC[c.shirtC],hd=O.hold[c.hold],bc=O.beardC[c.beardC],pa='#5A4A3A',o='';
+      if(O.leg[c.leg]==='peg')o+='<rect x="-9" y="-16" width="7" height="8" fill="'+pa+'"/>'+ln('M-5.5 -8V0','#8B5A2B',3);
+      else o+='<rect x="-9" y="-16" width="7" height="11" fill="'+pa+'"/><rect x="-10" y="-6" width="9" height="6" rx="1.5" fill="#3A2A1E"/>';
+      o+='<rect x="2" y="-16" width="7" height="11" fill="'+pa+'"/><rect x="1" y="-6" width="9" height="6" rx="1.5" fill="#3A2A1E"/>';
+      var sl=sh==='coat'?sc:'#F5F5F5';
+      o+='<rect x="-16" y="-36" width="5" height="15" rx="2.5" fill="'+sl+'"/><circle cx="-13.5" cy="-20" r="3" fill="'+sk+'"/><rect x="11" y="-36" width="5" height="15" rx="2.5" fill="'+sl+'"/>';
+      if(sh==='coat')o+='<rect x="-12" y="-37" width="24" height="29" rx="3" fill="'+sc+'"/><g fill="#F7C531" stroke="none"><circle cx="-3.5" cy="-31" r="1.2"/><circle cx="-3.5" cy="-25" r="1.2"/><circle cx="3.5" cy="-31" r="1.2"/><circle cx="3.5" cy="-25" r="1.2"/></g>';
+      else{o+='<rect x="-11" y="-37" width="22" height="22" rx="3" fill="#F5F5F5"/>';
+        if(sh==='stripe')o+='<g fill="'+sc+'" stroke="none"><rect x="-11" y="-33" width="22" height="3"/><rect x="-11" y="-27" width="22" height="3"/></g>';
+        else o+='<path d="M-11 -37H-3L-5 -15H-11ZM11 -37H3L5 -15H11Z" fill="'+sc+'"/>';}
+      o+='<rect x="-11" y="-19" width="22" height="3.5" fill="#3A2A1E"/><rect x="-2" y="-19.5" width="4" height="4.5" fill="#F7C531"/>';
+      if(hd==='hook')o+=ln('M13.5 -21v3.5q0 3.5 -3.5 3','#C9CED6',1.8);
+      else o+='<circle cx="13.5" cy="-20" r="3" fill="'+sk+'"/>';
+      if(hd==='sword')o+='<path d="M14 -23L24 -42L26.5 -40L16.5 -21Z" fill="#D5DCE3"/>'+ln('M11 -24L17 -19','#F7C531',2);
+      else if(hd==='map')o+='<rect x="12" y="-28" width="11" height="8" fill="#F2E2B8" transform="rotate(-10 17 -24)"/>'+ln('M14 -25l3 1l2 -2l2 1','#B0413E',.9);
+      else if(hd==='scope')o+='<rect x="12" y="-26" width="13" height="4" rx="1" fill="#C9A24A" transform="rotate(-25 13 -24)"/>';
+      if(c.bird)o+='<path d="M-17 -38l-3 6l3 -1Z" fill="'+O.birdC[c.birdC]+'"/><ellipse cx="-15" cy="-43" rx="4" ry="6" fill="'+O.birdC[c.birdC]+'"/><circle cx="-15" cy="-50" r="3.5" fill="'+O.birdC[c.birdC]+'"/><path d="M-18.5 -50.5l-3 1.5l3 1Z" fill="#F7C531"/><circle cx="-15.5" cy="-51" r=".8" fill="'+D+'" stroke="none"/>';
+      o+='<circle cx="0" cy="-52" r="14" fill="'+sk+'"/>';
+      o+='<circle cx="-5" cy="-53" r="1.8" fill="'+D+'" stroke="none"/>';
+      if(O.eye[c.eye]==='patch')o+=ln('M-14 -57Q0 -61 14 -55','#222',1)+'<ellipse cx="5" cy="-53" rx="3.6" ry="3.2" fill="#222831"/>';
+      else o+='<circle cx="5" cy="-53" r="1.8" fill="'+D+'" stroke="none"/>';
+      o+=ln('M-3 -46.5Q0 -44.5 3 -46.5');
+      if(O.beard[c.beard]==='beard')o+='<path d="M-12 -50Q-12 -38 0 -36Q12 -38 12 -50Q8 -43.5 0 -43.5Q-8 -43.5 -12 -50Z" fill="'+bc+'"/>';
+      else if(O.beard[c.beard]==='mustache')o+='<path d="M-6.5 -46Q-3 -50 0 -47.5Q3 -50 6.5 -46Q3 -45 0 -46.3Q-3 -45 -6.5 -46Z" fill="'+bc+'"/>';
+      if(ht==='tricorn')o+='<path d="M-12 -60Q-12 -72 0 -72Q12 -72 12 -60Z" fill="'+hc+'"/><path d="M-19 -59Q0 -55 19 -59L13 -66Q0 -61 -13 -66Z" fill="'+hc+'"/><circle cx="0" cy="-65" r="2.2" fill="#fff" stroke="none"/>';
+      else if(ht==='bandana')o+='<path d="M-14.5 -55Q-15 -67 0 -67Q15 -67 14.5 -55Z" fill="'+hc+'"/><path d="M13 -58l8 -2l-3 6Z" fill="'+hc+'"/><g fill="#fff" fill-opacity=".8" stroke="none"><circle cx="-6" cy="-61" r="1.2"/><circle cx="2" cy="-63" r="1.2"/><circle cx="8" cy="-59" r="1.2"/></g>';
+      return o;
+    }
+  };
+  // 새 장르 소품
+  var PROP2={
+    building:{box:[-18,-66,36,66],keys:{col:['#7FA7D9','#9AA5B1','#B39DDB','#80CBC4'],win:['#FFE38A','#BFE6FF']},draw:function(p){var c=this.keys.col[p.col],w=this.keys.win[p.win],o='<rect x="-18" y="-60" width="36" height="60" fill="'+c+'"/><rect x="-14" y="-64" width="28" height="4" fill="'+c+'"/>'+ln('M8 -64V-66','#555',1.5);
+      for(var yy=-54;yy<-12;yy+=10)for(var xx=-13;xx<13;xx+=10)o+='<rect x="'+xx+'" y="'+yy+'" width="6" height="6" fill="'+w+'" stroke="none"/>';return o+'<rect x="-5" y="-10" width="10" height="10" fill="#555"/>';}},
+    tower:{box:[-11,-72,22,72],keys:{light:['#E84A4A','#5AC8FA','#7CFF6B']},draw:function(p){return ln('M-10 0L0 -62L10 0M-7 -20H7M-4 -40H4M-8 -10L6 -30M8 -10L-6 -30M-5 -32L4 -50M5 -32L-4 -50',GRY,1.8)+'<circle cx="0" cy="-66" r="4.5" fill="'+this.keys.light[p.light]+'"/>';}},
+    gear:{box:[-9,-18,18,18],keys:{col:['#9AA5B1','#F7C531','#E58A2C']},draw:function(p){var o='<g fill="'+this.keys.col[p.col]+'">';for(var i=0;i<8;i++)o+='<rect x="-1.8" y="-17.5" width="3.6" height="4" transform="rotate('+(i*45)+' 0 -9)"/>';return o+'<circle cx="0" cy="-9" r="6.5"/></g><circle cx="0" cy="-9" r="2.2" fill="#555"/>';}},
+    battery:{box:[-6,-17,12,17],keys:{lvl:[1,2,3]},draw:function(p){var n=this.keys.lvl[p.lvl],o='<rect x="-2" y="-17" width="4" height="2" fill="#555"/><rect x="-5.5" y="-15" width="11" height="15" rx="1.5" fill="#F5F5F5"/>';for(var i=0;i<n;i++)o+='<rect x="-3.5" y="'+(-4-i*4)+'" width="7" height="3" fill="#4DBA5A" stroke="none"/>';return o;}},
+    drone:{box:[-15,-14,30,14],keys:{col:['#E84A4A','#3E8EDE','#F7C531','#F5F5F5']},draw:function(p){return ln('M-12 -11H-4M4 -11H12','#555',1.6)+'<path d="M-15 -13h6M9 -13h6" stroke="#9AA5B1" stroke-opacity="1" stroke-width="1.6"/><rect x="-6" y="-11" width="12" height="7" rx="3" fill="'+this.keys.col[p.col]+'"/><circle cx="0" cy="-7.5" r="1.6" fill="#3BE0FF" stroke="none"/>';}},
+    castle:{box:[-32,-66,64,66],sc:.85,keys:{wall:['#C9CED6','#E8D9B5','#D7C2E8'],flag:['#E84A4A','#3E8EDE','#F7C531'],door:['#7A4B2A','#3E6FB0']},ez:['wall','flag'],draw:function(p){var w=this.keys.wall[p.wall],f=this.keys.flag[p.flag],o='<rect x="-26" y="-40" width="52" height="40" fill="'+w+'"/>';
+      for(var x=-24;x<24;x+=8)o+='<rect x="'+x+'" y="-44" width="5" height="5" fill="'+w+'"/>';
+      [-30,18].forEach(function(x){o+='<rect x="'+x+'" y="-54" width="12" height="54" fill="'+w+'"/><path d="M'+(x-2)+' -54L'+(x+6)+' -64L'+(x+14)+' -54Z" fill="'+f+'"/><rect x="'+(x+3.5)+'" y="-46" width="5" height="7" fill="#22303A" stroke="none"/>';});
+      return o+ln('M0 -44V-62','#555',1.4)+'<path d="M0 -62H10L0 -56Z" fill="'+f+'"/><path d="M-7 0V-12Q-7 -19 0 -19Q7 -19 7 -12V0Z" fill="'+this.keys.door[p.door]+'"/>';}},
+    mush:{box:[-15,-30,30,30],keys:{cap:['#E84A4A','#9B6BDF','#F29B30','#3E8EDE']},draw:function(p){return '<rect x="-5" y="-14" width="10" height="14" rx="3" fill="#F5EBDD"/><path d="M-15 -12Q-15 -30 0 -30Q15 -30 15 -12Z" fill="'+this.keys.cap[p.cap]+'"/><g fill="#fff" stroke="none"><circle cx="-7" cy="-20" r="2.6"/><circle cx="4" cy="-24" r="2.2"/><circle cx="9" cy="-16" r="1.8"/></g>';}},
+    sign:{box:[-15,-30,30,30],keys:{dir:[0,1],col:['#C0763A','#8A5A3B']},draw:function(p){var d=p.dir?-1:1;return '<rect x="-2" y="-20" width="4" height="20" fill="#7A4B2A"/><path d="M'+(-12*d)+' -28H'+(9*d)+'L'+(14*d)+' -23L'+(9*d)+' -18H'+(-12*d)+'Z" fill="'+this.keys.col[p.col]+'"/>';}},
+    potion:{box:[-6,-17,12,17],keys:{col:['#E84A4A','#5AC8FA','#7BD36A','#B07AE0']},draw:function(p){return '<rect x="-2" y="-17" width="4" height="3" fill="#A0642D"/><path d="M-2 -14V-11L-6 -6Q-6 0 0 0Q6 0 6 -6L2 -11V-14Z" fill="#E6F4FF"/><path d="M-5.6 -6Q-6 0 0 0Q6 0 5.6 -6Z" fill="'+this.keys.col[p.col]+'"/>';}},
+    swordp:{box:[-7,-22,14,22],keys:{hilt:['#E84A4A','#3E8EDE','#F7C531']},draw:function(p){var h=this.keys.hilt[p.hilt];return '<path d="M-1.6 0V-10H1.6V0Z" fill="#D5DCE3"/><rect x="-5.5" y="-12" width="11" height="2.5" rx="1" fill="'+h+'"/><rect x="-1.3" y="-19" width="2.6" height="7" fill="#7A4B2A"/><circle cx="0" cy="-20" r="1.8" fill="'+h+'"/><path d="M-6 0Q-5 -4 0 -4Q5 -4 6 0Z" fill="#9AA5B1"/>';}},
+    mushhouse:{box:[-26,-58,52,58],keys:{cap:['#E84A4A','#F29B30','#9B6BDF','#3E8EDE'],door:['#7A4B2A','#3E6FB0','#4DBA5A'],win:[0,1]},ez:['cap','door'],draw:function(p){var o='<rect x="-15" y="-30" width="30" height="30" rx="4" fill="#F5EBDD"/><path d="M-26 -26Q-26 -58 0 -58Q26 -58 26 -26Z" fill="'+this.keys.cap[p.cap]+'"/><g fill="#fff" stroke="none"><circle cx="-13" cy="-40" r="4"/><circle cx="5" cy="-48" r="3.5"/><circle cx="15" cy="-34" r="3"/></g><path d="M-5 0V-11Q-5 -16 0 -16Q5 -16 5 -11V0Z" fill="'+this.keys.door[p.door]+'"/>';if(p.win)o+='<circle cx="9" cy="-16" r="3.4" fill="#BFE6FF"/>';return o;}},
+    cart:{box:[-22,-26,44,26],keys:{col:['#C0763A','#E84A4A','#3E8EDE']},draw:function(p){return '<g fill="#F29B30"><circle cx="-12" cy="-21" r="3.5"/><circle cx="-4" cy="-22" r="3.5"/><circle cx="4" cy="-21" r="3.5"/></g><rect x="-20" y="-20" width="34" height="12" rx="2" fill="'+this.keys.col[p.col]+'"/>'+ln('M14 -14L22 -20','#7A4B2A',2)+'<circle cx="-12" cy="-5" r="5" fill="#7A4B2A"/><circle cx="6" cy="-5" r="5" fill="#7A4B2A"/>';}},
+    carrot:{box:[-5,-19,10,19],keys:{},draw:function(){return '<path d="M-3.5 -12L3.5 -12L0 0Z" fill="#F29B30"/>'+ln('M0 -12L-3 -18M0 -12V-19M0 -12L3 -18','#4DBA5A',1.8);}},
+    apple:{box:[-6,-14,12,14],keys:{col:['#E84A4A','#7BD36A','#F7C531']},draw:function(p){return '<circle cx="0" cy="-6" r="5.6" fill="'+this.keys.col[p.col]+'"/>'+ln('M0 -11V-14','#7A4B2A',1.4)+'<path d="M0 -12Q4 -15 5 -12Q2 -11 0 -12Z" fill="#4DBA5A"/>';}},
+    mtower:{box:[-16,-74,32,74],keys:{wall:['#B9A2C9','#9AA5B1','#D7C2A8'],roof:['#4B3B8F','#2C3E66','#8E2F4F'],win:['#FFE38A','#9EE6F5']},ez:['roof','win'],draw:function(p){var l=this.keys.win[p.win];return '<rect x="-11" y="-48" width="22" height="48" fill="'+this.keys.wall[p.wall]+'"/><path d="M-15 -48L0 -74L15 -48Z" fill="'+this.keys.roof[p.roof]+'"/><path d="M-4 -30V-36Q-4 -40 0 -40Q4 -40 4 -36V-30Z" fill="'+l+'"/><path d="M-4 -12V-18Q-4 -22 0 -22Q4 -22 4 -18V-12Z" fill="'+l+'"/>';}},
+    cauldron:{box:[-16,-32,32,32],keys:{brew:['#7BD36A','#B07AE0','#F07AB0','#5AC8FA']},draw:function(p){var b=this.keys.brew[p.brew];return '<path d="M-14 -18Q-16 0 0 0Q16 0 14 -18Z" fill="#333C46"/><ellipse cx="0" cy="-18" rx="15" ry="4" fill="'+b+'"/><g fill="'+b+'"><circle cx="-4" cy="-24" r="3"/><circle cx="4" cy="-27" r="2.2"/><circle cx="0" cy="-30" r="1.4"/></g>';}},
+    book:{box:[-8,-12,16,12],keys:{col:['#E84A4A','#3E8EDE','#4DBA5A','#9B6BDF']},draw:function(p){return '<rect x="-7" y="-10" width="14" height="10" rx="1" fill="'+this.keys.col[p.col]+'"/><rect x="-7" y="-3" width="14" height="2" fill="#F5EBDD" stroke="none"/><path d="M-1 -10V-12L1 -11V-10Z" fill="#F7C531"/>';}},
+    broom:{box:[-17,-12,34,12],keys:{rib:['#E84A4A','#3E8EDE','#F7C531']},draw:function(p){return ln('M-16 -6H6','#8B5A2B',2.4)+'<path d="M5 -9L16 -11L16 -1L5 -3Z" fill="#E8C547"/><rect x="3" y="-8" width="3" height="6" fill="'+this.keys.rib[p.rib]+'"/>';}},
+    moon:{box:[-16,-34,32,34],keys:{face:[0,1]},ez:[],keep:1,draw:function(p){return '<circle cx="0" cy="-17" r="14" fill="#FFF3B0"/><circle cx="-6" cy="-23" r="2.5" fill="#E8DA90" stroke="none"/><circle cx="6" cy="-9" r="1.8" fill="#E8DA90" stroke="none"/>'+(p.face?ln('M-5 -17Q-3 -19 -1 -17M2 -17Q4 -19 6 -17','#8A7A30',1.3):'<circle cx="-3" cy="-17" r="1.2" fill="#8A7A30" stroke="none"/><circle cx="4" cy="-17" r="1.2" fill="#8A7A30" stroke="none"/>')+ln('M-2 -12Q1 -10 4 -12','#8A7A30',1.2);}},
+    mansion:{box:[-32,-72,64,72],sc:.85,keys:{wall:['#6E5A7E','#5A6E7E','#7E6A5A'],win:['#FFE38A','#9EE6F5','#B9FF8A']},draw:function(p){var w=this.keys.wall[p.wall],l=this.keys.win[p.win],o='<rect x="-28" y="-40" width="56" height="40" fill="'+w+'"/><path d="M-32 -40L-16 -58L0 -40L16 -58L32 -40Z" fill="#3A2E4A"/><rect x="-6" y="-62" width="12" height="22" fill="'+w+'"/><path d="M-8 -62L0 -72L8 -62Z" fill="#3A2E4A"/>';
+      [[-22,-32,9],[13,-32,9],[-22,-16,9],[13,-16,9],[-3,-56,6]].forEach(function(q){o+='<rect x="'+q[0]+'" y="'+q[1]+'" width="'+q[2]+'" height="8" fill="'+l+'"/>';});return o+'<path d="M-5 0V-10Q-5 -14 0 -14Q5 -14 5 -10V0Z" fill="#2A2030"/>';}},
+    deadtree:{box:[-18,-52,36,52],keys:{},draw:function(){return ln('M0 0V-30M0 -18L-12 -32L-16 -30M-12 -32L-12 -42M0 -26L10 -40L16 -44M10 -40L8 -50M0 -30L-3 -46','#5A4636',4);}},
+    grave:{box:[-10,-24,20,24],keys:{shape:[0,1],col:['#9AA5B1','#B8AE9C']},draw:function(p){var c=this.keys.col[p.col];return p.shape?'<path d="M-2.5 0V-14H-8V-19H-2.5V-24H2.5V-19H8V-14H2.5V0Z" fill="'+c+'"/>':'<path d="M-8 0V-14Q-8 -23 0 -23Q8 -23 8 -14V0Z" fill="'+c+'"/>'+ln('M-3 -15H3M-3 -11H3','#555',1);}},
+    pumpkin:{box:[-11,-18,22,18],keys:{face:[0,1,2]},draw:function(p){var o='<ellipse cx="0" cy="-8" rx="10.5" ry="8" fill="#F29B30"/>'+ln('M-4 -15Q-6 -8 -4 -1M4 -15Q6 -8 4 -1','#C46A1A',1)+'<path d="M-1 -15L0 -18L2 -17L1 -15Z" fill="#4E7A2A"/>';
+      if(p.face===1)o+='<path d="M-6 -10L-3 -12L-3 -9ZM6 -10L3 -12L3 -9ZM-5 -6Q0 -2 5 -6Q0 -4 -5 -6Z" fill="#5A2A0A" stroke="none"/>';else if(p.face===2)o+='<path d="M-7 -12L-2 -10L-6 -8ZM7 -12L2 -10L6 -8ZM-6 -5L-3 -3L0 -5L3 -3L6 -5L3 -2H-3Z" fill="#5A2A0A" stroke="none"/>';return o;}},
+    candy:{box:[-10,-9,20,9],keys:{col:['#E84A4A','#F07AB0','#7BD36A','#F7C531']},draw:function(p){var c=this.keys.col[p.col];return '<path d="M-5 -4.5L-10 -8V-1ZM5 -4.5L10 -8V-1Z" fill="'+c+'"/><ellipse cx="0" cy="-4.5" rx="5.5" ry="4" fill="'+c+'"/>'+ln('M-2 -7L1 -2','#fff',1);}},
+    bat:{box:[-15,-14,30,14],keys:{col:['#3A2E4A','#6A3A7A','#222831']},draw:function(p){return '<path d="M0 -8Q-6 -14 -15 -10Q-10 -8 -11 -4Q-7 -6 -5 -3Q-3 -5 0 -4Q3 -5 5 -3Q7 -6 11 -4Q10 -8 15 -10Q6 -14 0 -8Z" fill="'+this.keys.col[p.col]+'"/><circle cx="-1.5" cy="-7" r=".9" fill="#FFE38A" stroke="none"/><circle cx="1.5" cy="-7" r=".9" fill="#FFE38A" stroke="none"/>';}},
+    ship:{box:[-34,-62,68,62],sc:.8,keys:{sail:['#F5F5F5','#E84A4A','#2A2A2A'],hull:['#8B5A2B','#5A3A20','#B0413E'],flag:[0,1]},ez:['sail','hull'],draw:function(p){var s=this.keys.sail[p.sail],o='<path d="M-34 -18H34L26 0H-26Z" fill="'+this.keys.hull[p.hull]+'"/>'+ln('M-28 -10H28','#F7C531',1.4)+ln('M-6 -18V-60M14 -18V-48','#5A3A20',2.4)+'<path d="M-20 -54Q-6 -46 -20 -24H8Q-4 -38 8 -54Z" fill="'+s+'"/><path d="M4 -44Q14 -38 4 -24H24Q16 -34 24 -44Z" fill="'+s+'"/>';
+      if(p.flag)o+='<path d="M-6 -60H6V-53H-6Z" fill="#222831"/><circle cx="0" cy="-56.5" r="1.8" fill="#fff" stroke="none"/>';return o;}},
+    barrel:{box:[-8,-18,16,18],keys:{band:['#555','#F7C531','#C0763A']},draw:function(p){var b=this.keys.band[p.band];return '<path d="M-6 0Q-8.5 -9 -6 -18H6Q8.5 -9 6 0Z" fill="#A0642D"/><rect x="-7.4" y="-15" width="14.8" height="2" fill="'+b+'" stroke="none"/><rect x="-7.4" y="-5" width="14.8" height="2" fill="'+b+'" stroke="none"/>';}},
+    anchor:{box:[-9,-20,18,20],keys:{col:['#555','#3E6FB0','#B0413E']},draw:function(p){var c=this.keys.col[p.col];return ln('M0 -16V-1M-5 -12H5M-8 -6Q-7 0 0 -1Q7 0 8 -6',c,2.4)+'<circle cx="0" cy="-17.5" r="2.2" fill="none" stroke="'+c+'" stroke-opacity="1" stroke-width="1.8"/>';}},
+    cannon:{box:[-18,-20,36,20],keys:{col:['#333C46','#6A5446']},draw:function(p){return '<rect x="-14" y="-17" width="26" height="9" rx="4.5" fill="'+this.keys.col[p.col]+'" transform="rotate(-12 0 -12)"/><circle cx="-4" cy="-5" r="5" fill="#7A4B2A"/><circle cx="8" cy="-5" r="5" fill="#7A4B2A"/>';}}
+  };
+  for(var pk in PROP2)PROP[pk]=PROP2[pk];
+
   // ---------- 장르 ----------
   // pal: [하늘 위, 하늘 아래, 땅], horizon/air: 지평선·하늘에 놓을 것(i 번째), mid: 앞쪽 큰 물건, small: 작은 물건, sky/ground: 배경 꾸미기(씨앗으로 위·아래 같게)
   // crowd: 고급 배경 {g 땅, path 길, feat 아무도 안 서는 곳, deco 꾸밈(첫째는 큰 것)}
@@ -388,7 +652,35 @@ function HiddenEngine(){
       ground:function(r,W,HZ,H){return dotsR(r,24,0,W,HZ+6,H,[1.5,3],'#BFD9EE',.5);},
       crowd:{g:'#F2F8FD',path:'#DCE9F5',feat:'rink',deco:['pine','gift','flake'],card:['#EAF4FB','#A9D2F5']}}
   };
-  var THEME_KEYS=['block','anime','space','sea','dino','snow'];
+  function sunCloud(r,i){return i===0?'sun':'cloud';}
+  THEMES.robot={name:'로봇 도시',genre:'게임',ch:'robot',pal:[['#FFB38A','#FFE6CF','#A9B2BD'],['#8FD3FF','#E1F4FF','#A3ACB8'],['#B39DDB','#F0E6FF','#9EA7B3']],
+    horizon:function(r){return r()<.7?'building':'tower';},air:function(r,i){return i===0?'sun':r()<.5?'drone':'cloud';},mid:['car'],small:['gear','battery','gear','coin'],
+    ground:function(r,W,HZ){var o='<rect x="0" y="'+(HZ+30)+'" width="'+W+'" height="22" fill="#6B7480" fill-opacity=".35" stroke="none"/>';for(var x=6;x<W;x+=34)o+='<rect x="'+x+'" y="'+(HZ+40)+'" width="16" height="3" fill="#fff" fill-opacity=".85" stroke="none"/>';return o;},
+    crowd:{g:'#A3ACB8',path:'#8B96A2',feat:'pad',deco:['tower','gear','battery'],card:['#E1F4FF','#8FD3FF']}};
+  THEMES.slime={name:'슬라임 모험',genre:'게임',ch:'slime',pal:[['#8FD3FF','#E6F7FF','#8BD45A'],['#FFD59A','#FFF4E0','#86C55A'],['#B9C8FF','#EEF2FF','#7FCB60']],
+    horizon:function(r,i){return i===0?'castle':r()<.5?'tree':'mush';},air:sunCloud,mid:['sign'],small:['potion','coin','swordp','chest'],
+    ground:function(r,W,HZ){return '<path d="M0 '+(HZ+50)+'Q'+(W/2)+' '+(HZ+30)+' '+W+' '+(HZ+60)+'V'+(HZ+76)+'Q'+(W/2)+' '+(HZ+46)+' 0 '+(HZ+66)+'Z" fill="#D9C08E" fill-opacity=".7" stroke="none"/>';},
+    crowd:{g:'#8BD45A',path:'#D9C08E',feat:'pond',deco:['mush','potion','coin'],card:['#E6F7FF','#8FD3FF']}};
+  THEMES.animal={name:'동물 마을',genre:'만화',ch:'animal',pal:[['#BDE8FF','#FFF7E0','#9DD66B'],['#FFD0E0','#FFF5EA','#A5D86E'],['#C8F0D8','#FAFFF0','#96D065']],
+    horizon:function(r){return r()<.5?'mushhouse':'tree';},air:sunCloud,mid:['cart'],small:['carrot','apple','flower','apple'],
+    ground:function(r,W,HZ,H){return dotsR(r,26,0,W,HZ+8,H,[1.2,2],'#FFFFFF',.8);},
+    crowd:{g:'#9DD66B',path:'#E9D7A8',feat:'pond',deco:['tree','carrot','apple','flower'],card:['#FFF7E0','#BDE8FF']}};
+  THEMES.magic={name:'마법 학교',genre:'만화',ch:'wizard',pal:[['#2B1E5A','#7A5AB0','#5E8F4A'],['#1E2A5A','#5A6AB0','#55884A'],['#3A1E4A','#9A5A8A','#5A8A50']],
+    horizon:function(r,i){return i===0||r()<.4?'mtower':'pine';},air:function(r,i){return i===0?'moon':r()<.6?'star':'bat';},mid:['cauldron'],small:['potion','book','broom','book'],
+    sky:function(r,W,HZ){return dotsR(r,40,0,W,0,HZ-6,[.5,1.4],'#FFFFFF',.9);},ground:function(r,W,HZ,H){return dotsR(r,16,0,W,HZ+8,H,[1,2],'#FFE38A',.6);},
+    crowd:{g:'#5E8F4A',path:'#8C7A6A',feat:'circle',deco:['pine','book','potion'],card:['#7A5AB0','#2B1E5A']}};
+  THEMES.ghost={name:'유령 저택',genre:'영화',ch:'ghost',pal:[['#1E2A4A','#4A3A6A','#4E5A3E'],['#2A1E3A','#5A3A5A','#4A563A'],['#14283A','#3A5A6A','#46563E']],
+    horizon:function(r,i){return i===0?'mansion':r()<.5?'deadtree':'grave';},air:function(r,i){return i===0?'moon':'bat';},mid:['grave'],small:['pumpkin','candy','pumpkin','grave'],
+    sky:function(r,W,HZ){return dotsR(r,20,0,W,0,HZ-10,[.5,1.2],'#FFFFFF',.7);},
+    ground:function(r,W,HZ){return '<g fill="#fff" fill-opacity=".08" stroke="none"><ellipse cx="'+(W*.25)+'" cy="'+(HZ+20)+'" rx="120" ry="12"/><ellipse cx="'+(W*.75)+'" cy="'+(HZ+60)+'" rx="140" ry="14"/></g>';},
+    crowd:{g:'#4E5A3E',path:'#625E50',feat:'swamp',deco:['deadtree','pumpkin','grave','candy'],card:['#4A3A6A','#1E2A4A']}};
+  THEMES.pirate={name:'해적섬',genre:'영화',ch:'pirate',pal:[['#7FD0FF','#E0F6FF','#F0DDB0'],['#FFC48A','#FFEBD0','#EED7A6'],['#9EC8F5','#E8F2FF','#F2DFB4']],
+    horizon:function(r,i){return i===0?'ship':r()<.6?'palm':'rock';},air:sunCloud,mid:['cannon'],small:['barrel','anchor','chest','coin','shell'],
+    sky:function(r,W,HZ){var o='<rect x="0" y="'+(HZ-24)+'" width="'+W+'" height="24" fill="#3E9AD4" stroke="none"/>';for(var x=10;x<W;x+=40)o+='<path d="M'+x+' '+(HZ-14)+'q5 -4 10 0" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="1.5"/>';return o;},
+    ground:function(r,W,HZ,H){return dotsR(r,20,0,W,HZ+6,H,[.8,1.6],'#B89A64',.5);},
+    crowd:{g:'#F0DDB0',path:'',feat:'lagoon',deco:['palm','barrel','shell','coin'],card:['#E0F6FF','#7FD0FF']}};
+  // 순서: 게임 → 만화 → 영화
+  var THEME_KEYS=['block','robot','slime','anime','animal','magic','space','sea','dino','snow','ghost','pirate'];
   function themeOf(th){return THEMES[th]?th:'block';}
   function randProp(r,t,s,L,cat){var P=PROP[t],p={t:t,s:s*(P.sc||1),L:L,cat:cat};for(var k in P.keys)p[k]=ix(r,P.keys[k]);return p;}
 
@@ -505,7 +797,11 @@ function HiddenEngine(){
     if(kind==='reef')return '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="40" fill="#E9D7A8" stroke="#CDB57E" stroke-width="4"/>'+
       propSvg({t:'coral',x:x+w*.3,y:y+h*.7,s:1.4,col:0})+propSvg({t:'coral',x:x+w*.65,y:y+h*.55,s:1.2,col:2})+propSvg({t:'shell',x:x+w*.5,y:y+h*.85,s:1.3,col:1});
     if(kind==='rink')return '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="40" fill="#BFE6FF" stroke="#8CC8EA" stroke-width="4"/><path d="M'+(x+30)+' '+(y+40)+'l40 -10M'+(x+w-90)+' '+(y+h-40)+'l50 -12" stroke="#fff" stroke-opacity=".8" stroke-width="4" stroke-linecap="round"/>';
-    var c=kind==='lake'?['#4FA8C8','#367F9C']:['#5BB8E8','#3E8EB8'];
+    var cx=x+w/2,cy=y+h/2;
+    if(kind==='pad')return '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="20" fill="#6B7480" stroke="#F7C531" stroke-width="5"/><circle cx="'+cx+'" cy="'+cy+'" r="'+(h*.36)+'" fill="none" stroke="#fff" stroke-width="4"/>'+
+      '<path d="M'+(cx-14)+' '+(cy-18)+'V'+(cy+18)+'M'+(cx+14)+' '+(cy-18)+'V'+(cy+18)+'M'+(cx-14)+' '+cy+'H'+(cx+14)+'" stroke="#fff" stroke-width="6" fill="none"/>';
+    if(kind==='circle')return '<ellipse cx="'+cx+'" cy="'+cy+'" rx="'+(w/2)+'" ry="'+(h/2)+'" fill="#3A2E5A" stroke="#B07AE0" stroke-width="4"/><ellipse cx="'+cx+'" cy="'+cy+'" rx="'+(w/2-14)+'" ry="'+(h/2-12)+'" fill="none" stroke="#E2C8FF" stroke-width="2" stroke-dasharray="8 6"/><path d="'+starD(cx,cy,h*.28)+'" fill="none" stroke="#F7C531" stroke-width="3"/>';
+    var c=kind==='lake'?['#4FA8C8','#367F9C']:kind==='swamp'?['#3E5E44','#2A4030']:kind==='lagoon'?['#5BC8E8','#3EA0C8']:['#5BB8E8','#3E8EB8'];
     return '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="40" fill="'+c[0]+'" stroke="'+c[1]+'" stroke-width="4"/><path d="M'+(x+30)+' '+(y+40)+'h40M'+(x+w-90)+' '+(y+h-40)+'h50" stroke="#fff" stroke-opacity=".6" stroke-width="4" stroke-linecap="round"/>';
   }
   function crowdSvg(sc){
