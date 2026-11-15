@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>솔솔퍼즐(숨은그림)</title>
-<meta name="description" content="귀여운 블록 친구 숨은그림찾기. 초급·중급 틀린 그림 찾기, 고급은 군중 속에서 똑같은 친구 찾기.">
+<meta name="description" content="장르를 골라 하는 숨은그림찾기. 게임·만화·영화 같은 장면에서 초급·중급 틀린 그림 찾기, 고급은 군중 속에서 똑같은 친구 찾기.">
 <meta name="theme-color" content="#F2F6EC" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#111711" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -83,10 +83,10 @@ main{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden}
 
 /* 군중 */
 .target{display:flex;align-items:center;gap:10px;background:var(--surface);border:2px solid var(--line);border-radius:16px;padding:6px 10px}
-.target svg{width:46px;height:72px;flex:none;background:linear-gradient(#DDF3FF,#BFE6FF);border-radius:10px}
+.target svg{height:72px;width:auto;max-width:96px;min-width:46px;flex:none;background:linear-gradient(#DDF3FF,#BFE6FF);border-radius:10px}
 .target b{font-family:var(--f-display);font-size:16px;font-weight:700;display:block}
 .target span{font-size:12px;color:var(--muted);font-weight:700}
-.crowd{position:relative;height:calc(100vh - 330px);height:calc(100svh - 330px);min-height:260px;overflow:auto;border-radius:14px;box-shadow:0 4px 0 var(--shade);touch-action:pan-x pan-y;-webkit-overflow-scrolling:touch;background:#7CC152;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.crowd{position:relative;height:calc(100vh - 336px);height:calc(100svh - 336px);min-height:260px;overflow:auto;border-radius:14px;box-shadow:0 4px 0 var(--shade);touch-action:pan-x pan-y;-webkit-overflow-scrolling:touch;background:#7CC152;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 .crowd svg{display:block}
 .crowdwrap{position:relative}
 .zoom{position:absolute;right:8px;bottom:8px;display:flex;flex-direction:column;gap:6px;z-index:3}
@@ -150,6 +150,16 @@ table.rec td:first-child,table.rec th:first-child{text-align:left;font-weight:80
 .manual ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
 .manual b{font-weight:800}
 .modal footer{padding:10px 18px 14px;border-top:2px solid var(--line)}
+/* 장르 고르기 */
+.picklv{font-size:13px;font-weight:800;color:var(--muted);padding:10px 18px 0}
+.genres{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:10px 16px 18px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.gcard{border:2px solid var(--line);background:var(--surface);border-radius:16px;padding:6px 6px 8px;display:flex;flex-direction:column;align-items:center;gap:3px;box-shadow:0 3px 0 var(--line);font-weight:800;font-size:15px;line-height:1.2}
+.gcard:active{transform:translateY(3px);box-shadow:0 0 0 var(--line)}
+.gcard .pv{width:100%;height:78px;border-radius:11px;display:flex;align-items:flex-end;justify-content:center;gap:4px;overflow:hidden;padding-bottom:4px}
+.gcard .pv svg{height:66px;width:auto;max-width:48%}
+.gcard .chip{font-size:11px;color:var(--muted);font-weight:800}
+.gcard[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 3px 0 var(--accent-deep)}
+.gcard.any .pv{font-size:44px;align-items:center;padding:0;background:linear-gradient(135deg,#FFE6F0,#DDF3FF 50%,#E8F7D8)}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:14px;font-weight:800;font-size:14px;z-index:40;max-width:calc(100% - 32px);text-align:center}
 @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
 @media (max-width:380px){.tabs button{padding:6px 9px}.brand{font-size:17px}}
@@ -180,7 +190,7 @@ table.rec td:first-child,table.rec th:first-child{text-align:left;font-weight:80
         <div class="pane" id="pane1"><span class="tag">아래</span></div>
       </div>
       <div id="crowdBox" hidden>
-        <div class="target"><svg id="targetSvg" viewBox="-28 -92 56 97" aria-hidden="true"></svg><div><b>이 친구와 똑같은 친구 <span id="needN" style="font-size:inherit;color:inherit">3</span>명을 찾아요</b><span>모자·얼굴·옷 무늬·들고 있는 것까지 전부 같아야 해요. 두 손가락으로 확대</span></div></div>
+        <div class="target"><svg id="targetSvg" viewBox="-28 -92 56 97" aria-hidden="true"></svg><div><b>이 친구와 똑같은 친구 <span id="needN" style="font-size:inherit;color:inherit">3</span>명을 찾아요</b><span>색·무늬·쓴 것·든 것까지 전부 같아야 해요</span></div></div>
         <div class="crowdwrap"><div class="crowd" id="crowd"><div id="crowdIn"></div></div><div class="zoom"><button type="button" id="zin" aria-label="확대">＋</button><button type="button" id="zout" aria-label="축소">－</button></div></div>
       </div>
       <div class="actions">
@@ -210,9 +220,9 @@ table.rec td:first-child,table.rec th:first-child{text-align:left;font-weight:80
       </section>
       <section>
         <h3>고급: 똑같은 친구 찾기</h3>
-        <p>공원에 블록 친구가 200명 넘게 모여 있어요. 위에 보이는 친구와 <b>모든 게 똑같은 친구 3명</b>을 찾아 눌러요.</p>
+        <p>친구들이 200명 넘게 모여 있어요(장르마다 블록 친구·만화 친구·외계인·물고기·아기 공룡·눈사람). 위에 보이는 친구와 <b>모든 게 똑같은 친구 3명</b>을 찾아 눌러요.</p>
         <ul>
-          <li>한 군데만 다른 닮은꼴이 40명쯤 섞여 있어요. 모자 색, 표정, 옷 무늬, 풍선 색, 팔 자세까지 꼼꼼히!</li>
+          <li>한 군데만 다른 닮은꼴이 40명쯤 섞여 있어요. 색, 표정, 무늬, 쓰고 있는 것, 들고 있는 것까지 꼼꼼히!</li>
           <li><b>두 손가락</b>으로 벌려 확대하고, 한 손가락으로 끌어 둘러봐요. ＋ － 버튼도 있어요.</li>
         </ul>
       </section>
@@ -232,15 +242,22 @@ table.rec td:first-child,table.rec th:first-child{text-align:left;font-weight:80
     <footer><button class="btn primary" id="manualOk" type="button" style="width:100%">알겠어요</button></footer>
   </div>
 </div>
+<div class="modal-bg" id="pickBg" hidden style="z-index:29">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="pickTitle">
+    <header><h2 id="pickTitle">어떤 그림으로 할까요?</h2><button class="x" id="pickClose" type="button" aria-label="닫기">✕</button></header>
+    <div class="picklv" id="pickLv"></div>
+    <div class="genres" id="genres"></div>
+  </div>
+</div>
 <div class="toast" id="toast" hidden></div>
 
 <script src="../common/supabase-config.js?v=1"></script>
 <script src="../common/cloud.js?v=4" data-game="hidden"></script>
-<script src="engine.js?v=1"></script>
+<script src="engine.js?v=2"></script>
 <script>
 (function(){
 'use strict';
-var VERSION='11.14-1';
+var VERSION='11.15-1';
 var E=HiddenEngine();
 var LV={easy:{t:'초급',d:'틀린 그림 3곳'},normal:{t:'중급',d:'틀린 그림 6곳'},hard:{t:'고급',d:'똑같은 친구 3명'}};
 var LV_KEYS=['easy','normal','hard'];
@@ -255,23 +272,31 @@ $('logo').innerHTML='<svg viewBox="0 0 512 512" aria-hidden="true"><rect width="
 $('verLine').textContent='솔솔퍼즐(숨은그림) · 버전 '+VERSION;
 
 // ---------- 상태 ----------
-// G: {lv, seed, found[](찾은 차이 번호 또는 친구 번호), time(초, 벌점 포함), wrong, hints, over}
+// G: {lv, theme(장르), ev(엔진 버전), seed, found[](찾은 차이 번호 또는 친구 번호), time(초, 벌점 포함), wrong, hints, over}
 var G=null,S=null,tab='play';
-function newGame(lv){
-  lv=lv||G.lv;
-  G={lv:lv,seed:(Date.now()^Math.floor(Math.random()*1e9))>>>0,found:[],time:0,wrong:0,hints:0,over:false};
+var GENRE_EMOJI={'게임':'🎮','만화':'📺','영화':'🎬'};
+function pickTheme(th){
+  if(th==='any'){var ks=E.THEME_KEYS.filter(function(k){return !G||k!==G.theme;});return ks[Math.floor(Math.random()*ks.length)];}
+  return E.THEMES[th]?th:(G&&G.theme)||'block';
+}
+function newGame(lv,th){
+  lv=lv||G.lv;th=pickTheme(th);
+  store('hidden.lastTheme',th);$('pickBg').hidden=true;
+  G={lv:lv,theme:th,ev:E.VERSION,seed:(Date.now()^Math.floor(Math.random()*1e9))>>>0,found:[],time:0,wrong:0,hints:0,over:false};
   store('hidden.lastLv',lv);
   var st=store('hidden.stats')||{};st[lv]=st[lv]||{played:0,won:0,best:null,recent:[]};st[lv].played++;store('hidden.stats',st);
   $('result').hidden=true;
   build();save();
-  toast(LV[lv].t+' · '+LV[lv].d+' · 버전 '+VERSION);
+  toast(GENRE_EMOJI[E.THEMES[th].genre]+' '+E.THEMES[th].name+' · '+LV[lv].t+' · 버전 '+VERSION);
 }
 function need(){return S.mode==='diff'?S.diffs.length:S.copies.length;}
 
 // ---------- 그리기 ----------
 var zoom=1.6,crowdW=0;
 function build(){
-  S=G.lv==='hard'?E.genCrowd(G.seed):E.genDiff(G.seed,G.lv);
+  var TI=E.THEMES[G.theme]||E.THEMES.block;
+  S=G.lv==='hard'?E.genCrowd(G.seed,G.theme):E.genDiff(G.seed,G.lv,G.theme);
+  $('pane0').querySelector('.tag').textContent='위 · '+GENRE_EMOJI[TI.genre]+' '+TI.name;
   var diff=S.mode==='diff';
   $('pair').hidden=!diff;$('crowdBox').hidden=diff;
   if(diff){
@@ -280,9 +305,10 @@ function build(){
       p.insertAdjacentHTML('afterbegin','<svg viewBox="0 0 '+S.w+' '+S.h+'" aria-label="'+(k?'아래':'위')+' 그림">'+E.diffSvg(S,k,k)+'<g class="marks"></g></svg>');
     });
   }else{
-    $('targetSvg').innerHTML=E.charSvg(S.target,0,0,1);
+    var ts=$('targetSvg');ts.setAttribute('viewBox',E.charView(S.target));ts.innerHTML=E.charSvg(S.target,0,0,1);
+    ts.style.background='linear-gradient('+TI.card[0]+','+TI.card[1]+')';
     $('needN').textContent=S.copies.length;
-    $('crowdIn').innerHTML='<svg viewBox="0 0 '+S.w+' '+S.h+'" aria-label="공원 그림">'+E.crowdSvg(S)+'<g class="marks"></g></svg>';
+    $('crowdIn').innerHTML='<svg viewBox="0 0 '+S.w+' '+S.h+'" aria-label="'+TI.name+' 그림">'+E.crowdSvg(S)+'<g class="marks"></g></svg>';
     zoom=store('hidden.zoom')||1.6;sizeCrowd(null);
   }
   G.found.forEach(function(f){markFound(f,true);});
@@ -408,7 +434,7 @@ function win(){
   var st=store('hidden.stats')||{},s=st[G.lv]||(st[G.lv]={played:1,won:0,best:null,recent:[]});
   var t=Math.max(1,Math.floor(G.time)),record=s.best===null||t<s.best;
   s.won++;if(record)s.best=t;
-  s.recent.unshift({t:t,w:G.wrong,h:G.hints,ts:Date.now()});s.recent=s.recent.slice(0,10);
+  s.recent.unshift({t:t,w:G.wrong,h:G.hints,ts:Date.now(),th:G.theme});s.recent=s.recent.slice(0,10);
   store('hidden.stats',st);save();renderStatus();
   if(window.SolsolCloud)SolsolCloud.submitScore(G.lv,t);
   var clean=!G.wrong&&!G.hints;
@@ -425,6 +451,7 @@ function showResult(record){
   var idx=LV_KEYS.indexOf(G.lv);
   if(idx<2)add(LV[LV_KEYS[idx+1]].t+' 도전','primary',function(){newGame(LV_KEYS[idx+1]);});
   add('한 판 더',idx<2?'':'primary',function(){newGame(G.lv);});
+  add('다른 그림 고르기','',function(){$('result').hidden=true;openPick(G.lv);});
   add('그림 보기','',function(){$('result').hidden=true;});
   $('result').hidden=false;
 }
@@ -479,11 +506,11 @@ $('voiceBtn').onclick=function(){VOICE.on=!VOICE.on;store('hidden.voice',VOICE.o
 paintVoice();
 
 // ---------- 버튼·시간·저장 ----------
-$('newBtn').onclick=function(){newGame(G.lv);};
+$('newBtn').onclick=function(){openPick(G?G.lv:(store('hidden.lastLv')||'easy'));};
 $('lvSeg').innerHTML=LV_KEYS.map(function(k){return '<button type="button" data-lv="'+k+'">'+LV[k].t+'<small>'+LV[k].d+'</small></button>';}).join('');
-$('lvSeg').addEventListener('click',function(e){var b=e.target.closest('button');if(b)newGame(b.dataset.lv);});
+$('lvSeg').addEventListener('click',function(e){var b=e.target.closest('button');if(b)openPick(b.dataset.lv);});
 setInterval(function(){
-  if(!G||G.over||document.hidden||tab!=='play'||!$('manualBg').hidden)return;
+  if(!G||G.over||document.hidden||tab!=='play'||!$('manualBg').hidden||!$('pickBg').hidden)return;
   G.time+=1;$('timer').textContent=Math.floor(G.time);
   if(Math.floor(G.time)%5===0)save();
 },1000);
@@ -506,12 +533,33 @@ function renderHistory(){
     s.recent.forEach(function(r){recent.push({lv:k,r:r});});
   });
   recent.sort(function(a,b){return b.r.ts-a.r.ts;});
-  var items=recent.slice(0,15).map(function(x){return '<div><span>'+fmtDate(x.r.ts)+'</span><span>'+LV[x.lv].t+'</span><span>'+x.r.t+'초</span><span>틀림 '+x.r.w+' · 힌트 '+x.r.h+'</span></div>';});
+  var items=recent.slice(0,15).map(function(x){return '<div><span>'+fmtDate(x.r.ts)+'</span><span>'+LV[x.lv].t+(x.r.th&&E.THEMES[x.r.th]?' · '+E.THEMES[x.r.th].name:'')+'</span><span>'+x.r.t+'초</span><span>틀림 '+x.r.w+' · 힌트 '+x.r.h+'</span></div>';});
   $('view-history').innerHTML='<div class="panel"><h3>난이도별 기록</h3><table class="rec"><thead><tr><th>난이도</th><th>성공 / 시작</th><th>최고 기록</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
     '<div class="panel"><h3>최근 판</h3>'+(items.length?'<div class="recent">'+items.join('')+'</div>':'<p class="hint">아직 끝낸 판이 없어요</p>')+'<p class="hint">'+(window.SolsolCloud&&SolsolCloud.enabled?'기록은 이 폰과 서버에 함께 저장돼요.':'기록은 이 폰에만 저장돼요.')+'</p></div>'+
     '<p class="verline">솔솔퍼즐(숨은그림) · 버전 '+VERSION+'</p>';
   if(window.SolsolCloud)SolsolCloud.mount($('view-history'),{board:true,level:G&&G.lv,levels:LV_KEYS.map(function(k){return [k,LV[k].t];}),fmt:function(s){return s+'초';}});
 }
+
+// ---------- 장르 고르기: 새 게임·난이도를 누르면 먼저 장르를 고른다 ----------
+var pickLv='easy';
+function openPick(lv){
+  pickLv=E.LEVELS[lv]?lv:'easy';
+  var cur=(G&&G.theme)||store('hidden.lastTheme');
+  $('pickLv').textContent=LV[pickLv].t+' · '+LV[pickLv].d+(pickLv==='hard'?' (군중 속 찾기)':' (틀린 그림 찾기)');
+  var h=E.THEME_KEYS.map(function(k){
+    var t=E.THEMES[k],a=E.sample(k,3),b=E.sample(k,11);
+    return '<button type="button" class="gcard" data-th="'+k+'" aria-pressed="'+(k===cur)+'"><span class="pv" style="background:linear-gradient('+t.card[0]+','+t.card[1]+')">'+
+      '<svg viewBox="'+a.view+'" aria-hidden="true">'+a.svg+'</svg><svg viewBox="'+b.view+'" aria-hidden="true">'+b.svg+'</svg></span>'+
+      t.name+'<span class="chip">'+GENRE_EMOJI[t.genre]+' '+t.genre+'</span></button>';
+  }).join('');
+  h+='<button type="button" class="gcard any" data-th="any"><span class="pv">🎲</span>아무거나<span class="chip">장르 섞기</span></button>';
+  $('genres').innerHTML=h;
+  $('pickClose').hidden=!G;
+  $('pickBg').hidden=false;
+}
+$('genres').addEventListener('click',function(e){var b=e.target.closest('.gcard');if(b)newGame(pickLv,b.dataset.th);});
+$('pickClose').onclick=function(){if(G)$('pickBg').hidden=true;};
+$('pickBg').addEventListener('click',function(e){if(e.target.id==='pickBg'&&G)$('pickBg').hidden=true;});
 
 // ---------- 설명서 ----------
 function openManual(){$('manualBg').hidden=false;$('manualBg').querySelector('.manual').scrollTop=0;$('manualClose').focus();}
@@ -524,8 +572,9 @@ function toast(msg){var t=$('toast');t.textContent=msg;t.hidden=false;clearTimeo
 
 // ---------- 시작 ----------
 var saved=store('hidden.game');
-if(saved&&saved.seed&&!saved.over&&E.LEVELS[saved.lv]){G=saved;build();}
-else{newGame(store('hidden.lastLv')||'easy');if(!store('hidden.seenManual')){store('hidden.seenManual',true);openManual();}}
+// 이어 할 판이 없으면 장르부터 고른다(엔진이 바뀐 옛 판은 그림이 달라져서 버린다)
+if(saved&&saved.seed&&!saved.over&&E.LEVELS[saved.lv]&&saved.ev===E.VERSION&&E.THEMES[saved.theme]){G=saved;build();}
+else{openPick(store('hidden.lastLv')||'easy');if(!store('hidden.seenManual')){store('hidden.seenManual',true);openManual();}}
 window.addEventListener('resize',function(){if(S&&S.mode==='crowd')sizeCrowd(null);});
 })();
 </script>
