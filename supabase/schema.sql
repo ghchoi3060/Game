@@ -156,3 +156,24 @@ language sql stable security definer set search_path = public as $$
 $$;
 revoke all on function public.leaderboard(text, text, int) from public;
 grant execute on function public.leaderboard(text, text, int) to authenticated;
+
+-- 계단 추가: 계단도 블록처럼 높을수록 위(층수를 time_sec 칸에 저장)
+create or replace function public.leaderboard(p_game text, p_level text, p_limit int default 20)
+returns table (rank bigint, nickname text, best int, is_me boolean)
+language sql stable security definer set search_path = public as $$
+  with best as (
+    select s.user_id,
+           case when p_game in ('block', 'stairs') then max(s.time_sec) else min(s.time_sec) end as best
+    from scores s where s.game = p_game and s.level = p_level
+    group by s.user_id
+  ), ranked as (
+    select rank() over (order by case when p_game in ('block', 'stairs') then -b.best else b.best end) as rank,
+           coalesce(p.nickname, '이름 없음') as nickname,
+           b.best,
+           b.user_id = auth.uid() as is_me
+    from best b left join profiles p on p.id = b.user_id
+  )
+  select * from ranked where rank <= least(greatest(p_limit, 1), 100) or is_me order by rank;
+$$;
+revoke all on function public.leaderboard(text, text, int) from public;
+grant execute on function public.leaderboard(text, text, int) to authenticated;

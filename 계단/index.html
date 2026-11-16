@@ -1,0 +1,607 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>솔솔놀이(계단)</title>
+<meta name="description" content="끝없이 이어지는 하늘 계단 오르기. 오르기·방향 바꾸기 두 버튼으로 몇 층까지 갈 수 있을까? 친구들과 순위 겨루기.">
+<meta name="theme-color" content="#F2F6EC" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111711" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="솔솔놀이(계단)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-512.png">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Jua&family=Nunito:wght@400;600;700;800&display=swap">
+<style>
+/* 레이아웃: 한 화면 앱. 위 탭 → 상태 줄(층·최고·코인·버튼) → 계단 화면(캔버스, 위에 시간 막대) → 방향 바꾸기·오르기 큰 버튼 → 버전 */
+:root{
+  --bg:#F2F6EC; --surface:#FFFFFF; --ink:#22301F; --muted:#64735D; --line:#D9E3CE;
+  --accent:#58B030; --accent-deep:#3E871C; --on-accent:#FFFFFF;
+  --sky:#2E9BD6; --sky-deep:#1F73A3; --danger:#E0533D; --sun:#F6C945;
+  --shade:rgba(34,48,31,.14);
+  --f-display:"Fredoka","Jua","Nunito",ui-rounded,system-ui,sans-serif;
+  --f-body:"Nunito",ui-rounded,system-ui,-apple-system,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#111711; --surface:#1B231A; --ink:#E5EEDF; --muted:#9AAA92; --line:#2C3A29;
+  --accent:#68C23E; --accent-deep:#427F24; --on-accent:#0E160B;
+  --sky:#3AA6DF; --sky-deep:#21658C; --danger:#EC6A55; --sun:#F2C94C;
+  --shade:rgba(0,0,0,.45);
+  color-scheme:dark;
+}}
+[hidden]{display:none!important}
+html{height:100%;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);overscroll-behavior:none}
+body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+*,*::before,*::after{box-sizing:inherit}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible{outline:3px solid var(--sky);outline-offset:2px}
+#app{height:100%;max-width:600px;margin:0 auto;display:flex;flex-direction:column;gap:8px;
+  padding-left:max(14px,env(safe-area-inset-left,0px));padding-right:max(14px,env(safe-area-inset-right,0px));padding-block:10px 8px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.brand{font-family:var(--f-display);font-weight:700;font-size:20px;display:flex;align-items:center;gap:6px;letter-spacing:-.01em;cursor:pointer}
+.brand .logo svg{width:28px;height:28px;display:block}
+.tabs{display:flex;background:var(--line);border-radius:14px;padding:3px;gap:2px}
+.tabs button{border:0;background:transparent;padding:7px 13px;border-radius:11px;font-weight:800;font-size:14px;color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:0 2px 0 var(--shade)}
+main{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden}
+.view{display:flex;flex-direction:column;gap:8px;min-height:100%}
+#view-play{height:100%}
+
+/* 상태 줄 */
+.status{display:flex;align-items:center;gap:8px}
+.floor{font-family:var(--f-display);font-weight:700;font-size:30px;line-height:1;font-variant-numeric:tabular-nums;min-width:84px}
+.floor small{font-size:16px;margin-left:2px}
+.mini{display:flex;flex-direction:column;font-size:12px;font-weight:800;color:var(--muted);line-height:1.3;flex:1;min-width:0}
+.mini b{color:var(--ink);font-variant-numeric:tabular-nums}
+.ibtn{flex:none;height:38px;min-width:38px;border-radius:12px;border:2px solid var(--line);background:var(--surface);color:var(--muted);font-size:16px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 8px;box-shadow:0 3px 0 var(--line)}
+.ibtn svg{width:20px;height:20px}
+.ibtn[aria-pressed="true"]{border-color:var(--accent);background:var(--accent);color:var(--on-accent);box-shadow:0 3px 0 var(--accent-deep)}
+.ibtn[aria-pressed="false"]{position:relative}
+.ibtn[aria-pressed="false"]::after{content:"";position:absolute;width:24px;height:3px;border-radius:2px;background:var(--danger);transform:rotate(-40deg)}
+
+/* 계단 화면 */
+.stage{position:relative;flex:1;min-height:240px;border-radius:18px;overflow:hidden;box-shadow:0 4px 0 var(--shade);background:#9DD9FF;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.stage.shake{animation:shake .4s ease-in-out}
+@keyframes shake{20%{transform:translateX(-7px)}45%{transform:translateX(6px)}70%{transform:translateX(-3px)}}
+.gauge{position:absolute;left:12px;right:12px;top:10px;height:16px;border-radius:9px;background:rgba(0,0,0,.25);border:2.5px solid #fff;overflow:hidden}
+.gauge i{position:absolute;left:0;top:0;bottom:0;width:100%;border-radius:6px;background:linear-gradient(#FFE27A,#F6A019)}
+.gauge.low i{background:linear-gradient(#FF8A7A,#E0533D)}
+.gauge.low{animation:low .5s ease-in-out infinite alternate}
+@keyframes low{to{border-color:#FFD0C8}}
+.msg{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);text-align:center;color:#fff;font-family:var(--f-display);font-weight:700;font-size:24px;-webkit-text-stroke:5px rgba(20,40,70,.7);paint-order:stroke;white-space:nowrap;pointer-events:none}
+.msg small{display:block;font-size:15px;-webkit-text-stroke:3.5px rgba(20,40,70,.7);margin-top:6px}
+.msg.bob{animation:bob 1s ease-in-out infinite alternate}
+@keyframes bob{to{transform:translate(-50%,-58%)}}
+
+/* 버튼 */
+.ctrl{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ctrl button{height:92px;border-radius:22px;border:0;font-family:var(--f-display);font-weight:700;font-size:19px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;color:#fff;transition:transform .05s}
+.ctrl button svg{width:34px;height:34px}
+.ctrl button small{font-family:var(--f-body);font-size:11px;font-weight:800;opacity:.85}
+#turnBtn{background:var(--sky);box-shadow:0 6px 0 var(--sky-deep)}
+#upBtn{background:var(--accent);box-shadow:0 6px 0 var(--accent-deep);color:var(--on-accent)}
+.ctrl button.down{transform:translateY(5px)}
+#turnBtn.down{box-shadow:0 1px 0 var(--sky-deep)}
+#upBtn.down{box-shadow:0 1px 0 var(--accent-deep)}
+.ctrl.swap #turnBtn{order:2}
+.verline{text-align:center;font-size:11px;font-weight:700;color:var(--muted);opacity:.8}
+
+/* 칭찬 */
+.yay{position:fixed;left:50%;top:30%;z-index:25;pointer-events:none;transform:translate(-50%,-50%);text-align:center;white-space:nowrap;font-family:var(--f-display);font-weight:700;font-size:44px;line-height:1;-webkit-text-stroke:6px #fff;paint-order:stroke;filter:drop-shadow(0 3px 0 rgba(0,0,0,.25))}
+.yay i{font-style:normal;display:inline-block;animation:letter .5s cubic-bezier(.3,1.8,.5,1) both}
+.yay small{display:block;margin-top:8px;font-size:16px;color:#fff;-webkit-text-stroke:0;background:rgba(34,48,31,.75);padding:3px 12px;border-radius:12px;width:max-content;margin-inline:auto}
+.yay.out{animation:yout .35s ease-in forwards}
+@keyframes letter{0%{transform:translateY(26px) scale(.2);opacity:0}100%{transform:none;opacity:1}}
+@keyframes yout{to{opacity:0;transform:translate(-50%,-90%)}}
+
+/* 결과 */
+.overlay{position:fixed;inset:0;display:grid;place-items:center;background:rgba(17,23,17,.45);z-index:15;padding:16px;touch-action:none}
+.card{background:var(--surface);border-radius:20px;padding:18px;box-shadow:0 6px 0 var(--shade);text-align:center;width:min(100%,320px);display:flex;flex-direction:column;gap:10px;animation:pop .32s cubic-bezier(.3,1.5,.5,1)}
+@keyframes pop{0%{transform:scale(.85)}70%{transform:scale(1.04)}100%{transform:scale(1)}}
+.card h2{margin:0;font-family:var(--f-display);font-size:24px;font-weight:700}
+.card .big{font-family:var(--f-display);font-size:52px;font-weight:700;line-height:1.05;font-variant-numeric:tabular-nums}
+.card p{margin:0;color:var(--muted);font-weight:700}
+.card .new{color:var(--accent-deep);font-weight:800}
+.list{display:flex;flex-direction:column;gap:8px}
+.btn{border-radius:16px;padding:11px 10px;font-weight:800;font-size:15px;background:var(--surface);color:var(--ink);border:2px solid var(--line);box-shadow:0 4px 0 var(--line);display:flex;align-items:center;justify-content:center;gap:6px;min-height:46px}
+.btn:active{transform:translateY(4px);box-shadow:0 0 0 var(--line)}
+.btn.primary{background:var(--accent);color:var(--on-accent);border-color:var(--accent);box-shadow:0 4px 0 var(--accent-deep)}
+.conf{position:fixed;top:-20px;width:9px;height:14px;border-radius:2px;z-index:16;pointer-events:none;animation:fall var(--t) cubic-bezier(.25,.6,.5,1) forwards}
+@keyframes fall{to{transform:translate(var(--dx),105vh) rotate(var(--r));opacity:.3}}
+
+/* 기록 */
+.panel{background:var(--surface);border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:10px;border:2px solid var(--line)}
+.panel h3{margin:0;font-family:var(--f-display);font-size:18px;font-weight:600}
+.panel .hint{font-size:13px;color:var(--muted);font-weight:600;margin:0}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.stats div{background:var(--bg);border-radius:12px;padding:8px 10px;font-size:12px;font-weight:800;color:var(--muted)}
+.stats b{display:block;font-family:var(--f-display);font-size:22px;color:var(--ink);font-variant-numeric:tabular-nums}
+.recent{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
+.recent div{display:flex;gap:12px}
+
+/* 설명서 */
+.modal-bg{position:fixed;inset:0;background:rgba(17,23,17,.5);z-index:30;display:grid;place-items:center;touch-action:none;overscroll-behavior:contain;padding:max(16px,env(safe-area-inset-top,0px)) 16px max(16px,env(safe-area-inset-bottom,0px))}
+.modal{background:var(--bg);border-radius:22px;width:min(100%,520px);max-height:100%;display:flex;flex-direction:column;box-shadow:0 8px 0 var(--shade);animation:pop .3s cubic-bezier(.3,1.5,.5,1);overflow:hidden}
+.modal header{display:flex;align-items:center;gap:10px;padding:14px 14px 10px 18px;border-bottom:2px solid var(--line)}
+.modal h2{margin:0;font-family:var(--f-display);font-size:22px;font-weight:700;flex:1}
+.modal .x{width:38px;height:38px;border-radius:12px;border:2px solid var(--line);background:var(--surface);font-size:18px;font-weight:800;display:grid;place-items:center;padding:0}
+.manual{overflow-y:auto;padding:14px 18px 18px;display:flex;flex-direction:column;gap:16px;-webkit-overflow-scrolling:touch;touch-action:pan-y;overscroll-behavior:contain}
+.manual h3{margin:0 0 6px;font-family:var(--f-display);font-size:16px;font-weight:700;color:var(--accent)}
+.manual p,.manual li{margin:0;font-size:14px;line-height:1.6;font-weight:600}
+.manual ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.manual b{font-weight:800}
+.modal footer{padding:10px 18px 14px;border-top:2px solid var(--line);display:flex;flex-direction:column;gap:8px}
+body:has(.modal-bg:not([hidden])) main,body:has(.overlay:not([hidden])) main{overflow:hidden}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:14px;font-weight:800;font-size:14px;z-index:40;max-width:calc(100% - 32px);text-align:center}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:380px){.tabs button{padding:6px 9px}.brand{font-size:17px}.ctrl button{height:84px}}
+@media (max-height:640px){.ctrl button{height:74px;font-size:17px}.ctrl button svg{width:28px;height:28px}}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <header class="top">
+    <div class="brand"><span class="logo" id="logo"></span>솔솔놀이(계단)</div>
+    <nav class="tabs" role="tablist" aria-label="화면">
+      <button role="tab" id="tab-play" data-tab="play" aria-selected="true">게임</button>
+      <button role="tab" id="tab-history" data-tab="history" aria-selected="false">기록</button>
+    </nav>
+  </header>
+
+  <main>
+    <section class="view" id="view-play">
+      <div class="status">
+        <div class="floor" id="floor" aria-live="off">0<small>층</small></div>
+        <div class="mini"><span>최고 <b id="best">0</b>층</span><span>코인 <b id="coins">0</b></span></div>
+        <button class="ibtn" id="helpBtn" type="button" aria-label="설명서">?</button>
+        <button class="ibtn" id="voiceBtn" type="button" aria-pressed="true" aria-label="음성 끄기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+        <button class="ibtn" id="musicBtn" type="button" aria-pressed="false" aria-label="배경음악 켜기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 17V5l11-2v12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><circle cx="6.5" cy="17.5" r="3" fill="currentColor"/><circle cx="17.5" cy="15.5" r="3" fill="currentColor"/></svg></button>
+      </div>
+      <div class="stage" id="stage">
+        <canvas id="cv" aria-label="계단 화면"></canvas>
+        <div class="gauge" id="gauge" aria-hidden="true"><i id="gaugeBar"></i></div>
+        <div class="msg bob" id="msg">버튼을 누르면 시작!<small>파란 버튼 = 돌아서 오르기 · 초록 버튼 = 오르기</small></div>
+      </div>
+      <div class="ctrl" id="ctrl">
+        <button type="button" id="turnBtn" aria-label="방향 바꾸기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h9a4 4 0 0 1 0 8H8" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><path d="M10 3.5L6.5 7 10 10.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 18.5l-3-3.5 3-3.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" opacity="0"/></svg>방향 바꾸기<small>돌아서 한 칸</small></button>
+        <button type="button" id="upBtn" aria-label="오르기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h5v-5h5v-5h6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 5l5 0 0 5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>오르기<small>보는 쪽으로 한 칸</small></button>
+      </div>
+      <div class="verline" id="verLine"></div>
+    </section>
+
+    <section class="view" id="view-history" hidden></section>
+  </main>
+</div>
+
+<div class="overlay" id="result" hidden>
+  <div class="card"><h2 id="resTitle"></h2><div class="big" id="resFloor"></div><p id="resInfo"></p><div id="resBtns" class="list"></div></div>
+</div>
+
+<div class="modal-bg" id="manualBg" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="manualTitle">
+    <header><h2 id="manualTitle">계단 설명서</h2><button class="x" id="manualClose" type="button" aria-label="닫기">✕</button></header>
+    <div class="manual">
+      <section>
+        <h3>하늘까지 계단 오르기</h3>
+        <p>솔솔이가 끝없는 계단을 올라가요. 계단이 꺾이는 쪽을 잘 보고 버튼 두 개로 올라요.</p>
+        <ul>
+          <li><b>초록 · 오르기</b>: 지금 보고 있는 쪽으로 한 칸 올라가요.</li>
+          <li><b>파랑 · 방향 바꾸기</b>: 뒤로 돌아서 한 칸 올라가요.</li>
+          <li>계단이 없는 쪽으로 가면 떨어져서 끝나요.</li>
+        </ul>
+      </section>
+      <section>
+        <h3>시간 막대</h3>
+        <ul>
+          <li>위쪽 노란 막대가 점점 줄어요. 다 줄면 끝나요.</li>
+          <li>한 칸 오를 때마다 막대가 채워져요. 높이 갈수록 빨리 줄어드니 쉬지 말고 올라요!</li>
+          <li>계단 위 <b>코인</b>을 밟으면 막대가 조금 더 채워져요.</li>
+        </ul>
+      </section>
+      <section>
+        <h3>높이 올라가면</h3>
+        <p>100층마다 하늘이 바뀌어요: 파란 하늘 → 구름 위 → 노을 → 밤하늘 → 우주. 몇 층까지 갈 수 있을까요?</p>
+      </section>
+      <section>
+        <h3>기록·순위</h3>
+        <ul>
+          <li>최고 층은 <b>기록</b> 탭에, 끝난 판은 전체 순위표에 올라가요. 친구들과 순위를 겨뤄 봐요.</li>
+          <li>판이 끝나면 <b>자랑하기</b>로 친구에게 층수를 보낼 수 있어요.</li>
+          <li>컴퓨터에서는 ← 방향 바꾸기, → 또는 스페이스 오르기.</li>
+        </ul>
+      </section>
+    </div>
+    <footer><button class="btn" id="swapBtn" type="button">버튼 자리 바꾸기</button><button class="btn primary" id="manualOk" type="button">알겠어요</button></footer>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script src="../common/supabase-config.js?v=1"></script>
+<script src="../common/cloud.js?v=5" data-game="stairs"></script>
+<script>
+(function(){
+'use strict';
+var VERSION='11.16-1';
+var $=function(id){return document.getElementById(id);};
+function store(k,v){try{if(v===undefined)return JSON.parse(localStorage.getItem(k)||'null');localStorage.setItem(k,JSON.stringify(v));}catch(e){return null;}}
+function reduced(){return matchMedia('(prefers-reduced-motion: reduce)').matches;}
+
+$('logo').innerHTML='<svg viewBox="0 0 512 512" aria-hidden="true"><rect width="512" height="512" rx="112" fill="#2E9BD6"/><path d="M60 452h110v-90h110v-90h110v-90h62v270H60z" fill="#58B030"/><path d="M60 452h110v-90h110v-90h110v-90h62" fill="none" stroke="#3E871C" stroke-width="16" stroke-linejoin="round"/><rect x="292" y="70" width="120" height="110" rx="24" fill="#F7D046" stroke="#B5850F" stroke-width="12"/><circle cx="335" cy="120" r="11" fill="#22301F"/><circle cx="378" cy="120" r="11" fill="#22301F"/><path d="M332 146q20 16 40 0" stroke="#22301F" stroke-width="9" fill="none" stroke-linecap="round"/></svg>';
+$('verLine').textContent='솔솔놀이(계단) · 버전 '+VERSION;
+
+// ---------- 상태 ----------
+// stairs[i] = i번째 계단의 칸(가로 위치). 플레이어는 p번째 계단 위, face = 1(오른쪽) / -1(왼쪽)
+var R={stairs:[0],coinAt:{},p:0,face:1,started:false,alive:true,over:false,paused:false,
+  gauge:1,coins:0,hop:0,hopFrom:0,camX:0,camY:0,fall:null,lastMile:0,zone:0,dir:1,run:0};
+var stats=store('stairs.stats')||{played:0,best:0,total:0,coins:0,recent:[]};
+function ensure(n){
+  while(R.stairs.length<n){
+    var i=R.stairs.length,last=R.stairs[i-1];
+    // 처음 5칸은 오른쪽으로 곧게. 그 뒤로는 1~6칸마다 꺾인다(높이 갈수록 자주)
+    if(i>5){R.run++;var chg=Math.min(.55,.3+i*.0005);if(R.run>=6||(R.run>=1&&Math.random()<chg)){R.dir=-R.dir;R.run=0;}}
+    R.stairs.push(last+R.dir);
+    if(i>6&&Math.random()<.1)R.coinAt[i]=1;
+  }
+}
+function reset(){
+  R.stairs=[0];R.coinAt={};R.p=0;R.face=1;R.started=false;R.alive=true;R.over=false;R.paused=false;
+  R.gauge=1;R.coins=0;R.hop=1;R.camX=0;R.camY=0;R.fall=null;R.lastMile=0;R.zone=0;R.dir=1;R.run=0;
+  ensure(60);paintStatus();paintGauge();
+  showMsg('버튼을 누르면 시작!','파란 버튼 = 돌아서 오르기 · 초록 버튼 = 오르기');
+}
+function drain(){return .15+Math.min(.5,R.p*.0011);}   // 1초에 줄어드는 양(막대 전체 = 1)
+
+// ---------- 움직이기 ----------
+function act(turn){
+  unlockAudio();
+  if(R.over||!R.alive)return;
+  if(R.paused){R.paused=false;hideMsg();return;}   // 일시정지 뒤 첫 누름은 다시 시작만
+  if(!R.started){R.started=true;hideMsg();startMusicIfWanted();}
+  if(turn)R.face=-R.face;
+  ensure(R.p+60);
+  var want=R.stairs[R.p+1]-R.stairs[R.p];
+  if(want!==R.face){die('miss');return;}
+  R.hopFrom=R.stairs[R.p];R.p++;R.hop=0;
+  R.gauge=Math.min(1,R.gauge+.075);
+  stepSound(turn);
+  if(R.coinAt[R.p]){delete R.coinAt[R.p];R.coins++;R.gauge=Math.min(1,R.gauge+.06);coinSound();}
+  milestone();
+  paintStatus();
+}
+var MILES={10:'Good!',25:'Nice!',50:'Great!',100:'Excellent!',150:'Awesome!',200:'Amazing!',300:'Fantastic!',400:'Super star!',500:'Legendary!'};
+var ZONES=[['파란 하늘','☀️'],['구름 위','☁️'],['노을 하늘','🌇'],['밤하늘','🌙'],['우주','🚀']];
+function milestone(){
+  var p=R.p,w=MILES[p]||(p>500&&p%100===0?'Unstoppable!':null);
+  var z=Math.min(4,Math.floor(p/100));
+  if(z!==R.zone){R.zone=z;yay(w||'Wow!',ZONES[z][1]+' '+ZONES[z][0]+'에 왔어요!',3);return;}
+  if(w)yay(w,p+'층 돌파!',p>=100?3:2);
+}
+function die(why){
+  R.alive=false;
+  var dx=why==='miss'?R.face:0;
+  R.fall={t:0,why:why,x:R.stairs[R.p]+dx*.6,y:R.p+(why==='miss'?.25:0),vx:dx*1.2,vy:why==='miss'?3:4,rot:0};
+  if(!reduced()){var s=$('stage');s.classList.remove('shake');void s.offsetWidth;s.classList.add('shake');}
+  fallSound();if(navigator.vibrate){try{navigator.vibrate([60,40,60]);}catch(e){}}
+  setTimeout(finish,950);
+}
+function finish(){
+  R.over=true;
+  var score=R.p,record=score>stats.best&&score>0;
+  stats.played++;stats.total+=score;stats.coins+=R.coins;if(record)stats.best=score;
+  stats.recent.unshift({s:score,c:R.coins,ts:Date.now()});stats.recent=stats.recent.slice(0,10);
+  store('stairs.stats',stats);
+  if(window.SolsolCloud&&score>0)SolsolCloud.submitScore('normal',score);
+  paintStatus();
+  $('resTitle').textContent=R.fall&&R.fall.why==='time'?'시간이 다 됐어요!':'앗, 떨어졌어요!';
+  $('resFloor').textContent=score+'층';
+  $('resInfo').innerHTML='코인 '+R.coins+'개 · 최고 '+stats.best+'층'+(record?'<br><span class="new">최고 기록!</span>':'');
+  var btns=$('resBtns');btns.innerHTML='';
+  function add(label,cls,fn){var b=document.createElement('button');b.type='button';b.className='btn '+cls;b.textContent=label;b.onclick=fn;btns.appendChild(b);}
+  add('다시 하기','primary',function(){$('result').hidden=true;reset();});
+  if(score>0)add('친구에게 자랑하기','',function(){brag(score);});
+  add('순위 보기','',function(){$('result').hidden=true;reset();setTab('history');});
+  $('result').hidden=false;
+  resultAt=Date.now();
+  if(record){fanfare();confetti();sayPraise('New record!',5);}
+}
+var resultAt=0;
+function brag(score){
+  var url=location.origin+location.pathname,text='솔솔놀이(계단)에서 '+score+'층까지 올라갔어요! 나보다 높이 갈 수 있어? 🪜';
+  if(navigator.share){navigator.share({title:'솔솔놀이(계단)',text:text,url:url}).catch(function(){});return;}
+  var all=text+' '+url;
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(all).then(function(){toast('복사했어요. 친구에게 붙여넣어 보내요!');},function(){toast(all);});
+  else toast(all);
+}
+
+// ---------- 화면 ----------
+function paintStatus(){
+  $('floor').innerHTML=R.p+'<small>층</small>';
+  $('best').textContent=Math.max(stats.best,R.p);$('coins').textContent=R.coins;
+}
+function paintGauge(){var g=Math.max(0,R.gauge);$('gaugeBar').style.width=(g*100).toFixed(1)+'%';$('gauge').classList.toggle('low',R.started&&R.alive&&g<.28);}
+function showMsg(a,b){var m=$('msg');m.innerHTML=a+(b?'<small>'+b+'</small>':'');m.hidden=false;}
+function hideMsg(){$('msg').hidden=true;}
+
+var cv=$('cv'),ctx=cv.getContext('2d'),CW=0,CH=0,DPR=1;
+function resize(){
+  var r=$('stage').getBoundingClientRect();DPR=Math.min(2.5,window.devicePixelRatio||1);
+  CW=Math.max(1,r.width);CH=Math.max(1,r.height);cv.width=Math.round(CW*DPR);cv.height=Math.round(CH*DPR);
+}
+if(window.ResizeObserver)new ResizeObserver(resize).observe($('stage'));else window.addEventListener('resize',resize);
+resize();
+
+function mix(a,b,t){var pa=parseInt(a.slice(1),16),pb=parseInt(b.slice(1),16),r=[16,8,0].map(function(s){var x=(pa>>s)&255,y=(pb>>s)&255;return Math.round(x+(y-x)*t);});return 'rgb('+r.join(',')+')';}
+function hash(n){var x=Math.sin(n*127.1+311.7)*43758.5453;return x-Math.floor(x);}
+// 100층마다 하늘: 위·아래 색, 계단 윗면 색
+var SKY=[['#7CC8F8','#D8F1FF','#6CC04A'],['#A9D8F5','#F3FBFF','#FFFFFF'],['#FF8E6E','#FFD9A0','#FFB347'],['#2B2A6B','#C46F9C','#9C7BE0'],['#05071A','#1E1550','#5EE6FF']];
+function skyAt(f){var t=f/100,z=Math.min(4,Math.floor(t)),k=z>=4?0:Math.max(0,(t-z-.85)/.15),n=Math.min(4,z+1);return [0,1,2].map(function(i){return mix(SKY[z][i],SKY[n][i],k);});}
+
+function roundRect(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+var last=0,clock=0,lastDrain=0;
+// 시간 막대는 화면 그리기와 따로 0.1초마다도 계산한다(그리기가 느려져도 정확하게). 멈춘 동안은 세지 않는다
+function tickGauge(){
+  var now=performance.now();
+  if(!(R.started&&R.alive&&!R.paused&&!R.over&&tab==='play')){lastDrain=now;return;}
+  var dt=Math.min(.25,(now-(lastDrain||now))/1000);lastDrain=now;
+  R.gauge-=drain()*dt;if(R.gauge<=0){R.gauge=0;die('time');}
+}
+setInterval(tickGauge,100);
+function frame(){var ts=performance.now();
+  var dt=Math.min(.1,last?(ts-last)/1000:0);last=ts;clock+=dt;
+  tickGauge();
+  if(R.hop<1)R.hop=Math.min(1,R.hop+dt/.09);
+  if(R.fall){var f=R.fall;f.t+=dt;f.vy-=14*dt;f.x+=f.vx*dt;f.y+=f.vy*dt;f.rot+=dt*(f.vx||.6)*7;}
+  var k=1-Math.exp(-dt*12);R.camX+=(R.stairs[R.p]-R.camX)*k;R.camY+=(R.p-R.camY)*k;
+  paintGauge();draw();
+  requestAnimationFrame(frame);
+}
+function draw(){
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  var W=Math.min(66,CW/6.2),H=W*.6,cx=CW/2,baseY=CH*.66,cols=skyAt(R.camY);
+  // 하늘
+  var g=ctx.createLinearGradient(0,0,0,CH);g.addColorStop(0,cols[0]);g.addColorStop(1,cols[1]);ctx.fillStyle=g;ctx.fillRect(0,0,CW,CH);
+  var night=Math.max(0,Math.min(1,(R.camY-280)/60));
+  if(night>0){ // 별
+    ctx.fillStyle='#fff';
+    for(var s=0;s<70;s++){var sy=(hash(s)*CH*1.5+R.camY*H*.08)%(CH*1.5)-CH*.25,sx=hash(s+99)*CW,tw=.5+.5*Math.sin(clock*2+s);ctx.globalAlpha=night*(.35+.65*tw);ctx.fillRect(sx,sy,1.8,1.8);}
+    ctx.globalAlpha=1;
+    if(R.camY>420){var py=(CH*.3+R.camY*H*.05)%(CH*1.6)-CH*.3;ctx.globalAlpha=Math.min(1,(R.camY-420)/40);ctx.fillStyle='#F6A54C';ctx.beginPath();ctx.arc(CW*.78,py,26,0,7);ctx.fill();ctx.strokeStyle='#FFD9A0';ctx.lineWidth=4;ctx.beginPath();ctx.ellipse(CW*.78,py,44,10,-.35,0,7);ctx.stroke();ctx.globalAlpha=1;}
+  }
+  // 해·달
+  if(R.camY<300){ctx.fillStyle='rgba(255,236,140,.9)';ctx.beginPath();ctx.arc(CW*.82,CH*.16,22,0,7);ctx.fill();}
+  else if(R.camY<420){ctx.fillStyle='#FFF4C2';ctx.beginPath();ctx.arc(CW*.8,CH*.17,18,0,7);ctx.fill();ctx.fillStyle=cols[0];ctx.beginPath();ctx.arc(CW*.8+8,CH*.17-5,15,0,7);ctx.fill();}
+  // 구름(천천히 지나감)
+  var cloudA=Math.max(0,1-Math.max(0,R.camY-300)/80);
+  if(cloudA>0){
+    ctx.fillStyle='rgba(255,255,255,'+(.85*cloudA)+')';
+    var off=R.camY*H*.35,k0=Math.floor(off/120)-1;
+    for(var c=k0;c<k0+Math.ceil(CH/120)+3;c++){var y=CH-(c*120-off)-60,x=hash(c)*(CW+120)-60+Math.sin(clock*.2+c)*10,sz=18+hash(c+7)*16;
+      ctx.beginPath();ctx.arc(x,y,sz,0,7);ctx.arc(x+sz*1.1,y+4,sz*.8,0,7);ctx.arc(x-sz*1.1,y+5,sz*.7,0,7);ctx.fill();}
+  }
+  // 땅(처음에만 보임)
+  var groundY=baseY+(R.camY)*H+H*.95;
+  if(groundY<CH+40){
+    ctx.fillStyle='#8FD16B';ctx.beginPath();ctx.ellipse(CW*.2,groundY+10,CW*.45,60,0,Math.PI,0);ctx.ellipse(CW*.85,groundY+14,CW*.4,50,0,Math.PI,0);ctx.fill();
+    ctx.fillStyle='#6CC04A';ctx.fillRect(0,groundY,CW,CH);ctx.fillStyle='#58A83A';ctx.fillRect(0,groundY,CW,5);
+  }
+  // 계단
+  var lo=Math.max(0,R.p-Math.ceil((CH-baseY)/H)-2),hi=R.p+Math.ceil(baseY/H)+2;ensure(hi+2);
+  for(var i=hi;i>=lo;i--){
+    var sx=cx+(R.stairs[i]-R.camX)*W,sy=baseY-(i-R.camY)*H;
+    if(sx<-W||sx>CW+W)continue;
+    ctx.fillStyle='rgba(0,0,0,.15)';roundRect(sx-W/2+3,sy+4,W,H*.95,8);ctx.fill();
+    ctx.fillStyle=i%2?'#C98F5A':'#BC8350';roundRect(sx-W/2,sy,W,H*.95,8);ctx.fill();
+    ctx.fillStyle=cols[2];roundRect(sx-W/2,sy-2,W,H*.36,7);ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,.35)';ctx.fillRect(sx-W/2+7,sy+1,W*.35,3);
+    ctx.fillStyle='rgba(0,0,0,.12)';ctx.fillRect(sx-W/2+6,sy+H*.6,W-12,2);
+    if(i%10===0&&i>0){ctx.fillStyle='#fff';ctx.font='700 '+Math.round(H*.36)+'px Fredoka,Jua,sans-serif';ctx.textAlign='center';ctx.fillText(i,sx,sy+H*.82);}
+    if(R.coinAt[i]){var cy=sy-W*.38+Math.sin(clock*4+i)*3,sq=Math.abs(Math.cos(clock*3+i));
+      ctx.fillStyle='#F6C945';ctx.strokeStyle='#B5850F';ctx.lineWidth=2.5;ctx.beginPath();ctx.ellipse(sx,cy,W*.17*Math.max(.25,sq),W*.17,0,0,7);ctx.fill();ctx.stroke();
+      if(sq>.5){ctx.fillStyle='#B5850F';ctx.fillRect(sx-1.5,cy-W*.08,3,W*.16);}}
+  }
+  // 솔솔이
+  var px,py,rot=0;
+  if(R.fall){px=R.fall.x;py=R.fall.y;rot=R.fall.rot;}
+  else{var e=R.hop,ease=1-(1-e)*(1-e);px=R.hopFrom+(R.stairs[R.p]-R.hopFrom)*ease;py=R.p-1+ease+Math.sin(e*Math.PI)*.35;if(R.hop>=1&&R.p===0){px=0;py=0;}}
+  drawKid(cx+(px-R.camX)*W,baseY-(py-R.camY)*H,W,rot);
+}
+function drawKid(x,y,W,rot){
+  var s=W/60,f=R.face,step=R.p%2,idle=R.started?0:Math.sin(clock*4)*1.5;
+  ctx.save();ctx.translate(x,y);ctx.rotate(rot);ctx.scale(f*s,s);ctx.translate(0,idle);
+  ctx.lineJoin='round';ctx.lineCap='round';
+  // 다리
+  ctx.fillStyle='#3B4A7A';var a=step?4:-4;roundRect(-11+a,-18,9,18,3);ctx.fill();roundRect(2-a,-18,9,18,3);ctx.fill();
+  ctx.fillStyle='#22301F';roundRect(-13+a,-5,13,6,3);ctx.fill();roundRect(1-a,-5,13,6,3);ctx.fill();
+  // 가방(등쪽)
+  ctx.fillStyle='#E0533D';roundRect(-24,-46,13,24,5);ctx.fill();ctx.fillStyle='#AE3826';ctx.fillRect(-24,-36,13,3);
+  // 몸
+  ctx.fillStyle='#2E9BD6';roundRect(-15,-48,30,32,8);ctx.fill();
+  ctx.fillStyle='#F7D046';var sw=step?-3:3;roundRect(8,-44+sw,8,18,4);ctx.fill();   // 앞팔
+  // 머리
+  ctx.fillStyle='#F7D046';ctx.strokeStyle='#B5850F';ctx.lineWidth=3;roundRect(-19,-84,38,36,10);ctx.fill();ctx.stroke();
+  // 모자
+  ctx.fillStyle='#E0533D';roundRect(-19,-88,38,12,6);ctx.fill();ctx.fillRect(10,-80,14,5);
+  // 얼굴(앞쪽)
+  ctx.fillStyle='#22301F';
+  if(R.fall){ctx.lineWidth=2.5;ctx.strokeStyle='#22301F';[0,13].forEach(function(o){ctx.beginPath();ctx.moveTo(o-3,-70);ctx.lineTo(o+3,-64);ctx.moveTo(o+3,-70);ctx.lineTo(o-3,-64);ctx.stroke();});ctx.beginPath();ctx.arc(7,-56,3.5,0,7);ctx.stroke();}
+  else{ctx.beginPath();ctx.arc(1,-67,3.2,0,7);ctx.arc(13,-67,3.2,0,7);ctx.fill();ctx.lineWidth=2.5;ctx.strokeStyle='#22301F';ctx.beginPath();ctx.arc(7,-60,5,.2,Math.PI-.2);ctx.stroke();
+    ctx.fillStyle='rgba(255,120,120,.5)';ctx.beginPath();ctx.arc(-6,-59,3.5,0,7);ctx.arc(17,-59,3,0,7);ctx.fill();}
+  ctx.restore();
+}
+requestAnimationFrame(frame);
+
+// ---------- 누르기 ----------
+function bindBtn(el,turn){
+  el.addEventListener('pointerdown',function(e){e.preventDefault();el.classList.add('down');act(turn);});
+  ['pointerup','pointercancel','pointerleave'].forEach(function(n){el.addEventListener(n,function(){el.classList.remove('down');});});
+  el.addEventListener('contextmenu',function(e){e.preventDefault();});
+}
+bindBtn($('turnBtn'),true);bindBtn($('upBtn'),false);
+$('stage').addEventListener('pointerdown',function(e){e.preventDefault();if(R.paused){R.paused=false;hideMsg();}});
+document.addEventListener('keydown',function(e){
+  if(e.repeat||tab!=='play'||!$('manualBg').hidden)return;
+  if(!$('result').hidden){if((e.key==='Enter'||e.key===' ')&&Date.now()-resultAt>700){e.preventDefault();$('result').hidden=true;reset();}return;}
+  if(e.key==='ArrowLeft'||e.key==='f'||e.key==='F'){e.preventDefault();act(true);}
+  else if(e.key==='ArrowRight'||e.key===' '||e.key==='ArrowUp'||e.key==='j'||e.key==='J'){e.preventDefault();act(false);}
+});
+function pause(){if(R.started&&R.alive&&!R.over&&!R.paused){R.paused=true;showMsg('잠깐 멈췄어요','아무 버튼이나 누르면 계속');}}
+document.addEventListener('visibilitychange',function(){if(document.hidden)pause();});
+window.addEventListener('blur',pause);
+
+// ---------- 칭찬·이펙트 ----------
+var YCOL=[['#58B030','#2E9BD6','#F6A019'],['#2E9BD6','#8E5BE8','#FF6B9A'],['#FF6B9A','#F6A019','#8E5BE8','#2E9BD6'],['#E8402F','#F6A019','#58B030','#2E9BD6','#8E5BE8']];
+var yayTimer=0;
+function yay(word,sub,tier){
+  document.querySelectorAll('.yay').forEach(function(n){n.remove();});
+  var cols=YCOL[Math.min(3,tier)],el=document.createElement('div');el.className='yay';
+  el.innerHTML=word.split('').map(function(c,k){return '<i style="color:'+cols[k%cols.length]+';animation-delay:'+(k*.04)+'s">'+(c===' '?'&nbsp;':c)+'</i>';}).join('')+'<small>'+sub+'</small>';
+  document.body.appendChild(el);clearTimeout(yayTimer);
+  yayTimer=setTimeout(function(){el.classList.add('out');setTimeout(function(){el.remove();},360);},1100);
+  mileSound();sayPraise(word,2+tier);
+}
+function confetti(){
+  if(reduced())return;
+  var cols=['#F6C945','#58B030','#2E9BD6','#FF8FA3','#E0533D'];
+  for(var i=0;i<70;i++){var c=document.createElement('span');c.className='conf';c.style.left=Math.random()*100+'vw';c.style.background=cols[i%5];
+    c.style.setProperty('--dx',(Math.random()*80-40)+'px');c.style.setProperty('--r',(Math.random()*900-450)+'deg');c.style.setProperty('--t',(1.6+Math.random()*1.2)+'s');c.style.animationDelay=Math.random()*.4+'s';
+    if(i%4===0){c.style.borderRadius='50%';c.style.height='9px';}document.body.appendChild(c);}
+  setTimeout(function(){document.querySelectorAll('.conf').forEach(function(n){n.remove();});},3400);
+}
+
+// ---------- 소리 ----------
+var actx=null;
+function unlockAudio(){try{if(!actx){var AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;actx=new AC();}if(actx.state==='suspended')actx.resume();}catch(e){}}
+['pointerdown','touchstart','keydown'].forEach(function(ev){document.addEventListener(ev,unlockAudio,{passive:true});});
+function note(f,at,dur,type,vol,f2){var t=actx.currentTime+at,o=actx.createOscillator(),g=actx.createGain();o.type=type||'triangle';o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+dur);o.connect(g);g.connect(actx.destination);
+  g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(vol||.2,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.start(t);o.stop(t+dur+.03);}
+var STEP=[0,2,4,7,9,12,9,7];
+function stepSound(turn){if(!actx)return;try{var f=523.25*Math.pow(2,STEP[R.p%8]/12);note(f,0,.07,'square',.05);if(turn)note(f*.75,0,.09,'triangle',.12,f*1.2);}catch(e){}}
+function coinSound(){if(!actx)return;try{note(987.77,0,.08,'square',.06);note(1318.5,.07,.22,'square',.06);}catch(e){}}
+function mileSound(){if(!actx)return;try{[0,4,7,12].forEach(function(s,k){note(659.25*Math.pow(2,s/12),k*.07,.2,'triangle',.16);});}catch(e){}}
+function fallSound(){unlockAudio();if(!actx)return;try{note(700,0,.6,'triangle',.2,90);note(160,.55,.25,'square',.06);}catch(e){}}
+function fanfare(){if(!actx)return;try{[0,4,7,12].forEach(function(s,k){note(523.25*Math.pow(2,s/12),k*.1,.35,'square',.06);});note(1046.5,.45,.8,'triangle',.18);}catch(e){}}
+
+// 감탄 음성: 폰 내장 음성 합성(다른 솔솔 게임과 같은 방식). 켜고 끄기 stairs.voice
+var VOICE={on:store('stairs.voice')!==false,v:null,ready:false};
+var MALE=/aaron|daniel|fred|alex\b|arthur|rishi|tom\b|evan|nathan|gordon|reed|rocko|eddy|ralph|oliver|male|david|mark|guy|george|james|ryan|christopher|eric|roger|brian/i,FEMALE=/female|samantha|karen|moira|tessa|victoria|kate|serena|susan|zira|hazel|aria|jenny|libby|sonia|martha|catherine|nicky|allison|ava|zoe/i;
+function pickVoice(){if(!window.speechSynthesis)return null;var vs=speechSynthesis.getVoices().filter(function(v){return /^en/i.test(v.lang);});if(!vs.length)return null;
+  function sc(v){var s=0;if(MALE.test(v.name))s+=10;if(FEMALE.test(v.name))s-=20;if(/en[-_]US/i.test(v.lang))s+=2;if(/enhanced|premium|neural|natural/i.test(v.name))s+=3;if(v.localService)s+=1;return s;}
+  vs.sort(function(a,b){return sc(b)-sc(a);});return vs[0];}
+if(window.speechSynthesis){VOICE.v=pickVoice();try{speechSynthesis.addEventListener('voiceschanged',function(){VOICE.v=pickVoice();});}catch(e){}}
+document.addEventListener('pointerdown',function(){if(VOICE.ready||!window.speechSynthesis)return;VOICE.ready=true;try{var u=new SpeechSynthesisUtterance(' ');u.volume=0;speechSynthesis.speak(u);}catch(e){}},{passive:true});
+var SAY={'Good!':'Goood!','Nice!':'Niice!','Great!':'Greeat!','Super star!':'Super star!','New record!':'New record!'};
+function sayPraise(text,power){
+  if(!VOICE.on||!window.speechSynthesis)return;
+  try{
+    speechSynthesis.cancel();if(!VOICE.v)VOICE.v=pickVoice();
+    var lift=VOICE.v&&MALE.test(VOICE.v.name)?0:-.4;
+    function mk(s,p,r){var u=new SpeechSynthesisUtterance(s);if(VOICE.v){u.voice=VOICE.v;u.lang=VOICE.v.lang;}else u.lang='en-US';u.pitch=Math.max(.1,Math.min(2,p+lift));u.rate=r;u.volume=1;return u;}
+    if(power>=4){var H=['Oh yeah!','Whoa!','Wow!'];speechSynthesis.speak(mk(H[Math.floor(Math.random()*H.length)],1.8,1.3));}
+    speechSynthesis.speak(mk(SAY[text]||text,1.5+power*.07,Math.min(1.3,1.12+power*.03)));
+  }catch(e){}
+}
+function paintVoice(){var b=$('voiceBtn');b.setAttribute('aria-pressed',VOICE.on);b.setAttribute('aria-label',VOICE.on?'음성 끄기':'음성 켜기');}
+$('voiceBtn').onclick=function(){VOICE.on=!VOICE.on;store('stairs.voice',VOICE.on);paintVoice();if(VOICE.on)sayPraise("Let's go!",3);else if(window.speechSynthesis)speechSynthesis.cancel();};
+paintVoice();
+
+// ---------- 배경음악: 직접 만든 8비트 곡(파일 없음). 높이 올라갈수록 빨라진다 ----------
+var MEL=[[72,76,79,76,84,79,76,79],[71,74,79,74,83,79,74,79],[72,76,81,76,84,81,76,81],[72,77,81,77,84,81,77,81],
+  [84,0,83,81,79,0,76,0],[74,0,79,0,83,81,79,0],[77,79,81,84,81,79,77,76],[74,76,77,79,83,0,86,0]];
+var ROOT=[48,43,45,41,48,43,41,43];
+var BGM={on:false,timer:0,step:0,next:0,master:null,noise:null,resume:false};
+function m2f(m){return 440*Math.pow(2,(m-69)/12);}
+function bgmEnsure(){
+  unlockAudio();if(!actx)return false;
+  if(!BGM.master){BGM.master=actx.createGain();BGM.master.gain.value=.08;BGM.master.connect(actx.destination);}
+  if(!BGM.noise){var len=actx.sampleRate*.3,buf=actx.createBuffer(1,len,actx.sampleRate),d=buf.getChannelData(0);for(var i=0;i<len;i++)d[i]=Math.random()*2-1;BGM.noise=buf;}
+  return true;
+}
+function bgmTone(freq,t,dur,type,vol){var o=actx.createOscillator(),g=actx.createGain();o.type=type;o.frequency.value=freq;o.connect(g);g.connect(BGM.master);
+  g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(vol,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.start(t);o.stop(t+dur+.02);}
+function bgmNoise(t,dur,vol,hp){var s=actx.createBufferSource(),f=actx.createBiquadFilter(),g=actx.createGain();s.buffer=BGM.noise;f.type='highpass';f.frequency.value=hp;
+  s.connect(f);f.connect(g);g.connect(BGM.master);g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);s.start(t);s.stop(t+dur+.02);}
+function bgmKick(t){var o=actx.createOscillator(),g=actx.createGain();o.type='sine';o.frequency.setValueAtTime(150,t);o.frequency.exponentialRampToValueAtTime(45,t+.12);
+  o.connect(g);g.connect(BGM.master);g.gain.setValueAtTime(.8,t);g.gain.exponentialRampToValueAtTime(.0001,t+.15);o.start(t);o.stop(t+.17);}
+function bgmSchedule(){
+  if(!BGM.on||!actx)return;
+  var playing=R.started&&R.alive&&!R.paused,bpm=playing?132+Math.min(48,R.p*.12):112,sp=60/bpm/2;
+  while(BGM.next<actx.currentTime+.2){
+    var t=BGM.next,bar=Math.floor(BGM.step/8)%8,s=BGM.step%8,n=MEL[bar][s],r=ROOT[bar];
+    if(n)bgmTone(m2f(n),t,sp*1.5,'square',.2);
+    bgmTone(m2f(s%2?r+12:r),t,sp*.9,'triangle',.5);
+    if(s%2===0)bgmKick(t);
+    if(s===2||s===6)bgmNoise(t,.1,.28,1800);
+    if(s%2)bgmNoise(t,.03,.13,7000);
+    BGM.step++;BGM.next+=sp;
+  }
+}
+function bgmStart(){if(!bgmEnsure())return;BGM.on=true;BGM.step=0;BGM.next=actx.currentTime+.08;clearInterval(BGM.timer);BGM.timer=setInterval(bgmSchedule,25);bgmSchedule();paintMusic();}
+function bgmStop(){BGM.on=false;clearInterval(BGM.timer);BGM.timer=0;paintMusic();}
+function paintMusic(){var b=$('musicBtn');b.setAttribute('aria-pressed',BGM.on);b.setAttribute('aria-label',BGM.on?'배경음악 끄기':'배경음악 켜기');}
+$('musicBtn').onclick=function(){if(BGM.on){bgmStop();store('stairs.music',false);}else{bgmStart();store('stairs.music',true);}};
+// 기본은 켜짐: 처음 누를 때 시작(iOS 는 사용자가 만져야 소리가 남). 화면을 떠나면 멈추고 돌아오면 다시
+function startMusicIfWanted(){if(!BGM.on&&store('stairs.music')!==false)bgmStart();}
+document.addEventListener('pointerdown',function once(e){if(e.target.closest&&e.target.closest('#musicBtn'))return;document.removeEventListener('pointerdown',once);startMusicIfWanted();},{passive:true});
+document.addEventListener('visibilitychange',function(){if(document.hidden){if(BGM.on){bgmStop();BGM.resume=true;}}else if(BGM.resume){BGM.resume=false;bgmStart();}});
+paintMusic();
+
+// ---------- 탭·기록 ----------
+var tab='play';
+function setTab(t){
+  tab=t;if(t!=='play')pause();
+  ['play','history'].forEach(function(n){$('view-'+n).hidden=n!==t;$('tab-'+n).setAttribute('aria-selected',n===t);});
+  if(t==='history')renderHistory();else resize();
+}
+document.querySelector('.tabs').addEventListener('click',function(e){var b=e.target.closest('button');if(b)setTab(b.dataset.tab);});
+function fmtDate(ts){var d=new Date(ts);return (d.getMonth()+1)+'/'+d.getDate();}
+function renderHistory(){
+  var items=stats.recent.map(function(r){return '<div><span>'+fmtDate(r.ts)+'</span><span>'+r.s+'층</span><span>코인 '+r.c+'</span></div>';});
+  $('view-history').innerHTML='<div class="panel"><h3>내 기록</h3><div class="stats">'+
+    '<div>최고<b>'+stats.best+'층</b></div><div>한 판 평균<b>'+(stats.played?Math.round(stats.total/stats.played):0)+'층</b></div>'+
+    '<div>모두 오른 계단<b>'+stats.total+'</b></div><div>모은 코인<b>'+stats.coins+'</b></div></div></div>'+
+    '<div class="panel"><h3>최근 판</h3>'+(items.length?'<div class="recent">'+items.join('')+'</div>':'<p class="hint">아직 끝낸 판이 없어요</p>')+'<p class="hint">'+(window.SolsolCloud&&SolsolCloud.enabled?'기록은 이 폰과 서버에 함께 저장돼요.':'기록은 이 폰에만 저장돼요.')+'</p></div>'+
+    '<p class="verline">솔솔놀이(계단) · 버전 '+VERSION+'</p>';
+  if(window.SolsolCloud)SolsolCloud.mount($('view-history'),{board:true,level:'normal',levels:[['normal','최고 층']],fmt:function(s){return s+'층';},note:'끝난 판의 층수가 올라가요. 친구들과 누가 더 높이 가는지 겨뤄 봐요!'});
+}
+// 다른 기기에서 기록을 받아 오면(cloud.js) 다시 읽는다
+window.addEventListener('storage',function(e){if(e.key==='stairs.stats'){stats=store('stairs.stats')||stats;paintStatus();}});
+
+// ---------- 설명서 ----------
+function openManual(){pause();$('manualBg').hidden=false;$('manualBg').querySelector('.manual').scrollTop=0;$('manualClose').focus();}
+function closeManual(){$('manualBg').hidden=true;$('helpBtn').focus();}
+$('helpBtn').onclick=openManual;$('manualClose').onclick=closeManual;$('manualOk').onclick=closeManual;
+$('manualBg').addEventListener('click',function(e){if(e.target.id==='manualBg')closeManual();});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!$('manualBg').hidden)closeManual();});
+function paintSwap(){$('ctrl').classList.toggle('swap',!!store('stairs.swap'));}
+$('swapBtn').onclick=function(){store('stairs.swap',!store('stairs.swap'));paintSwap();toast(store('stairs.swap')?'오르기 버튼이 왼쪽으로 갔어요':'오르기 버튼이 오른쪽으로 갔어요');};
+paintSwap();
+// 창이 떠 있을 때 뒤 화면 스크롤 막기
+var touchY=0;
+document.addEventListener('touchstart',function(e){if(e.touches.length===1)touchY=e.touches[0].clientY;},{passive:true});
+document.addEventListener('touchmove',function(e){
+  if($('manualBg').hidden&&$('result').hidden)return;
+  var sc=e.target.closest&&e.target.closest('.manual');
+  if(!sc||$('manualBg').hidden){e.preventDefault();return;}
+  var dy=e.touches[0].clientY-touchY;touchY=e.touches[0].clientY;
+  if(sc.scrollHeight<=sc.clientHeight+1||(dy>0&&sc.scrollTop<=0)||(dy<0&&sc.scrollTop+sc.clientHeight>=sc.scrollHeight-1))e.preventDefault();
+},{passive:false});
+var toastTimer=0;
+function toast(msg){var t=$('toast');t.textContent=msg;t.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(function(){t.hidden=true;},2600);}
+
+// ---------- 시작 ----------
+reset();
+if(!store('stairs.seenManual')){store('stairs.seenManual',true);openManual();}
+window.__stairs={R:R,act:act};   // 테스트용
+})();
+</script>
+<script src="../common/home.js?v=1"></script>
+<script>if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(function(){});</script>
+</body>
+</html>

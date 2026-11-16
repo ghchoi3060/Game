@@ -15,7 +15,8 @@
     mine:{prefix:['mine.']},
     bingo:{prefix:['bingo.'],skip:['bingo.room']},
     block:{prefix:['block.'],skip:['block.room']},
-    hidden:{prefix:['hidden.'],skip:['hidden.zoom']}
+    hidden:{prefix:['hidden.'],skip:['hidden.zoom']},
+    stairs:{prefix:['stairs.']}
   }[GAME]||{prefix:[]};
   function owned(k){
     if(!k)return false;

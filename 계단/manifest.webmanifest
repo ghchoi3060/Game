@@ -1,0 +1,16 @@
+{
+  "name": "솔솔놀이(계단)",
+  "short_name": "솔솔놀이(계단)",
+  "description": "끝없이 이어지는 하늘 계단 오르기. 오르기·방향 바꾸기 두 버튼으로 몇 층까지 갈 수 있을까?",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F2F6EC",
+  "theme_color": "#2E9BD6",
+  "icons": [
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
