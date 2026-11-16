@@ -228,12 +228,12 @@ body:has(.modal-bg:not([hidden])) main,body:has(.overlay:not([hidden])) main{ove
 <script>
 (function(){
 'use strict';
-var VERSION='11.16-1';
+var VERSION='11.16-2';
 var $=function(id){return document.getElementById(id);};
 function store(k,v){try{if(v===undefined)return JSON.parse(localStorage.getItem(k)||'null');localStorage.setItem(k,JSON.stringify(v));}catch(e){return null;}}
 function reduced(){return matchMedia('(prefers-reduced-motion: reduce)').matches;}
 
-$('logo').innerHTML='<svg viewBox="0 0 512 512" aria-hidden="true"><rect width="512" height="512" rx="112" fill="#2E9BD6"/><path d="M60 452h110v-90h110v-90h110v-90h62v270H60z" fill="#58B030"/><path d="M60 452h110v-90h110v-90h110v-90h62" fill="none" stroke="#3E871C" stroke-width="16" stroke-linejoin="round"/><rect x="292" y="70" width="120" height="110" rx="24" fill="#F7D046" stroke="#B5850F" stroke-width="12"/><circle cx="335" cy="120" r="11" fill="#22301F"/><circle cx="378" cy="120" r="11" fill="#22301F"/><path d="M332 146q20 16 40 0" stroke="#22301F" stroke-width="9" fill="none" stroke-linecap="round"/></svg>';
+$('logo').innerHTML='<svg aria-hidden="true" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" fill="#7FD0FF"/><circle cx="96" cy="104" r="34" fill="#FFF1A8"/><ellipse cx="128" cy="230" rx="60" ry="20" fill="#fff" fill-opacity=".9"/><path d="M40 472V382h120v-90h110v-90h110v-90h92V472z" fill="#D59A66"/><path d="M40 382h120v26H40zM160 292h110v26H160zM270 202h110v26H270zM380 112h92v26h-92z" fill="#7CCB57"/><path d="M40 472V382h120v-90h110v-90h110v-90h92" fill="none" stroke="#8A5A36" stroke-width="12" stroke-linejoin="round"/><g stroke="#7A4A60" stroke-width="9"><ellipse cx="298" cy="62" rx="22" ry="50" transform="rotate(-14 298 62)" fill="#FFC2D4"/><ellipse cx="352" cy="62" rx="22" ry="50" transform="rotate(10 352 62)" fill="#FFC2D4"/><ellipse cx="324" cy="146" rx="70" ry="62" fill="#FFC2D4"/></g><ellipse cx="298" cy="64" rx="10" ry="32" transform="rotate(-14 298 64)" fill="#FF9DBB"/><ellipse cx="352" cy="64" rx="10" ry="32" transform="rotate(10 352 64)" fill="#FF9DBB"/><ellipse cx="326" cy="152" rx="52" ry="45" fill="#FFEADF"/><path d="M276 134q40-36 102-6q-20 0-28 10q-14-12-30-2q-12-10-26 2q-10-8-18-4z" fill="#9A6A50"/><ellipse cx="304" cy="156" rx="11" ry="14" fill="#3A2433"/><ellipse cx="348" cy="156" rx="11" ry="14" fill="#3A2433"/><circle cx="308" cy="150" r="4.5" fill="#fff"/><circle cx="352" cy="150" r="4.5" fill="#fff"/><path d="M316 176a6 6 0 0 0 10 0a6 6 0 0 0 10 0" fill="none" stroke="#3A2433" stroke-width="5" stroke-linecap="round"/><ellipse cx="288" cy="178" rx="11" ry="7" fill="#FF698C" fill-opacity=".45"/><ellipse cx="364" cy="178" rx="11" ry="7" fill="#FF698C" fill-opacity=".45"/></svg>';
 $('verLine').textContent='솔솔놀이(계단) · 버전 '+VERSION;
 
 // ---------- 상태 ----------
@@ -412,27 +412,47 @@ function draw(){
   else{var e=R.hop,ease=1-(1-e)*(1-e);px=R.hopFrom+(R.stairs[R.p]-R.hopFrom)*ease;py=R.p-1+ease+Math.sin(e*Math.PI)*.35;if(R.hop>=1&&R.p===0){px=0;py=0;}}
   drawKid(cx+(px-R.camX)*W,baseY-(py-R.camY)*H,W,rot);
 }
+// 솔솔이: 토끼 귀 후드를 쓴 꼬마(2등신). 오른쪽을 보고 그린 뒤 face 로 뒤집는다. 발끝이 (0,0)
+function ell(x,y,rx,ry,r){ctx.beginPath();ctx.ellipse(x,y,rx,ry,r||0,0,Math.PI*2);}
 function drawKid(x,y,W,rot){
-  var s=W/60,f=R.face,step=R.p%2,idle=R.started?0:Math.sin(clock*4)*1.5;
+  var s=W/48,f=R.face,step=R.p%2,t=clock,idle=R.started?0:Math.sin(t*4)*1.5,flap=R.hop<1?Math.sin(R.hop*Math.PI):0;
+  var PINK='#FFC2D4',DEEP='#FF9DBB',OL='#7A4A60';
   ctx.save();ctx.translate(x,y);ctx.rotate(rot);ctx.scale(f*s,s);ctx.translate(0,idle);
-  ctx.lineJoin='round';ctx.lineCap='round';
-  // 다리
-  ctx.fillStyle='#3B4A7A';var a=step?4:-4;roundRect(-11+a,-18,9,18,3);ctx.fill();roundRect(2-a,-18,9,18,3);ctx.fill();
-  ctx.fillStyle='#22301F';roundRect(-13+a,-5,13,6,3);ctx.fill();roundRect(1-a,-5,13,6,3);ctx.fill();
-  // 가방(등쪽)
-  ctx.fillStyle='#E0533D';roundRect(-24,-46,13,24,5);ctx.fill();ctx.fillStyle='#AE3826';ctx.fillRect(-24,-36,13,3);
-  // 몸
-  ctx.fillStyle='#2E9BD6';roundRect(-15,-48,30,32,8);ctx.fill();
-  ctx.fillStyle='#F7D046';var sw=step?-3:3;roundRect(8,-44+sw,8,18,4);ctx.fill();   // 앞팔
-  // 머리
-  ctx.fillStyle='#F7D046';ctx.strokeStyle='#B5850F';ctx.lineWidth=3;roundRect(-19,-84,38,36,10);ctx.fill();ctx.stroke();
-  // 모자
-  ctx.fillStyle='#E0533D';roundRect(-19,-88,38,12,6);ctx.fill();ctx.fillRect(10,-80,14,5);
-  // 얼굴(앞쪽)
-  ctx.fillStyle='#22301F';
-  if(R.fall){ctx.lineWidth=2.5;ctx.strokeStyle='#22301F';[0,13].forEach(function(o){ctx.beginPath();ctx.moveTo(o-3,-70);ctx.lineTo(o+3,-64);ctx.moveTo(o+3,-70);ctx.lineTo(o-3,-64);ctx.stroke();});ctx.beginPath();ctx.arc(7,-56,3.5,0,7);ctx.stroke();}
-  else{ctx.beginPath();ctx.arc(1,-67,3.2,0,7);ctx.arc(13,-67,3.2,0,7);ctx.fill();ctx.lineWidth=2.5;ctx.strokeStyle='#22301F';ctx.beginPath();ctx.arc(7,-60,5,.2,Math.PI-.2);ctx.stroke();
-    ctx.fillStyle='rgba(255,120,120,.5)';ctx.beginPath();ctx.arc(-6,-59,3.5,0,7);ctx.arc(17,-59,3,0,7);ctx.fill();}
+  ctx.lineJoin='round';ctx.lineCap='round';ctx.lineWidth=2.6;ctx.strokeStyle=OL;
+  // 발(번갈아 앞으로)
+  var a=step?3:-3;ctx.fillStyle='#FF8FB1';
+  ell(-6+a,-4,6.5,4.5);ctx.fill();ctx.stroke();ell(7-a,-4,6.5,4.5);ctx.fill();ctx.stroke();
+  // 동그란 꼬리(등쪽)
+  ctx.fillStyle='#fff';ell(-14,-15,5.5,5.5);ctx.fill();ctx.stroke();
+  // 몸(후드티)
+  ctx.fillStyle=PINK;ctx.beginPath();ctx.moveTo(-13,-6);ctx.quadraticCurveTo(-15,-31,0,-31);ctx.quadraticCurveTo(15,-31,13,-6);ctx.quadraticCurveTo(0,-2,-13,-6);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.fillStyle='#FFE6EE';ell(2,-15,6.5,5.5);ctx.fill();
+  ctx.fillStyle='#FFD166';ctx.beginPath();for(var k=0;k<10;k++){var an=-Math.PI/2+k*Math.PI/5,rr=k%2?1.6:3.6;ctx.lineTo(2+Math.cos(an)*rr,-15+Math.sin(an)*rr);}ctx.closePath();ctx.fill();   // 배에 별
+  // 팔
+  var sw=step?-2:2;ctx.fillStyle=PINK;ell(11,-19+sw,4,5.5,-.5);ctx.fill();ctx.stroke();
+  // 긴 귀: 뒤로 살짝 눕고, 뛸 때 펄럭
+  var ea=-.22-flap*.4;
+  [[-7,-.18],[5,.1]].forEach(function(e){ctx.save();ctx.translate(e[0],-66);ctx.rotate(ea+e[1]);
+    ctx.fillStyle=PINK;ell(0,-13,6.5,15);ctx.fill();ctx.stroke();ctx.fillStyle=DEEP;ell(0,-12,3.2,10);ctx.fill();ctx.restore();});
+  // 머리(후드)
+  ctx.fillStyle=PINK;ell(0,-49,22,20);ctx.fill();ctx.stroke();
+  // 얼굴
+  ctx.fillStyle='#FFEADF';ell(4,-47,16,14.5);ctx.fill();
+  // 앞머리
+  ctx.fillStyle='#9A6A50';ctx.beginPath();ctx.moveTo(-11,-52);ctx.quadraticCurveTo(-2,-65,19,-55);ctx.quadraticCurveTo(12,-55,10,-52);ctx.quadraticCurveTo(6,-56,0,-52);ctx.quadraticCurveTo(-4,-55,-11,-50);ctx.closePath();ctx.fill();
+  // 눈
+  ctx.fillStyle='#3A2433';ctx.strokeStyle='#3A2433';ctx.lineWidth=2.2;
+  if(R.fall){[1,13].forEach(function(o,k){var d=k?-1:1;ctx.beginPath();ctx.moveTo(o-3*d,-49.5);ctx.lineTo(o+2*d,-46.5);ctx.lineTo(o-3*d,-43.5);ctx.stroke();});
+    ctx.fillStyle='#C2405F';ell(7,-38.5,2.6,3.2);ctx.fill();}
+  else{
+    if(t%3.4<.13){[1,13].forEach(function(o){ctx.beginPath();ctx.moveTo(o-3,-46);ctx.quadraticCurveTo(o,-44,o+3,-46);ctx.stroke();});}
+    else{ell(1,-46.5,3.5,4.6);ctx.fill();ell(13,-46.5,3.5,4.6);ctx.fill();
+      ctx.fillStyle='#fff';ell(2.3,-48.3,1.4,1.7);ctx.fill();ell(14.3,-48.3,1.4,1.7);ctx.fill();ell(.2,-44.3,.7,.7);ctx.fill();ell(12.2,-44.3,.7,.7);ctx.fill();}
+    // 입(ω)
+    ctx.lineWidth=1.7;ctx.beginPath();ctx.arc(5.4,-40.6,1.7,0,Math.PI);ctx.moveTo(10.4,-40.6);ctx.arc(8.7,-40.6,1.7,0,Math.PI);ctx.stroke();
+  }
+  // 볼
+  ctx.fillStyle='rgba(255,105,140,.45)';ell(-3.5,-40.5,3.8,2.5);ctx.fill();ell(18,-40.5,3,2.3);ctx.fill();
   ctx.restore();
 }
 requestAnimationFrame(frame);
