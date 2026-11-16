@@ -4,6 +4,7 @@
 - 상태 `R`: `stairs[i]`는 i번째 계단의 칸. `p`는 지금 계단, `face`는 1이거나 -1. `act(turn)`은 turn이면 face를 뒤집고, 다음 계단 방향이 face와 다르면 `die('miss')`.
 - 계단 생성 `ensure(n)`: 처음 5칸은 곧게. 그 뒤로는 꺾일 확률이 .3에서 .55로 오르고, 6칸 넘게 곧게 가지는 않는다. 코인은 10% 확률.
 - 시간 막대 `drain()`은 .15 + p×.0011(최대 .65)/초이고, 한 칸에 +.075, 코인은 +.06을 더 채운다. `tickGauge()`는 그리기(rAF)와 setInterval(100ms) 양쪽에서 불러서 그리기가 느려도 정확하다.
+- 배경음악 `TUNES`: 캐릭터마다 곡이 달라요(깡총 팝 / 냥냥 펑키 / 곰곰 폴카 / 삐약 칩튠 / 멍멍 록 / 대나무 디스코). 곡마다 멜로디 8마디·베이스 방식(oct·funk·oompah·drive·disco)·드럼 방식이 다르고, 높이 갈수록 빨라져요. 캐릭터를 바꾸면 다음 마디 처음에서 곡이 바뀌어요.
 - 일시정지: 화면을 떠나거나 설명서·기록 탭을 열면 멈추고, 다음 누름은 다시 시작만 한다(움직이지 않음).
 - 캐릭터 6종 `CHARS`(토끼·고양이·곰·병아리·강아지·판다): 후드 색, 귀(long/cat/round/flop/tuft), 꼬리(puff/curl/wag/feather), 배 무늬만 다르고 얼굴은 같다. 고르기 창(`#charBg`)의 캔버스 미리보기는 `drawPicks()`가 매 프레임 그린다. 처음 들어오면 설명서 다음에 고르기 창이 뜬다.
 - 저장 키: `stairs.stats` {played, best, total, coins, recent[]}, `stairs.voice`, `stairs.music`, `stairs.char`, `stairs.swap`(버튼 자리), `stairs.seenManual`.

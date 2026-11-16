@@ -143,6 +143,7 @@ body:has(.modal-bg:not([hidden])) main,body:has(.overlay:not([hidden])) main{ove
 .ccard{border:2.5px solid var(--line);background:var(--surface);border-radius:16px;padding:4px 4px 8px;display:flex;flex-direction:column;align-items:center;gap:2px;box-shadow:0 3px 0 var(--line);font-weight:800;font-size:14px;min-width:0}
 .ccard canvas{width:100%;height:104px;display:block;border-radius:12px;background:linear-gradient(#D8F1FF,#F3FBFF)}
 .ccard[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 3px 0 var(--accent-deep);background:color-mix(in srgb,var(--accent) 12%,var(--surface))}
+.ccard small{display:block;font-size:10.5px;font-weight:800;color:var(--muted);margin-top:-1px}
 .ccard:active{transform:translateY(3px);box-shadow:none}
 #charBtn{font-size:21px;padding:0 6px}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:14px;font-weight:800;font-size:14px;z-index:40;max-width:calc(100% - 32px);text-align:center}
@@ -211,6 +212,7 @@ body:has(.modal-bg:not([hidden])) main,body:has(.overlay:not([hidden])) main{ove
           <li>위쪽 노란 막대가 점점 줄어요. 다 줄면 끝나요.</li>
           <li>한 칸 오를 때마다 막대가 채워져요. 높이 갈수록 빨리 줄어드니 쉬지 말고 올라요!</li>
           <li>계단 위 <b>코인</b>을 밟으면 막대가 조금 더 채워져요.</li>
+          <li>캐릭터마다 배경음악이 달라요: 🐰 깡총 팝 · 🐱 냥냥 펑키 · 🐻 곰곰 폴카 · 🐥 삐약 칩튠 · 🐶 멍멍 록 · 🐼 대나무 디스코.</li>
         </ul>
       </section>
       <section>
@@ -243,7 +245,7 @@ body:has(.modal-bg:not([hidden])) main,body:has(.overlay:not([hidden])) main{ove
 <script>
 (function(){
 'use strict';
-var VERSION='11.16-3';
+var VERSION='11.16-4';
 var $=function(id){return document.getElementById(id);};
 var charBg=$('charBg');
 function store(k,v){try{if(v===undefined)return JSON.parse(localStorage.getItem(k)||'null');localStorage.setItem(k,JSON.stringify(v));}catch(e){return null;}}
@@ -587,11 +589,30 @@ function paintVoice(){var b=$('voiceBtn');b.setAttribute('aria-pressed',VOICE.on
 $('voiceBtn').onclick=function(){VOICE.on=!VOICE.on;store('stairs.voice',VOICE.on);paintVoice();if(VOICE.on)sayPraise("Let's go!",3);else if(window.speechSynthesis)speechSynthesis.cancel();};
 paintVoice();
 
-// ---------- 배경음악: 직접 만든 8비트 곡(파일 없음). 높이 올라갈수록 빨라진다 ----------
-var MEL=[[72,76,79,76,84,79,76,79],[71,74,79,74,83,79,74,79],[72,76,81,76,84,81,76,81],[72,77,81,77,84,81,77,81],
-  [84,0,83,81,79,0,76,0],[74,0,79,0,83,81,79,0],[77,79,81,84,81,79,77,76],[74,76,77,79,83,0,86,0]];
-var ROOT=[48,43,45,41,48,43,41,43];
-var BGM={on:false,timer:0,step:0,next:0,master:null,noise:null,resume:false};
+// ---------- 배경음악: 캐릭터마다 다른 신나는 곡(직접 만든 곡, 파일 없음). 높이 올라갈수록 빨라진다 ----------
+// mel: 8마디 × 8칸(8분음표), MIDI 음(0 = 쉼). root: 마디별 베이스 근음, third: 화음 3도(4 장조 / 3 단조)
+// bass: oct(옥타브 통통) drive(락 8비트) oompah(폴카 쿵짝) funk(펑키) disco(디스코) / drum: pop rock polka disco chip funk
+var TUNES={
+  bunny:{nm:'깡총 팝',bpm:132,lead:'square',lv:.2,sus:1.5,bass:'oct',drum:'pop',root:[48,43,45,41,48,43,41,43],mel:[
+    [72,76,79,76,84,79,76,79],[71,74,79,74,83,79,74,79],[72,76,81,76,84,81,76,81],[72,77,81,77,84,81,77,81],
+    [84,0,83,81,79,0,76,0],[74,0,79,0,83,81,79,0],[77,79,81,84,81,79,77,76],[74,76,77,79,83,0,86,0]]},
+  cat:{nm:'냥냥 펑키',bpm:122,lead:'sawtooth',lv:.09,sus:1.2,swing:.18,bass:'funk',drum:'funk',root:[45,45,41,43,45,45,41,40],third:[3,3,4,4,3,3,4,4],mel:[
+    [69,0,72,74,0,76,0,74],[72,0,69,0,67,69,0,0],[77,0,76,74,0,72,0,74],[76,0,74,0,71,0,67,0],
+    [81,0,79,76,0,79,0,81],[84,0,81,0,79,76,0,0],[77,79,81,0,79,77,76,74],[76,0,0,80,0,83,0,0]]},
+  bear:{nm:'곰곰 폴카',bpm:140,lead:'triangle',lv:.4,sus:1.3,bass:'oompah',drum:'polka',root:[41,48,41,46,41,48,48,41],mel:[
+    [72,0,69,0,72,74,72,69],[70,0,67,0,70,72,70,67],[69,72,77,0,76,74,72,0],[74,0,70,0,77,0,74,0],
+    [72,0,77,0,81,0,79,77],[76,0,79,0,77,76,74,72],[70,72,74,76,77,76,74,70],[69,0,72,0,77,0,0,0]]},
+  chick:{nm:'삐약 칩튠',bpm:150,lead:'square',lv:.13,sus:1.2,arp:true,bass:'oct',drum:'chip',root:[43,50,40,48,43,50,48,50],third:[4,4,3,4,4,4,4,4],mel:[
+    [79,83,86,83,91,86,83,86],[78,81,86,81,90,86,81,86],[79,83,88,83,91,88,83,88],[79,84,88,84,91,88,84,88],
+    [91,0,90,88,86,0,83,0],[86,0,90,0,93,91,90,0],[88,86,84,83,84,86,88,91],[90,0,86,0,81,0,78,0]]},
+  puppy:{nm:'멍멍 록',bpm:144,lead:'sawtooth',lv:.1,sus:1.6,bass:'drive',drum:'rock',root:[40,48,43,50,40,48,50,50],third:[3,4,4,4,3,4,4,4],mel:[
+    [76,0,76,79,0,76,74,0],[72,0,72,76,0,79,0,0],[79,0,79,83,0,81,79,0],[78,0,74,0,78,0,81,0],
+    [83,0,83,0,81,79,76,0],[79,0,79,0,76,74,72,0],[74,76,78,81,78,76,74,78],[81,0,0,0,86,0,0,0]]},
+  panda:{nm:'대나무 디스코',bpm:126,lead:'triangle',lv:.38,sus:1.4,echo:true,bass:'disco',drum:'disco',root:[45,41,48,43,45,41,48,43],third:[3,4,4,4,3,4,4,4],mel:[
+    [81,0,79,76,79,0,76,74],[72,0,74,76,0,74,72,0],[76,0,79,81,84,0,81,79],[79,0,76,74,0,0,74,76],
+    [81,84,0,81,79,0,76,79],[77,0,76,74,72,0,69,72],[74,76,79,81,79,76,74,72],[74,0,79,0,76,0,0,0]]}
+};
+var BGM={on:false,timer:0,step:0,next:0,master:null,noise:null,resume:false,cur:null};
 function m2f(m){return 440*Math.pow(2,(m-69)/12);}
 function bgmEnsure(){
   unlockAudio();if(!actx)return false;
@@ -603,18 +624,31 @@ function bgmTone(freq,t,dur,type,vol){var o=actx.createOscillator(),g=actx.creat
   g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(vol,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.start(t);o.stop(t+dur+.02);}
 function bgmNoise(t,dur,vol,hp){var s=actx.createBufferSource(),f=actx.createBiquadFilter(),g=actx.createGain();s.buffer=BGM.noise;f.type='highpass';f.frequency.value=hp;
   s.connect(f);f.connect(g);g.connect(BGM.master);g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);s.start(t);s.stop(t+dur+.02);}
-function bgmKick(t){var o=actx.createOscillator(),g=actx.createGain();o.type='sine';o.frequency.setValueAtTime(150,t);o.frequency.exponentialRampToValueAtTime(45,t+.12);
-  o.connect(g);g.connect(BGM.master);g.gain.setValueAtTime(.8,t);g.gain.exponentialRampToValueAtTime(.0001,t+.15);o.start(t);o.stop(t+.17);}
+function bgmKick(t,v){var o=actx.createOscillator(),g=actx.createGain();o.type='sine';o.frequency.setValueAtTime(150,t);o.frequency.exponentialRampToValueAtTime(45,t+.12);
+  o.connect(g);g.connect(BGM.master);g.gain.setValueAtTime(v||.8,t);g.gain.exponentialRampToValueAtTime(.0001,t+.15);o.start(t);o.stop(t+.17);}
 function bgmSchedule(){
   if(!BGM.on||!actx)return;
-  var playing=R.started&&R.alive&&!R.paused,bpm=playing?132+Math.min(48,R.p*.12):112,sp=60/bpm/2;
+  var playing=R.started&&R.alive&&!R.paused;
   while(BGM.next<actx.currentTime+.2){
-    var t=BGM.next,bar=Math.floor(BGM.step/8)%8,s=BGM.step%8,n=MEL[bar][s],r=ROOT[bar];
-    if(n)bgmTone(m2f(n),t,sp*1.5,'square',.2);
-    bgmTone(m2f(s%2?r+12:r),t,sp*.9,'triangle',.5);
-    if(s%2===0)bgmKick(t);
-    if(s===2||s===6)bgmNoise(t,.1,.28,1800);
-    if(s%2)bgmNoise(t,.03,.13,7000);
+    if(BGM.step%8===0&&BGM.cur!==CHAR){BGM.cur=CHAR;BGM.step=0;}   // 캐릭터를 바꾸면 마디 처음에서 곡이 바뀐다
+    var T=TUNES[BGM.cur]||TUNES.bunny,bpm=playing?T.bpm+Math.min(40,R.p*.1):T.bpm-20,sp=60/bpm/2;
+    var s=BGM.step%8,bar=Math.floor(BGM.step/8)%8,t=BGM.next+(s%2&&T.swing?sp*T.swing:0),n=T.mel[bar][s],r=T.root[bar],th=T.third?T.third[bar]:4;
+    // 멜로디
+    if(n){bgmTone(m2f(n),t,sp*T.sus,T.lead,T.lv);if(T.echo)bgmTone(m2f(n+12),t+sp*.5,sp*.6,'sine',.07);}
+    else if(T.arp)bgmTone(m2f(r+24+[0,th,7,12][s%4]),t,sp*.6,'square',.07);
+    // 베이스
+    if(T.bass==='oct')bgmTone(m2f(s%2?r+12:r),t,sp*.9,'triangle',.5);
+    else if(T.bass==='drive'){bgmTone(m2f(r),t,sp*.75,'triangle',.55);bgmTone(m2f(r+12),t,sp*.5,'square',.04);}
+    else if(T.bass==='oompah'){if(s%2===0)bgmTone(m2f(s%4?r+7:r),t,sp*1.1,'triangle',.55);else{bgmTone(m2f(r+12+th),t,sp*.5,'square',.05);bgmTone(m2f(r+19),t,sp*.5,'square',.05);}}
+    else if(T.bass==='funk'){var fb=[r,0,r+12,r,0,r+10,r+12,0][s];if(fb)bgmTone(m2f(fb),t,sp*.6,'triangle',.6);}
+    else if(T.bass==='disco')bgmTone(m2f(s%2?r+12:r),t,sp*(s%2?.6:.9),'triangle',s%2?.55:.4);
+    // 드럼
+    if(T.drum==='pop'){if(s%2===0)bgmKick(t);if(s===2||s===6)bgmNoise(t,.1,.28,1800);if(s%2)bgmNoise(t,.03,.13,7000);}
+    else if(T.drum==='rock'){if(s===0||s===3||s===4)bgmKick(t,.9);if(s===2||s===6)bgmNoise(t,.14,.4,1400);bgmNoise(t,.03,.1,8000);}
+    else if(T.drum==='polka'){if(s%2===0)bgmKick(t,.6);else bgmNoise(t,.05,.18,3000);}
+    else if(T.drum==='disco'){if(s%2===0)bgmKick(t,.85);else bgmNoise(t,.09,.2,6000);if(s===2||s===6)bgmNoise(t,.08,.25,1500);}
+    else if(T.drum==='chip'){if(s===0||s===4)bgmKick(t,.7);if(s===2||s===6)bgmNoise(t,.06,.25,2500);if(s%2)bgmNoise(t,.02,.12,9000);}
+    else if(T.drum==='funk'){if(s===0||s===3||s===5)bgmKick(t,.8);if(s===2||s===6)bgmNoise(t,.1,.32,1600);bgmNoise(t,.025,s%2?.1:.06,8000);}
     BGM.step++;BGM.next+=sp;
   }
 }
@@ -657,7 +691,7 @@ function closeManual(){$('manualBg').hidden=true;$('helpBtn').focus();if(!store(
 function paintChar(){$('charEm').textContent=CHARS[CHAR].em;$('charBtn').setAttribute('aria-label','캐릭터 고르기 (지금: '+CHARS[CHAR].nm+')');}
 function openChars(){
   pause();
-  $('chars').innerHTML=CHAR_KEYS.map(function(k){return '<button type="button" class="ccard" data-ch="'+k+'" aria-pressed="'+(k===CHAR)+'"><canvas data-ch="'+k+'" aria-hidden="true"></canvas>'+CHARS[k].em+' '+CHARS[k].nm+'</button>';}).join('');
+  $('chars').innerHTML=CHAR_KEYS.map(function(k){return '<button type="button" class="ccard" data-ch="'+k+'" aria-pressed="'+(k===CHAR)+'"><canvas data-ch="'+k+'" aria-hidden="true"></canvas>'+CHARS[k].em+' '+CHARS[k].nm+'<small>♪ '+TUNES[k].nm+'</small></button>';}).join('');
   charBg.hidden=false;
 }
 function pickChar(k){
@@ -665,7 +699,7 @@ function pickChar(k){
   Array.prototype.forEach.call($('chars').children,function(b){b.setAttribute('aria-pressed',b.dataset.ch===k);});
   unlockAudio();if(actx){try{note(784,0,.08,'triangle',.15);note(1175,.06,.14,'triangle',.12);}catch(err){}}
 }
-function closeChars(){if(!store('stairs.char'))store('stairs.char',CHAR);charBg.hidden=true;$('charBtn').focus();var nm=CHARS[CHAR].nm,jo=(nm.charCodeAt(nm.length-1)-0xAC00)%28?'이랑':'랑';toast(CHARS[CHAR].em+' '+nm+jo+' 같이 올라가요!');}
+function closeChars(){if(!store('stairs.char'))store('stairs.char',CHAR);charBg.hidden=true;$('charBtn').focus();var nm=CHARS[CHAR].nm,jo=(nm.charCodeAt(nm.length-1)-0xAC00)%28?'이랑':'랑';toast(CHARS[CHAR].em+' '+nm+jo+' 같이 올라가요! ♪ '+TUNES[CHAR].nm);}
 $('chars').addEventListener('click',function(e){var b=e.target.closest('.ccard');if(b)pickChar(b.dataset.ch);});
 $('charBtn').onclick=openChars;$('charOk').onclick=closeChars;$('charClose').onclick=closeChars;
 charBg.addEventListener('click',function(e){if(e.target===charBg)closeChars();});
@@ -693,7 +727,7 @@ function toast(msg){var t=$('toast');t.textContent=msg;t.hidden=false;clearTimeo
 // ---------- 시작 ----------
 reset();
 if(!store('stairs.seenManual')){store('stairs.seenManual',true);openManual();}
-window.__stairs={R:R,act:act};   // 테스트용
+window.__stairs={R:R,act:act,BGM:BGM,TUNES:TUNES};   // 테스트용
 })();
 </script>
 <script src="../common/home.js?v=1"></script>
