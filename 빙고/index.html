@@ -139,7 +139,7 @@ main{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden}
 /* 이펙트 */
 .fx{position:absolute;inset:0;pointer-events:none;z-index:4;overflow:visible}
 /* 빙고 공: 숫자를 부를 때 굴러 들어오고, 이기면 B·I·N·G·O 공이 떨어진다 */
-.ballbox{position:absolute;inset:0;pointer-events:none;z-index:6;display:grid;place-items:center;container-type:inline-size}
+.ballbox{position:absolute;inset:0;pointer-events:none;z-index:6;display:grid;place-items:start center;padding-top:9%;container-type:inline-size}
 .ball{width:26cqw;aspect-ratio:1;border-radius:50%;display:grid;place-items:center;position:relative;
   background:radial-gradient(circle at 50% 50%,#FFFFFF 0 37%,var(--c) 38% 100%);box-shadow:inset -8px -10px 0 rgba(0,0,0,.18),inset 6px 6px 0 rgba(255,255,255,.35),0 8px 0 rgba(0,0,0,.25)}
 .ball b{font-family:var(--f-display);font-weight:700;font-size:11cqw;color:#22301F;line-height:1}
@@ -163,20 +163,48 @@ main{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden}
 @keyframes drop{0%{transform:translateY(-90cqw) rotate(-200deg);opacity:0}60%{opacity:1}100%{transform:none}}
 .balls.out .ball{animation:dropout .45s ease-in forwards}
 @keyframes dropout{to{transform:translateY(60cqw) rotate(120deg);opacity:0}}
-/* 줄 완성: 칸이 차례로 빛나고 별가루, 리본 */
-.cell.sweep{animation:sweep .55s ease-out both}
-@keyframes sweep{0%{transform:none}35%{transform:scale(1.16) rotate(-5deg);filter:brightness(1.7)}100%{transform:none;filter:none}}
-.star{position:absolute;width:14px;height:14px;margin:-7px 0 0 -7px;clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);animation:star .8s ease-out forwards}
-@keyframes star{0%{transform:translate(0,0) scale(.3) rotate(0);opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(1.1) rotate(200deg);opacity:0}}
+/* 줄 완성(귀엽게): 칸이 차례로 젤리처럼 통통, 하트·별이 퐁퐁, 공돌이가 팻말을 들고 올라온다 */
+.cell.sweep{animation:jelly .75s ease-out both}
+@keyframes jelly{0%{transform:none}22%{transform:scale(1.2,.84);filter:brightness(1.25)}42%{transform:scale(.88,1.16) translateY(-6%)}62%{transform:scale(1.07,.94)}82%{transform:scale(.98,1.03)}100%{transform:none;filter:none}}
+.puff{position:absolute;width:20px;height:20px;margin:-10px 0 0 -10px;animation:puff 1.15s ease-out forwards}
+.puff svg{width:100%;height:100%;display:block}
+@keyframes puff{0%{transform:translate(0,0) scale(.2);opacity:0}25%{opacity:1;transform:translate(calc(var(--dx)*.35),-12px) scale(1.2) rotate(calc(var(--r)*.3))}100%{transform:translate(var(--dx),var(--dy)) scale(.75) rotate(var(--r));opacity:0}}
+/* 공돌이: 동그란 노란 공 캐릭터 + 말풍선 */
+.mascot{position:absolute;left:50%;bottom:4%;z-index:7;pointer-events:none;display:flex;flex-direction:column;align-items:center;animation:mascot var(--dur,1.7s) cubic-bezier(.3,1.45,.5,1) forwards}
+.mascot svg{width:clamp(72px,22vw,100px);height:auto;transform-origin:50% 100%;animation:hop .32s ease-in-out .3s 4 alternate}
+.mascot.sad svg{animation:sway .5s ease-in-out .3s 3 alternate}
+.mascot .bub{position:relative;margin-bottom:9px;background:var(--surface);color:var(--ink);font-family:"Jua",var(--f-display);font-size:clamp(18px,5.6vw,27px);padding:6px 18px;border-radius:999px;border:3px solid var(--ink);box-shadow:0 4px 0 var(--shade);white-space:nowrap;animation:bub .42s cubic-bezier(.3,1.7,.5,1) .18s both}
+.mascot .bub:after{content:'';position:absolute;left:50%;bottom:-11px;margin-left:-8px;border:8px solid transparent;border-top:10px solid var(--ink);border-bottom:0}
+.mascot.win .bub{background:#FF8FA3;color:#fff;border-color:#D9536E}
+.mascot.win .bub:after{border-top-color:#D9536E}
+.mascot.sad .bub{background:var(--sky);color:#fff;border-color:var(--sky-deep)}
+.mascot.sad .bub:after{border-top-color:var(--sky-deep)}
+@keyframes mascot{0%{transform:translate(-50%,150%)}18%{transform:translate(-50%,0)}84%{transform:translate(-50%,0);opacity:1}100%{transform:translate(-50%,150%);opacity:0}}
+@keyframes hop{to{transform:translateY(-12px) scale(1.05,.95)}}
+@keyframes sway{from{transform:rotate(-6deg)}to{transform:rotate(6deg)}}
+@keyframes bub{from{transform:scale(0) rotate(-10deg)}}
+/* 이기면 화면 전체에 하트·별·사탕색 종이가 떨어진다 */
+.rain{position:fixed;inset:0;z-index:40;pointer-events:none;overflow:hidden}
+.rain i{position:absolute;top:-30px;width:var(--s);height:var(--s);animation:fall var(--t) cubic-bezier(.4,.1,.6,1) var(--d) forwards}
+.rain i svg{width:100%;height:100%;display:block;animation:wob .5s ease-in-out infinite alternate}
+.rain i.dot{border-radius:50%;background:var(--c)}
+@keyframes fall{0%{transform:translate(0,0) rotate(0)}100%{transform:translate(var(--sx),112vh) rotate(var(--r))}}
+@keyframes wob{from{transform:rotate(-18deg) scale(1)}to{transform:rotate(18deg) scale(.86)}}
+/* BINGO 공 얼굴: 이기면 웃는 눈(^ ^)으로 통통 뛰고, 지면 졸린 눈(– –) */
+.balls .ball{--k:0;animation-delay:calc(var(--k)*130ms)}
+.balls .ball b{font-size:6.6cqw;margin-top:3.4cqw}
+.balls .ball::before{content:'';position:absolute;left:50%;top:22%;width:8cqw;height:2.8cqw;transform:translateX(-50%);background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 10'%3E%3Cpath d='M3 8q4-7 8 0M19 8q4-7 8 0' fill='none' stroke='%2322301F' stroke-width='2.8' stroke-linecap='round'/%3E%3C/svg%3E") center/contain no-repeat}
+.balls .ball::after{content:'';position:absolute;left:15%;right:15%;top:47%;height:2.6cqw;background:radial-gradient(ellipse 1.5cqw 1cqw at 1.6cqw 50%,rgba(255,120,150,.8) 0 98%,transparent),radial-gradient(ellipse 1.5cqw 1cqw at calc(100% - 1.6cqw) 50%,rgba(255,120,150,.8) 0 98%,transparent)}
+.balls.gray .ball::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 10'%3E%3Cpath d='M3 5h8M19 5h8' fill='none' stroke='%2322301F' stroke-width='2.8' stroke-linecap='round'/%3E%3C/svg%3E")}
+.balls.gray .ball::after{opacity:.35}
+.balls.hop .ball{animation:bhop .34s ease-in-out calc(var(--k)*90ms) infinite alternate}
+@keyframes bhop{from{transform:translateY(0) scale(1.04,.96)}to{transform:translateY(-22%) scale(.97,1.04)}}
+.balls.gray.droop .ball{animation:droop .6s ease-in-out calc(var(--k)*80ms) forwards}
+@keyframes droop{to{transform:translateY(6%) rotate(calc((var(--k) - 2)*6deg))}}
 .ribbon{position:absolute;left:0;right:0;top:42%;z-index:7;pointer-events:none;display:flex;justify-content:center}
 .ribbon span{background:var(--bingo);color:#fff;font-family:"Jua",var(--f-display);font-size:clamp(22px,7vw,34px);padding:6px 22px;border-radius:14px;box-shadow:0 5px 0 var(--danger-deep);white-space:nowrap;animation:ribbon 1.4s cubic-bezier(.2,.9,.3,1) forwards}
 .ribbon.blue span{background:var(--sky);box-shadow:0 5px 0 var(--sky-deep)}
 @keyframes ribbon{0%{transform:translateX(-120vw) skewX(-12deg)}25%{transform:translateX(0) skewX(0)}78%{transform:translateX(0);opacity:1}100%{transform:translateX(120vw) skewX(12deg);opacity:0}}
-/* 불꽃놀이 */
-.fw{position:absolute;width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:50%;animation:fw 1s cubic-bezier(.1,.8,.3,1) forwards}
-@keyframes fw{0%{transform:translate(0,0) scale(1);opacity:1}80%{opacity:1}100%{transform:translate(var(--dx),calc(var(--dy) + 18px)) scale(.3);opacity:0}}
-.fwcore{position:absolute;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;background:#fff;animation:core .5s ease-out forwards}
-@keyframes core{0%{transform:scale(.2);opacity:1}100%{transform:scale(2.4);opacity:0}}
 .overlay{position:absolute;inset:0;display:grid;place-items:center;background:rgba(17,23,17,.42);border-radius:18px;z-index:5;padding:14px}
 .overlay .card{animation:pop .32s cubic-bezier(.3,1.5,.5,1)}
 @keyframes pop{0%{transform:scale(.85)}70%{transform:scale(1.04)}100%{transform:scale(1)}}
@@ -492,7 +520,7 @@ function applyCall(n,by){
   if(G.mode==='bot')G.players.forEach(function(p){if(p.kind==='bot')p.lines=B.lines(p.board,G.called).length;});
   render({stamp:true,sweep:sweep,newLines:newLines});
   callBall(n,by);
-  if(newLines.length){sparkLines(newLines);if(myLines.length<G.target)ribbon(myLines.length+'줄 완성!');}
+  if(newLines.length){sparkLines(newLines);if(myLines.length<G.target){mascot(myLines.length+'줄 완성!','');chime([1046.5,1318.5,1568],.07,.16);}}
   if(navigator.vibrate&&newLines.length){try{navigator.vibrate(30);}catch(e){}}
 }
 function winnersNow(){return G.players.filter(function(p){return !p.gone&&(p.lines||0)>=G.target;}).map(function(p){return p.id;});}
@@ -510,10 +538,13 @@ function finish(winners){
   store('bingo.stats',st);
   render();
   // 이기면 B·I·N·G·O 공이 떨어지고 불꽃놀이, 지면 회색 공과 누가 빙고했는지 리본
+  // 이기면 웃는 BINGO 공이 통통 뛰고 하트·별 비, 공돌이 '빙고!'. 지면 졸린 회색 공과 공돌이가 누가 빙고했는지 알려 준다
   if(winners.length)dingdong();
   winBalls(iWon);
-  if(iWon)setTimeout(fireworks,900);
-  else setTimeout(function(){ribbon(winners.map(playerName).join(', ')+' 빙고!','blue');},700);
+  if(iWon){
+    setTimeout(candyRain,700);
+    setTimeout(function(){mascot(winners.length>1?'같이 빙고!':'빙고! 최고!','win',1.5);chime([1046.5,1318.5,1568,2093],.11,.22);},800);
+  }else setTimeout(function(){mascot(winners.map(playerName).join(', ')+' 님 빙고!','sad',1.5);},700);
   setTimeout(function(){showResultCard();},2300);
 }
 
@@ -639,11 +670,11 @@ function unlockAudio(){
   }catch(e){}
 }
 ['pointerdown','touchstart','keydown'].forEach(function(ev){document.addEventListener(ev,unlockAudio,{passive:true});});
-function tone(freq,at,dur){
+function tone(freq,at,dur,vol){
   var t=actx.currentTime+at,g=actx.createGain(),o=actx.createOscillator(),o2=actx.createOscillator(),g2=actx.createGain();
   o.type='sine';o.frequency.value=freq;o2.type='sine';o2.frequency.value=freq*2.01;g2.gain.value=.22;
   o.connect(g);o2.connect(g2);g2.connect(g);g.connect(actx.destination);
-  g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.38,t+.015);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(vol||.38,t+.015);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
   o.start(t);o2.start(t);o.stop(t+dur+.05);o2.stop(t+dur+.05);
 }
 function dingdong(){
@@ -660,43 +691,89 @@ function callBall(n,by){
 }
 function winBalls(win){
   var box=document.createElement('div');box.className='ballbox';
-  box.innerHTML='<div class="balls'+(win?'':' gray')+'">'+'BINGO'.split('').map(function(ch,k){return '<div class="ball" style="--c:'+BALL_COLORS[k]+';animation-delay:'+(reduced()?0:k*130)+'ms"><b>'+ch+'</b></div>';}).join('')+'</div>';
+  box.innerHTML='<div class="balls'+(win?'':' gray')+'">'+'BINGO'.split('').map(function(ch,k){return '<div class="ball" style="--c:'+BALL_COLORS[k]+';--k:'+(reduced()?0:k)+'"><b>'+ch+'</b></div>';}).join('')+'</div>';
   $('wrap').appendChild(box);
-  setTimeout(function(){var b=box.querySelector('.balls');if(b)b.classList.add('out');},1900);
-  setTimeout(function(){box.remove();},2500);
+  if(!reduced())setTimeout(function(){var b=box.querySelector('.balls');if(b)b.classList.add(win?'hop':'droop');},1250);
+  setTimeout(function(){var b=box.querySelector('.balls');if(b){b.classList.remove('hop','droop');b.classList.add('out');}},2000);
+  setTimeout(function(){box.remove();},2600);
 }
+// 귀여운 모양(하트·별) SVG
+var HEART='<svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-9.6-9.3A5.2 5.2 0 0 1 12 6.2a5.2 5.2 0 0 1 9.6 5.5C19.5 16.4 12 21 12 21z" fill="CLR" stroke="rgba(0,0,0,.12)" stroke-width="1.2"/></svg>';
+var STAR='<svg viewBox="0 0 24 24"><path d="M12 2.5l2.9 6 6.6.8-4.9 4.5 1.3 6.5L12 17.1l-5.9 3.2 1.3-6.5L2.5 9.3l6.6-.8z" fill="CLR" stroke="rgba(0,0,0,.12)" stroke-width="1.2" stroke-linejoin="round"/></svg>';
+var CUTE=['#FF8FA3','#F6C945','#FFB4C8','#8FD3FF','#B9E58C','#C8A8FF'];
+function shape(i,c){return (i%2?STAR:HEART).replace('CLR',c);}
+// 줄 완성: 줄의 칸마다 하트·별이 위로 퐁퐁
 function sparkLines(lines){
   if(reduced())return;
-  var fx=$('fx'),cols=['var(--sun)','#FFFFFF','var(--bingo)','var(--sky)'];
+  var fx=$('fx');
   lines.forEach(function(j){B.LINES[j].forEach(function(p,q){
-    for(var s=0;s<3;s++){
-      var st=document.createElement('span'),a=Math.random()*Math.PI*2,d=20+Math.random()*30;
-      st.className='star';st.style.left=((p%5)+.5)*20+'%';st.style.top=(((p/5)|0)+.5)*20+'%';
-      st.style.background=cols[(q+s)%4];st.style.animationDelay=q*70+'ms';
-      st.style.setProperty('--dx',Math.cos(a)*d+'px');st.style.setProperty('--dy',Math.sin(a)*d+'px');
-      fx.appendChild(st);
+    for(var s=0;s<2;s++){
+      var el=document.createElement('span');
+      el.className='puff';el.innerHTML=shape(q+s,CUTE[(q*2+s)%CUTE.length]);
+      el.style.left=((p%5)+.5)*20+'%';el.style.top=(((p/5)|0)+.5)*20+'%';el.style.animationDelay=(q*70+s*120)+'ms';
+      el.style.setProperty('--dx',(Math.random()*44-22)+'px');el.style.setProperty('--dy',-(34+Math.random()*30)+'px');el.style.setProperty('--r',(Math.random()*60-30)+'deg');
+      fx.appendChild(el);
     }
   });});
-  setTimeout(function(){fx.querySelectorAll('.star').forEach(function(x){x.remove();});},1500);
+  setTimeout(function(){fx.querySelectorAll('.puff').forEach(function(x){x.remove();});},1800);
+}
+// 공돌이(동그란 노란 공 캐릭터). mood: '' 동그란 눈 · 'win' 웃는 눈과 만세 · 'sad' 처진 눈과 땀방울
+function mascotSvg(mood){
+  var ink='#22301F',Y='#F6C945',eyes,arms,mouth,extra='';
+  function arm(cx,cy,rx,ry,rot){return '<ellipse cx="'+cx+'" cy="'+cy+'" rx="'+rx+'" ry="'+ry+'" transform="rotate('+rot+' '+cx+' '+cy+')" fill="'+Y+'" stroke="'+ink+'" stroke-width="3"/>';}
+  if(mood==='win'){
+    eyes='<path d="M31 50q5-8 10 0M59 50q5-8 10 0" fill="none" stroke="'+ink+'" stroke-width="3.6" stroke-linecap="round"/>';
+    arms=arm(14,36,6,10,-30)+arm(86,36,6,10,30);
+    mouth='<path d="M42 61q8 10 16 0z" fill="#E0533D" stroke="'+ink+'" stroke-width="3" stroke-linejoin="round"/>';
+  }else if(mood==='sad'){
+    eyes='<path d="M31 51l9 3M69 51l-9 3" fill="none" stroke="'+ink+'" stroke-width="3.6" stroke-linecap="round"/>';
+    arms=arm(15,68,6,9,20)+arm(85,68,6,9,-20);
+    mouth='<path d="M44 66q6-6 12 0" fill="none" stroke="'+ink+'" stroke-width="3.2" stroke-linecap="round"/>';
+    extra='<path d="M78 30q5 8 0 11q-5-3 0-11z" fill="#8FD3FF" stroke="'+ink+'" stroke-width="2"/>';
+  }else{
+    eyes='<ellipse cx="37" cy="50" rx="5" ry="6.5" fill="'+ink+'"/><ellipse cx="63" cy="50" rx="5" ry="6.5" fill="'+ink+'"/><circle cx="39" cy="47.5" r="1.8" fill="#fff"/><circle cx="65" cy="47.5" r="1.8" fill="#fff"/>';
+    arms=arm(13,48,6,10,-55)+arm(87,58,6,9,-10);
+    mouth='<path d="M43 61q3.5 5 7 0q3.5 5 7 0" fill="none" stroke="'+ink+'" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>';
+  }
+  return '<svg viewBox="0 0 100 100" aria-hidden="true">'+
+    '<ellipse cx="38" cy="93" rx="9" ry="5" fill="#F2A93B" stroke="'+ink+'" stroke-width="3"/><ellipse cx="62" cy="93" rx="9" ry="5" fill="#F2A93B" stroke="'+ink+'" stroke-width="3"/>'+
+    arms+'<circle cx="50" cy="55" r="36" fill="'+Y+'" stroke="'+ink+'" stroke-width="3.5"/>'+
+    '<path d="M50 19q-2-9 6-11q-2 5 1 9" fill="'+Y+'" stroke="'+ink+'" stroke-width="3" stroke-linejoin="round"/>'+
+    '<ellipse cx="30" cy="62" rx="6" ry="3.8" fill="#FF8FA3" opacity=".8"/><ellipse cx="70" cy="62" rx="6" ry="3.8" fill="#FF8FA3" opacity=".8"/>'+
+    eyes+mouth+extra+'</svg>';
+}
+function mascot(text,mood,dur){
+  if(reduced()){ribbon(text,mood==='sad'?'blue':'');return;}
+  var old=$('wrap').querySelector('.mascot');if(old)old.remove();
+  var m=document.createElement('div');m.className='mascot'+(mood?' '+mood:'');
+  if(dur)m.style.setProperty('--dur',dur+'s');
+  m.innerHTML='<div class="bub">'+esc(text)+'</div>'+mascotSvg(mood);
+  $('wrap').appendChild(m);
+  setTimeout(function(){m.remove();},(dur||1.7)*1000+100);
+}
+// 이겼을 때: 화면 위에서 하트·별·동그라미가 살랑살랑 떨어진다
+function candyRain(){
+  if(reduced())return;
+  var r=document.createElement('div');r.className='rain';r.setAttribute('aria-hidden','true');
+  for(var i=0;i<42;i++){
+    var el=document.createElement('i'),c=CUTE[i%CUTE.length],k=i%3;
+    if(k===2){el.className='dot';el.style.setProperty('--c',c);}else el.innerHTML=shape(k,c);
+    el.style.left=Math.random()*100+'%';
+    el.style.setProperty('--s',(k===2?10:16+Math.random()*14)+'px');
+    el.style.setProperty('--t',(1.6+Math.random()*1.1)+'s');el.style.setProperty('--d',(Math.random()*.7)+'s');
+    el.style.setProperty('--sx',(Math.random()*80-40)+'px');el.style.setProperty('--r',(Math.random()*540-270)+'deg');
+    r.appendChild(el);
+  }
+  document.body.appendChild(r);setTimeout(function(){r.remove();},3400);
+}
+// 뾰로롱: 실로폰 같은 짧은 음 몇 개(줄 완성·승리)
+function chime(freqs,gap,dur){
+  unlockAudio();if(!actx)return;
+  try{freqs.forEach(function(f,k){tone(f,k*gap,dur,.2);});}catch(e){}
 }
 function ribbon(text,cls){
   var r=document.createElement('div');r.className='ribbon'+(cls?' '+cls:'');r.innerHTML='<span>'+esc(text)+'</span>';
   $('wrap').appendChild(r);setTimeout(function(){r.remove();},1500);
-}
-function fireworks(){
-  if(reduced())return;
-  var fx=$('fx'),cols=['#F6C945','#E0533D','#58B030','#2E9BD6','#FF8FA3','#9B6BD6'];
-  for(var b=0;b<6;b++)(function(b){setTimeout(function(){
-    var x=10+Math.random()*80,y=8+Math.random()*60,c=cols[b%cols.length];
-    var core=document.createElement('span');core.className='fwcore';core.style.left=x+'%';core.style.top=y+'%';fx.appendChild(core);
-    for(var i=0;i<18;i++){
-      var s=document.createElement('span'),a=Math.PI*2*i/18,d=45+Math.random()*25;
-      s.className='fw';s.style.left=x+'%';s.style.top=y+'%';s.style.background=i%3?c:'#FFFFFF';
-      s.style.setProperty('--dx',Math.cos(a)*d+'px');s.style.setProperty('--dy',Math.sin(a)*d+'px');
-      fx.appendChild(s);
-    }
-  },b*260);})(b);
-  setTimeout(function(){fx.querySelectorAll('.fw,.fwcore').forEach(function(x){x.remove();});},3200);
 }
 
 // ---------- 시트(봇과 새 게임) ----------

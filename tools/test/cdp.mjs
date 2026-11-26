@@ -43,7 +43,8 @@ export async function launch() {
     const ev = async (expr) => { const r = await send('Runtime.evaluate', { expression: expr, awaitPromise: true, returnByValue: true }, sessionId); if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description || r.exceptionDetails.text); return r.result.value; };
     const nav = async (u) => { await send('Page.navigate', { url: u }, sessionId); await new Promise(r => setTimeout(r, 300)); for (let i = 0; i < 50; i++) { if (await ev('document.readyState').catch(() => '') === 'complete') break; await new Promise(r => setTimeout(r, 100)); } };
     if (url) await nav(url);
-    return { ev, nav, logs, sessionId, close: () => send('Target.disposeBrowserContext', { browserContextId }) };
+    const shot = async (file) => { const r = await send('Page.captureScreenshot', { format: 'png' }, sessionId); (await import('node:fs')).writeFileSync(file, Buffer.from(r.data, 'base64')); };
+    return { ev, nav, shot, logs, sessionId, close: () => send('Target.disposeBrowserContext', { browserContextId }) };
   }
   return { page, close: () => { try { ws.close(); } catch {} chrome.kill(); } };
 }
