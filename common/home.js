@@ -2,10 +2,10 @@
 // 색·글꼴은 게임마다 있는 공통 CSS 변수(--bg, --surface, --line, --ink, --muted, --accent …)를 쓴다.
 (function(){
   'use strict';
-  // 친구와 연결된 방이 저장돼 있는지(게임마다 키가 다르다)
-  var ROOM_KEYS=['solsol.room','janggi.room','bingo.room','block.room'];
+  // 지금 이 게임에서 친구와 실제로 연결돼 있는지(common/peer.js 가 연 연결 수). 저장된 방 기록만으로는 판단하지 않는다
+  // (다른 게임의 방, 아무도 안 들어온 방, 끊긴 방이 남아 있어도 안내가 뜨던 문제)
   function inRoom(){
-    return ROOM_KEYS.some(function(k){try{var v=JSON.parse(localStorage.getItem(k)||'null');return !!(v&&(v.id||v.code));}catch(e){return false;}});
+    try{return !!(window.SolsolPeer&&window.SolsolPeer.openCount&&window.SolsolPeer.openCount()>0);}catch(e){return false;}
   }
   function init(){
     var brand=document.querySelector('.brand');if(!brand)return;

@@ -216,6 +216,13 @@
     this.emit('close');
   };
 
+  // 지금 실제로 열려 있는 친구 연결 수(게임 모음 팝업이 '친구와 연결된 방' 안내를 띄울지 정할 때 쓴다)
+  var ALL=[];
+  var _start=Peer.prototype._start;
+  Peer.prototype._start=function(){ALL=ALL.filter(function(x){return !x.destroyed;});ALL.push(this);return _start.call(this);};
+  Peer.openCount=function(){
+    return ALL.reduce(function(n,p){if(p.destroyed)return n;return n+Object.keys(p._conns).filter(function(k){return p._conns[k].open;}).length;},0);
+  };
   window.Peer=Peer;
   window.SolsolPeer=Peer;
 })();
