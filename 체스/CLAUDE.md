@@ -15,8 +15,8 @@
 ## 구조
 
 - **봇 난이도**: `index.html` 의 `LEVELS` 10개. `depth`(수읽기 깊이)·`noise`(평가 흔들기)·`rnd`(무작위 수 확률)·`time`(ms).
-- **친구 대전**: PeerJS(unpkg `peerjs@1.5.4`)로 두 폰을 WebRTC 로 직접 연결. 공개 PeerJS 서버는 연결 중개만 하고 저장하지 않는다.
-  방 만든 쪽 피어 id 는 `solsol-<방코드6자리>`. 초대 링크는 `<주소>#join-<코드>`.
+- **친구 대전**: `../common/peer.js`(PeerJS 와 같은 모양의 `Peer`, 실제로는 Supabase Realtime 채널로 중계). 폰끼리 직접(WebRTC) 붙지 않아 LTE·5G·카카오톡 안 브라우저에서도 연결된다. 서버에 저장하지 않는다(2026-11-26, PeerJS 에서 바꿈).
+  방 만든 쪽 id 는 `solsol-<방코드6자리>`. 초대 링크는 `<주소>#join-<코드>`.
   메시지: `hello` → (방장) `state` → `move`(전체 수 목록을 보냄) / `end`(기권) / `rematch`(색 바꿔 새 판).
 - **저장**: 전부 그 폰의 localStorage. `solsol.room`(진행 중 방), `solsol.friends`(친구별 전적), `solsol.name`, `solsol.me`(기기 id), `chess.botStats`·`chess.botGame`.
 

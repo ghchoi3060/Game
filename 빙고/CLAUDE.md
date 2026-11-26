@@ -18,7 +18,7 @@
 - **상태** `G`: `mode('bot'|'friend'), target(1·3·5줄), players, order(제비뽑기 순서), turn, called, phase('setup'|'play'|'end'), winners, lastCall`.
   내 판(`myBoard`)은 G 밖에 두고 남에게 보내지 않는다. 봇 판은 봇 플레이어 안에.
 - **봇**: `botPick(board, called, level)` — 0 무작위, 1 보통(40% 무작위), 2 어려움. 줄에 이미 표시된 칸이 많을수록 점수.
-- **친구 대전**: PeerJS 별 모양 연결. 방장 피어 id `solsolbg-<방코드>`, 방장이 모든 판정과 중계를 맡는다.
+- **친구 대전**: `../common/peer.js`(Supabase Realtime 중계) 별 모양 연결. 방장 id `solsolbg-<방코드>`, 방장이 모든 판정과 중계를 맡는다.
   - 참가자→방장: `hello{id,name}`, `ready{ready}`, `call{n}`, `status{k,lines}`
   - 방장→모두: `lobby{players,target,phase}`, `start{order,turn,target}`, `called{n,by,k}`, `turn{turn,lines}`, `end{winners,lines}`, `again`, `full`, `started`
   - 숫자가 불리면 모두 자기 줄 수를 `status` 로 보내고, 방장이 다 모으면(또는 5초) 승자를 정하거나 다음 차례를 알린다. 그동안 다음 부르기는 받지 않는다.
@@ -31,8 +31,7 @@
 ## 검증
 
 - 봇 대전: headless Chrome 에서 배치(직접 채우기·되돌리기·나머지 랜덤) → 시작 → 끝까지 → 결과·전적.
-- 친구 대전: 실제 WebRTC 는 headless 에서 연결되지 않으므로, 한 페이지에 iframe 3개를 두고 PeerJS 를 부모 페이지가 중계하는 가짜로 바꿔 확인한다
-  (참가, 준비, 시작, 제비뽑기가 모두 같은지, 5초 자동 선택, 승자 판정이 모두 같은지).
+- 친구 대전: `../tools/test/test-bingo.mjs` — headless Chrome 에 저장소가 분리된 창 3개(방장·친구 2)를 띄워 실제 Supabase 서버로 초대 링크 참가 → 방장 새로 열기 → 준비·시작 → 끝까지 두고, 부른 숫자·승자가 모두 같은지 본다.
 - 실제 폰 2대 이상으로 한 판 둬 봐야 최종 확인된다.
 
 ## 배포

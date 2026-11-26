@@ -36,7 +36,7 @@
 - **끌어 놓기**: 블록을 손가락보다 블록 높이 + 40px 위에 띄운다. 띄운 블록의 왼쪽 위로 판 칸을 계산하고, 막혔으면 한 칸 안의 가장 가까운 빈자리로 끌어당긴다(`snapSpot`). 움직임은 rAF 로 한 프레임에 한 번. 움직이지 않고 떼면 "고르기", 그다음 칸 클릭으로 놓기.
   아이폰 주의: 끄는 동안 블록 칸(tray)을 다시 그리지 않는다(손가락을 댄 요소가 사라지면 Safari 가 이후 움직임을 버림). 슬롯에 pointer capture 를 걸지 않고, touchmove 는 preventDefault 로 스크롤을 막는다.
 - **상태** `G`: `mode('solo'|'friend'), seed, round, board, tray(놓은 칸은 null), score, combo, miss, lines, over, why, limit, countdown, feverUntil, lastClearAt, speed`. 혼자 하기는 `block.game` 에 저장해서 이어 한다.
-- **친구 대전(2명)**: PeerJS, 방장 피어 id `solsolbk-<방코드>`. `hello` → `lobby{host,limit,phase}` → `start{seed,limit,gid}`(3·2·1 뒤 시작) → 서로 `state{score,over,lines,fever}`(0.25초마다 최대 1번).
+- **친구 대전(2명)**: `../common/peer.js`(Supabase Realtime 중계), 방장 id `solsolbk-<방코드>`. `hello` → `lobby{host,limit,phase}` → `start{seed,limit,gid}`(3·2·1 뒤 시작) → 서로 `state{score,over,lines,fever}`(0.25초마다 최대 1번).
   둘 다 끝나면(시간 제한이면 0초에 자동으로 끝) 점수 비교. 상대가 45초 넘게 끊겨 있으면 내 점수로 끝낸다.
   재연결은 빙고와 같은 방식(참가자 3초마다 최대 3분 재시도, 화면 복귀 시 재연결, 방 코드 저장 후 다시 열기).
 - **저장**: `block.game`, `block.stats`(best, games, total, recent, friend w/l/d), `block.room`. 서버 순위표는 `scores(game='block', level='normal', time_sec=점수)`, 높은 점수가 위.
@@ -45,7 +45,7 @@
 
 - 엔진: 같은 씨앗·순번이면 같은 블록, 줄·판 비움 점수, 범위·겹침, 연속, 무작위 100판이 끝나는지.
 - 화면: headless Chrome 에서 가짜 PointerEvent 로 끌어 놓기·톡 고르기, 끝까지 → 결과·기록. 점수 규칙(빠르게·피버)은 판을 미리 만들어 계산값과 비교.
-- 친구 대전: iframe 2개 + 가짜 PeerJS 중계(같은 블록인지, 상대 점수 표시, 결과가 같은지). 실제 폰 2대로도 확인해야 한다.
+- 친구 대전: `node ../tools/test/test-others.mjs` 와 같은 방식으로 실제 서버에 연결해 확인(`../tools/test/`). 예전 iframe + 가짜 PeerJS 방식은 쓰지 않는다. 실제 폰 2대로도 확인해야 한다.
 
 ## 배포
 

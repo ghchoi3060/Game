@@ -1,6 +1,6 @@
 // 앱 껍데기 캐시: 화면은 네트워크 우선(새 버전 바로 반영), 안 되면 캐시로 오프라인 봇 대전
 // 다른 게임과 같은 주소(origin)라 캐시 저장소를 함께 쓴다. 지울 때는 자기 이름(solsol-bingo-)으로 시작하는 것만 지운다
-const CACHE = 'solsol-bingo-v3';
+const CACHE = 'solsol-bingo-v4';
 const SHELL = ['./', './index.html', './engine.js?v=1', './manifest.webmanifest', './icon.svg', './icon-512.png'];
 
 self.addEventListener('install', (e) => {

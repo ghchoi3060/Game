@@ -23,7 +23,7 @@
   초 = Zhi Mang Xing, 한 = Yuji Syuku. 붓글씨 글꼴은 획이 가늘어 흰 테두리(stroke)로 굵게 한다. 둘 다 Google Fonts 에서 `text=` 로 쓰는 글자만 받는다. 글자를 바꾸면 그 링크의 `text=` 도 고친다.
   붓글씨 글꼴에 번체 車·馬 가 없어 초는 간체 车·马 를 쓴다(간체가 초서에서 온 모양이라 실제 초 말과 같다).
 - **봇 난이도**: `index.html` 의 `LEVELS` 10개. `depth`·`noise`(졸 = 200 기준)·`rnd`·`time`(ms).
-- **친구 대전**: 체스와 같은 PeerJS 방식. 피어 id 는 `solsoljg-<방코드>`(체스 `solsol-` 과 겹치지 않게).
+- **친구 대전**: 체스와 같은 `../common/peer.js` 방식(Supabase Realtime 중계). id 는 `solsoljg-<방코드>`(체스 `solsol-` 과 겹치지 않게).
   메시지: `hello` → (방장) `state` → `form`(내가 고른 상차림) / `move`(전체 수 목록) / `end`(기권) / `rematch`(진영 바꾸고 상차림 다시 고름).
   상차림은 `mergeSetup` 으로 합친다(먼저 정해진 값을 지킴). 끊긴 동안 고른 것은 다시 연결될 때 `hello`·`state` 뒤에 다시 보낸다.
 - **저장**: localStorage. 체스와 같은 주소라 장기 것은 `janggi.*`(`room`, `friends`, `recorded`, `botStats`, `botLog`, `botGame`, `prefs`).

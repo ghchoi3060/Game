@@ -17,3 +17,9 @@
 
 모든 게임의 기록을 Supabase 에 저장하고, 스도쿠·지뢰찾기·블록·숨은그림·계단 순위표를 보여 준다. 익명 계정이라 회원가입이 없고, 폰을 바꿀 때는 기록 탭의 이어하기 코드로 옮긴다.
 설정 방법은 [supabase/README.md](supabase/README.md). 설정 전에는 각 폰에만 저장한다.
+
+## 친구 대전 연결
+
+체스·장기·빙고·블록 친구 대전은 [common/peer.js](common/peer.js) 로 연결한다. PeerJS 와 같은 모양(`new Peer(id)`, `peer.connect(id)`)이지만 폰끼리 직접(WebRTC) 붙지 않고 Supabase Realtime 채널로 중계해서, LTE·5G·카카오톡 안 브라우저에서도 연결된다(2026-11-26, PeerJS 직접 연결이 실제 폰에서 안 붙던 문제로 바꿈). 서버에 아무것도 저장하지 않는다.
+Supabase 대시보드 Realtime 설정에서 공개 채널 접근(Allow public access)이 켜져 있어야 한다.
+테스트: `tools/test/` 의 스크립트를 Node 로 실행하면 headless Chrome 으로 실제 서버에 붙여 확인한다(`test-peer.mjs` 연결 단독, `test-bingo.mjs` 빙고 한 판, `test-others.mjs` 체스·장기 연결).
